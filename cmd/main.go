@@ -15,6 +15,19 @@ import (
 )
 
 func main() {
+	// Initialize the file storage adapter
+	fileStorage := &storage.FileStorage{
+		PerformanceFile: "validators-performance.json",
+		ExitRequestFile: "exit-requests.json",
+		ConfigFile:      "config.json",
+	}
+
+	// Load the configuration from the config.json file
+	config, err := fileStorage.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	// Initialize the Ethereum adapter with ABIs and contract addresses
 	abiPaths := []string{
 		"abi/CSAccounting.json",
@@ -39,19 +52,6 @@ func main() {
 	// Start listening to events
 	go ethereumAdapter.SubscribeToEvents()
 
-	// Initialize the file storage adapter
-	fileStorage := &storage.FileStorage{
-		PerformanceFile: "validators-performance.json",
-		ExitRequestFile: "exit-requests.json",
-		ConfigFile:      "config.json",
-	}
-
-	// Load the configuration from the config.json file
-	config, err := fileStorage.LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
 	// Initialize the Telegram bot as the notifier using the loaded Telegram token
 	var notifier domain.Notifier
 	if config.TelegramToken != "" {
@@ -65,14 +65,14 @@ func main() {
 	}
 
 	// Initialize the IndexerService with storage and the Telegram bot as the notifier
-	indexerService := &services.IndexerService{
+	service := &services.Service{
 		Storage:  fileStorage,
 		Notifier: notifier,
 		Config:   config,
 	}
 
 	handler := &api.APIHandler{
-		IndexerService: indexerService,
+		IndexerService: service,
 	}
 
 	r := mux.NewRouter()

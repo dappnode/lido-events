@@ -1,9 +1,9 @@
 package domain
 
-type Indexer interface {
+type Storage interface {
 	UpdateTelegramToken(token string) error
 	UpdateOperatorID(operatorID string) error
-	GetLidoReport(start, end int) (Report, error)
+	GetLidoReport(start, end int) (map[string]Report, error)
 	GetExitRequests() (map[string]string, error)
 }
 

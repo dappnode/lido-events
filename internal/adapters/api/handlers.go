@@ -9,7 +9,7 @@ import (
 )
 
 type APIHandler struct {
-	IndexerService *services.IndexerService
+	IndexerService *services.Service
 }
 
 // Handler to update the Telegram token
