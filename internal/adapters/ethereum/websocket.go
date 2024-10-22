@@ -13,35 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// EthereumAdapter handles Ethereum client and contract ABIs
 type EthereumAdapter struct {
 	Client    *ethclient.Client
-	Contracts map[string]common.Address // Contract addresses
-	ABICache  *cache.ABICache           // ABI cache to fetch ABIs when needed
+	Contracts map[string]common.Address
+	ABICache  *cache.ABICache
 }
 
-// EventDescriptionMap holds the description for each event
-var EventDescriptionMap = map[string]string{
-	"DepositedSigningKeysCountChanged":         "🤩 Node Operator's keys received deposits",
-	"ELRewardsStealingPenaltyReported":         "🚨 Penalty for stealing EL rewards reported",
-	"ELRewardsStealingPenaltySettled":          "🚨 EL rewards stealing penalty confirmed and applied",
-	"ELRewardsStealingPenaltyCancelled":        "😮‍💨 Cancelled penalty for stealing EL rewards",
-	"InitialSlashingSubmitted":                 "🚨 Initial slashing submitted for one of the validators",
-	"KeyRemovalChargeApplied":                  "🔑 Applied charge for key removal",
-	"NodeOperatorManagerAddressChangeProposed": "ℹ️ New manager address proposed",
-	"NodeOperatorManagerAddressChanged":        "✅ Manager address changed",
-	"NodeOperatorRewardAddressChangeProposed":  "ℹ️ New rewards address proposed",
-	"NodeOperatorRewardAddressChanged":         "✅ Rewards address changed",
-	"StuckSigningKeysCountChanged":             "🚨 Reported stuck keys that were not exited in time",
-	"VettedSigningKeysCountDecreased":          "🚨 Uploaded invalid keys",
-	"WithdrawalSubmitted":                      "👀 Key withdrawal information submitted",
-	"TotalSigningKeysCountChanged":             "👀 New keys uploaded or removed",
-	"ValidatorExitRequest":                     "🚨 One of the validators requested to exit",
-	"PublicRelease":                            "🎉 Public release of CSM!",
-	"DistributionDataUpdated":                  "📈 New rewards distributed",
-}
-
-// NewEthereumAdapter initializes the Ethereum adapter with cached ABIs and contract addresses
+// NewEthereumAdapter initializes the Ethereum adapter
 func NewEthereumAdapter(rpcURL string, contractAddresses map[string]string, abiCache *cache.ABICache) (*EthereumAdapter, error) {
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
@@ -60,8 +38,8 @@ func NewEthereumAdapter(rpcURL string, contractAddresses map[string]string, abiC
 	}, nil
 }
 
-// SubscribeToEvents subscribes to contract events and logs/handles them
-func (e *EthereumAdapter) SubscribeToEvents() {
+// SubscribeToEvents subscribes to contract events and passes them to the provided event handler
+func (e *EthereumAdapter) SubscribeToEvents(eventHandler func(contractName string, eventName string, vLog types.Log)) {
 	for contractName, contractAddress := range e.Contracts {
 		// Retrieve the ABI from the cache
 		cachedABI, exists := e.ABICache.GetABI(contractAddress.Hex())
@@ -87,23 +65,19 @@ func (e *EthereumAdapter) SubscribeToEvents() {
 
 		log.Printf("Subscribed to events from contract: %s", contractName)
 
-		go func() {
+		// Capture variables contractName and parsedABI in the closure
+		go func(contractName string, parsedABI abi.ABI) {
 			for {
 				select {
 				case err := <-sub.Err():
 					log.Println("Subscription error:", err)
 				case vLog := <-logs:
-					// Parse the log
+					// Parse the log and delegate handling to the service layer
 					eventName := e.getEventName(parsedABI, vLog.Topics[0])
-					if description, found := EventDescriptionMap[eventName]; found {
-						log.Printf("Event: %s - %s", eventName, description)
-						// Handle event: you can trigger Telegram notification here or store data
-					} else {
-						log.Printf("Unknown event received: %v", vLog.Topics[0])
-					}
+					eventHandler(contractName, eventName, vLog) // Pass the event to the handler
 				}
 			}
-		}()
+		}(contractName, parsedABI) // Pass contractName and parsedABI to the goroutine
 	}
 }
 
