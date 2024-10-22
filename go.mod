@@ -16,7 +16,6 @@ require (
 	github.com/ethereum/go-verkle v0.1.1-0.20240829091221-dffa7562dbe9 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/supranational/blst v0.3.13 // indirect
-	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
@@ -26,7 +25,6 @@ require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.4.2 // indirect
