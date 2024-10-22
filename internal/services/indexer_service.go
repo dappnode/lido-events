@@ -3,9 +3,8 @@ package services
 import "lido-events/internal/domain"
 
 type Service struct {
-	Storage  domain.Storage  // Core Storage interface for data management
-	Notifier domain.Notifier // Separate Notifier interface for notifications
-	Config   domain.Config
+	Storage  domain.IndexerRepository // Core Storage interface for data management
+	Notifier domain.AlertService      // Separate Notifier interface for notifications
 }
 
 func (s *Service) UpdateTelegramToken(token string) error {
