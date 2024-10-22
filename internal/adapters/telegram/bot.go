@@ -3,19 +3,31 @@ package telegram
 import (
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// TelegramBot implements the Notifier interface
 type TelegramBot struct {
-    Bot *tgbotapi.BotAPI
+	Bot    *tgbotapi.BotAPI
+	ChatID int64
 }
 
-func (tb *TelegramBot) SendMessage(chatID int64, text string) error {
-    msg := tgbotapi.NewMessage(chatID, text)
-    _, err := tb.Bot.Send(msg)
-    if err != nil {
-        log.Printf("Error sending message: %s", err)
-        return err
-    }
-    return nil
+// NewTelegramNotifier creates a new TelegramBot instance
+func NewTelegramNotifier(token string, chatID int64) (*TelegramBot, error) {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return nil, err
+	}
+	return &TelegramBot{Bot: bot, ChatID: chatID}, nil
+}
+
+// Notify sends a notification message via Telegram
+func (tb *TelegramBot) Notify(message string) error {
+	msg := tgbotapi.NewMessage(tb.ChatID, message)
+	_, err := tb.Bot.Send(msg)
+	if err != nil {
+		log.Printf("Error sending message via Telegram: %s", err)
+		return err
+	}
+	return nil
 }

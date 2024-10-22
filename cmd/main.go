@@ -2,13 +2,14 @@ package main
 
 import (
 	"lido-events/internal/adapters/ethereum"
+	"lido-events/internal/domain"
 	"log"
 	"net/http"
 
-	"github.com/dappnode/lido-events/internal/adapters/api"
-	"github.com/dappnode/lido-events/internal/adapters/storage"
-	"github.com/dappnode/lido-events/internal/adapters/telegram"
-	"github.com/dappnode/lido-events/internal/services"
+	"lido-events/internal/adapters/api"
+	"lido-events/internal/adapters/storage"
+	"lido-events/internal/adapters/telegram"
+	"lido-events/internal/services"
 
 	"github.com/gorilla/mux"
 )
@@ -51,16 +52,23 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Initialize the Telegram bot as the notifier using the loaded Telegram token from the config
-	bot, err := telegram.NewTelegramBot(config.TelegramToken)
-	if err != nil {
-		log.Fatalf("Failed to initialize Telegram bot: %v", err)
+	// Initialize the Telegram bot as the notifier using the loaded Telegram token
+	var notifier domain.Notifier
+	if config.TelegramToken != "" {
+		bot, err := telegram.NewTelegramNotifier(config.TelegramToken, 0) // TODO: Add chat ID
+		if err != nil {
+			log.Fatalf("Failed to initialize Telegram bot: %v", err)
+		}
+		notifier = bot
+	} else {
+		log.Fatal("No Telegram token provided in the config")
 	}
 
 	// Initialize the IndexerService with storage and the Telegram bot as the notifier
 	indexerService := &services.IndexerService{
 		Storage:  fileStorage,
-		Notifier: bot, // Using the Telegram bot as the notifier
+		Notifier: notifier,
+		Config:   config,
 	}
 
 	handler := &api.APIHandler{
