@@ -3,37 +3,39 @@ package storage
 import (
 	"encoding/json"
 	"lido-events/internal/domain"
+	"lido-events/internal/infrastructure/config"
 	"os"
 	"strconv"
 )
 
+// FileStorage handles file-based storage for validator performance and exit requests
 type FileStorage struct {
 	PerformanceFile string
 	ExitRequestFile string
 	ConfigFile      string
 }
 
-// Implement UpdateTelegramToken (required by domain.Storage)
+// UpdateTelegramToken updates the Telegram token in the config file
 func (fs *FileStorage) UpdateTelegramToken(token string) error {
-	config, err := fs.LoadConfig()
+	cfg, err := fs.LoadConfig()
 	if err != nil {
 		return err
 	}
-	config.TelegramToken = token
-	return fs.saveConfig(config)
+	cfg.Telegram.Token = token
+	return fs.saveConfig(cfg)
 }
 
-// Implement UpdateOperatorID (required by domain.Storage)
+// UpdateOperatorID updates the operator ID in the config file
 func (fs *FileStorage) UpdateOperatorID(operatorID string) error {
-	config, err := fs.LoadConfig()
+	cfg, err := fs.LoadConfig()
 	if err != nil {
 		return err
 	}
-	config.OperatorID = operatorID
-	return fs.saveConfig(config)
+	cfg.OperatorID = operatorID
+	return fs.saveConfig(cfg)
 }
 
-// Implement GetLidoReport (required by domain.Storage)
+// GetLidoReport loads the Lido report data from the performance JSON file for the given epoch range
 func (fs *FileStorage) GetLidoReport(start, end int) (map[string]domain.Report, error) {
 	performanceData, err := fs.LoadPerformance()
 	if err != nil {
@@ -52,7 +54,7 @@ func (fs *FileStorage) GetLidoReport(start, end int) (map[string]domain.Report, 
 	return reportData, nil
 }
 
-// Implement GetExitRequests (required by domain.Storage)
+// GetExitRequests loads exit requests from the JSON file
 func (fs *FileStorage) GetExitRequests() (map[string]string, error) {
 	file, err := os.ReadFile(fs.ExitRequestFile)
 	if err != nil {
@@ -63,27 +65,7 @@ func (fs *FileStorage) GetExitRequests() (map[string]string, error) {
 	return data, err
 }
 
-// LoadConfig loads the configuration from the JSON file
-func (fs *FileStorage) LoadConfig() (domain.Config, error) {
-	file, err := os.ReadFile(fs.ConfigFile)
-	if err != nil {
-		return domain.Config{}, err
-	}
-	var config domain.Config
-	err = json.Unmarshal(file, &config)
-	return config, err
-}
-
-// saveConfig saves the updated configuration back to the config file
-func (fs *FileStorage) saveConfig(config domain.Config) error {
-	data, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(fs.ConfigFile, data, 0644)
-}
-
-// LoadPerformance loads the performance data from the JSON file
+// LoadPerformance loads the validator performance data from the JSON file
 func (fs *FileStorage) LoadPerformance() (map[string]domain.Report, error) {
 	file, err := os.ReadFile(fs.PerformanceFile)
 	if err != nil {
@@ -92,4 +74,24 @@ func (fs *FileStorage) LoadPerformance() (map[string]domain.Report, error) {
 	var data map[string]domain.Report
 	err = json.Unmarshal(file, &data)
 	return data, err
+}
+
+// LoadConfig loads the configuration from the JSON file using the infrastructure config struct
+func (fs *FileStorage) LoadConfig() (config.Config, error) {
+	file, err := os.ReadFile(fs.ConfigFile)
+	if err != nil {
+		return config.Config{}, err
+	}
+	var cfg config.Config
+	err = json.Unmarshal(file, &cfg)
+	return cfg, err
+}
+
+// saveConfig saves the updated configuration back to the config file
+func (fs *FileStorage) saveConfig(cfg config.Config) error {
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(fs.ConfigFile, data, 0644)
 }

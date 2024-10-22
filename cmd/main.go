@@ -38,6 +38,7 @@ func main() {
 	fileStorage := &storage.FileStorage{
 		PerformanceFile: "validators-performance.json",
 		ExitRequestFile: "exit-requests.json",
+		ConfigFile:      "config.json",
 	}
 
 	// Initialize the Ethereum adapter using cached ABIs
