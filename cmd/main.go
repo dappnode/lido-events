@@ -2,73 +2,63 @@ package main
 
 import (
 	"lido-events/internal/adapters/ethereum"
-	"lido-events/internal/domain"
+	"lido-events/internal/infrastructure/cache"
+	"lido-events/internal/infrastructure/config"
 	"log"
 	"net/http"
 
 	"lido-events/internal/adapters/api"
+	telegram "lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
-	"lido-events/internal/adapters/telegram"
 	"lido-events/internal/services"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	// Load the partial config (operatorId, telegram) from the JSON file
+	appConfig, err := config.LoadAppConfig("config.json")
+	if err != nil {
+		log.Fatalf("Failed to load partial config: %v", err)
+	}
+
+	// Load the network-specific configuration and contract ABIs
+	networkConfig, err := config.LoadNetworkConfig()
+	if err != nil {
+		log.Fatalf("Failed to load network configuration: %v", err)
+	}
+
+	// Load the cached ABIs from the network configuration
+	abiCache, err := cache.NewABICache(networkConfig.ContractABIs)
+	if err != nil {
+		log.Fatalf("Failed to load ABIs: %v", err)
+	}
+
 	// Initialize the file storage adapter
 	fileStorage := &storage.FileStorage{
 		PerformanceFile: "validators-performance.json",
 		ExitRequestFile: "exit-requests.json",
-		ConfigFile:      "config.json",
 	}
 
-	// Load the configuration from the config.json file
-	config, err := fileStorage.LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	// Initialize the Ethereum adapter with ABIs and contract addresses
-	abiPaths := []string{
-		"abi/CSAccounting.json",
-		"abi/CSFeeDistributor.json",
-		"abi/CSFeeOracle.json",
-		"abi/CSModule.json",
-		"abi/VEBO.json",
-	}
-	contractAddresses := []string{
-		"0xContractAddress1",
-		"0xContractAddress2",
-		"0xContractAddress3",
-		"0xContractAddress4",
-		"0xContractAddress5",
-	}
-
-	ethereumAdapter, err := ethereum.NewEthereumAdapter("https://mainnet.infura.io/v3/YOUR_PROJECT_ID", abiPaths, contractAddresses)
+	// Initialize the Ethereum adapter using cached ABIs
+	ethereumAdapter, err := ethereum.NewEthereumAdapter(networkConfig.EtherscanURL, networkConfig.ContractABIs, abiCache)
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum adapter: %v", err)
 	}
 
-	// Start listening to events
+	// Start listening to Ethereum events
 	go ethereumAdapter.SubscribeToEvents()
 
-	// Initialize the Telegram bot as the notifier using the loaded Telegram token
-	var notifier domain.Notifier
-	if config.TelegramToken != "" {
-		bot, err := telegram.NewTelegramNotifier(config.TelegramToken, 0) // TODO: Add chat ID
-		if err != nil {
-			log.Fatalf("Failed to initialize Telegram bot: %v", err)
-		}
-		notifier = bot
-	} else {
-		log.Fatal("No Telegram token provided in the config")
+	// Initialize the Telegram notifier using the loaded Telegram token
+	notifier, err := telegram.NewTelegramNotifier(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
+	if err != nil {
+		log.Fatalf("Failed to initialize Telegram bot: %v", err)
 	}
 
 	// Initialize the IndexerService with storage and the Telegram bot as the notifier
 	service := &services.Service{
 		Storage:  fileStorage,
 		Notifier: notifier,
-		Config:   config,
 	}
 
 	handler := &api.APIHandler{

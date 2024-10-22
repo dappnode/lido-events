@@ -1,11 +1,10 @@
 package ethereum
 
 import (
-	"bytes"
 	"context"
-	"io"
 	"log"
-	"os"
+
+	"lido-events/internal/infrastructure/cache"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -14,10 +13,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// EthereumAdapter handles Ethereum client and contract ABIs
 type EthereumAdapter struct {
-	Client       *ethclient.Client
-	ContractABIs map[string]abi.ABI
-	Contracts    map[string]common.Address
+	Client    *ethclient.Client
+	Contracts map[string]common.Address // Contract addresses
+	ABICache  *cache.ABICache           // ABI cache to fetch ABIs when needed
 }
 
 // EventDescriptionMap holds the description for each event
@@ -41,44 +41,42 @@ var EventDescriptionMap = map[string]string{
 	"DistributionDataUpdated":                  "📈 New rewards distributed",
 }
 
-// NewEthereumAdapter initializes the Ethereum adapter for multiple contracts
-func NewEthereumAdapter(rpcURL string, abiFilePaths []string, contractAddresses []string) (*EthereumAdapter, error) {
+// NewEthereumAdapter initializes the Ethereum adapter with cached ABIs and contract addresses
+func NewEthereumAdapter(rpcURL string, contractAddresses map[string]string, abiCache *cache.ABICache) (*EthereumAdapter, error) {
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
 		return nil, err
 	}
 
-	contractABIs := make(map[string]abi.ABI)
 	contracts := make(map[string]common.Address)
-
-	// Load each ABI
-	for i, abiFilePath := range abiFilePaths {
-		abiFile, err := os.ReadFile(abiFilePath) // Replaced ioutil.ReadFile with os.ReadFile
-		if err != nil {
-			return nil, err
-		}
-
-		parsedABI, err := abi.JSON(io.NopCloser(bytes.NewReader(abiFile))) // Replaced ioutil.NopCloser
-		if err != nil {
-			return nil, err
-		}
-
-		contractABIs[abiFilePath] = parsedABI
-		contracts[abiFilePath] = common.HexToAddress(contractAddresses[i])
+	for name, address := range contractAddresses {
+		contracts[name] = common.HexToAddress(address)
 	}
 
 	return &EthereumAdapter{
-		Client:       client,
-		ContractABIs: contractABIs,
-		Contracts:    contracts,
+		Client:    client,
+		Contracts: contracts,
+		ABICache:  abiCache,
 	}, nil
 }
 
 // SubscribeToEvents subscribes to contract events and logs/handles them
 func (e *EthereumAdapter) SubscribeToEvents() {
-	for contractName, contractABI := range e.ContractABIs {
+	for contractName, contractAddress := range e.Contracts {
+		// Retrieve the ABI from the cache
+		cachedABI, exists := e.ABICache.GetABI(contractAddress.Hex())
+		if !exists {
+			log.Fatalf("No ABI found for contract address: %s", contractAddress.Hex())
+		}
+
+		// Cast the ABI to the correct type
+		parsedABI, ok := cachedABI.(abi.ABI)
+		if !ok {
+			log.Fatalf("Invalid ABI format for contract address: %s", contractAddress.Hex())
+		}
+
 		query := ethereum.FilterQuery{
-			Addresses: []common.Address{e.Contracts[contractName]},
+			Addresses: []common.Address{contractAddress},
 		}
 
 		logs := make(chan types.Log)
@@ -96,7 +94,7 @@ func (e *EthereumAdapter) SubscribeToEvents() {
 					log.Println("Subscription error:", err)
 				case vLog := <-logs:
 					// Parse the log
-					eventName := e.getEventName(contractABI, vLog.Topics[0])
+					eventName := e.getEventName(parsedABI, vLog.Topics[0])
 					if description, found := EventDescriptionMap[eventName]; found {
 						log.Printf("Event: %s - %s", eventName, description)
 						// Handle event: you can trigger Telegram notification here or store data
