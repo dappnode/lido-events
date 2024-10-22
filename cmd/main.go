@@ -41,15 +41,6 @@ func main() {
 		ConfigFile:      "config.json",
 	}
 
-	// Initialize the Ethereum adapter using cached ABIs
-	ethereumAdapter, err := ethereum.NewEthereumAdapter(networkConfig.EtherscanURL, networkConfig.ContractABIs, abiCache)
-	if err != nil {
-		log.Fatalf("Failed to initialize Ethereum adapter: %v", err)
-	}
-
-	// Start listening to Ethereum events
-	go ethereumAdapter.SubscribeToEvents()
-
 	// Initialize the Telegram notifier using the loaded Telegram token
 	notifier, err := telegram.NewTelegramNotifier(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
 	if err != nil {
@@ -61,6 +52,15 @@ func main() {
 		Storage:  fileStorage,
 		Notifier: notifier,
 	}
+
+	// Initialize the Ethereum adapter using cached ABIs
+	ethereumAdapter, err := ethereum.NewEthereumAdapter(networkConfig.EtherscanURL, networkConfig.ContractABIs, abiCache)
+	if err != nil {
+		log.Fatalf("Failed to initialize Ethereum adapter: %v", err)
+	}
+
+	// Start Ethereum event subscription, passing the event handler from the service
+	go ethereumAdapter.SubscribeToEvents(service.HandleEthereumEvent)
 
 	handler := &api.APIHandler{
 		IndexerService: service,
