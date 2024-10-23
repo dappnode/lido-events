@@ -1,27 +1,23 @@
 package main
 
 import (
-	"lido-events/internal/adapters/ethereum"
+	"lido-events/internal/adapters/notifier"
+	"lido-events/internal/adapters/storage"
+	"lido-events/internal/eventhandler"
 	"lido-events/internal/infrastructure/cache"
 	"lido-events/internal/infrastructure/config"
+	"lido-events/internal/service"
+	"lido-events/internal/subscriber"
 	"log"
 	"net/http"
+	"os"
 
 	"lido-events/internal/adapters/api"
-	telegram "lido-events/internal/adapters/notifier"
-	"lido-events/internal/adapters/storage"
-	"lido-events/internal/services"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	// Load the partial config (operatorId, telegram) from the JSON file
-	appConfig, err := config.LoadAppConfig("config.json")
-	if err != nil {
-		log.Fatalf("Failed to load partial config: %v", err)
-	}
-
 	// Load the network-specific configuration and contract ABIs
 	networkConfig, err := config.LoadNetworkConfig()
 	if err != nil {
@@ -34,47 +30,55 @@ func main() {
 		log.Fatalf("Failed to load ABIs: %v", err)
 	}
 
+	appConfig, err := config.LoadAppConfig("config.json")
+	if err != nil {
+		log.Fatalf("Failed to load application configuration: %v", err)
+	}
+
 	// Initialize the file storage adapter
-	fileStorage := &storage.FileStorage{
-		PerformanceFile: "validators-performance.json",
-		ExitRequestFile: "exit-requests.json",
-		ConfigFile:      "config.json",
-	}
+	storageAdapter := storage.NewStorageAdapter()
 
-	// Initialize the Telegram notifier using the loaded Telegram token
-	notifier, err := telegram.NewTelegramNotifier(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
+	// Initialize Notifier Adapter (Telegram)
+	notifierAdapter, err := notifier.NewNotifierAdapter(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
 	if err != nil {
-		log.Fatalf("Failed to initialize Telegram bot: %v", err)
+		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
 
-	// Initialize the IndexerService with storage and the Telegram bot as the notifier
-	service := &services.Service{
-		Storage:  fileStorage,
-		Notifier: notifier,
+	// Initialize Notifier Service
+	notifierService := service.NewNotifierService(notifierAdapter)
+
+	// Initialize Operator Service
+	operatorService := service.NewOperatorService(storageAdapter)
+
+	// Initialize Event Handler with services
+	eventHandler := eventhandler.NewEventHandler(operatorService, notifierService)
+
+	// Initialize Ethereum Subscriber and Start Subscribing to Events
+	wsURL := os.Getenv("WS_URL")
+	if wsURL == "" {
+		wsURL = "wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID" // Replace with your default WebSocket URL
 	}
 
-	// Initialize the Ethereum adapter using cached ABIs
-	ethereumAdapter, err := ethereum.NewEthereumAdapter(networkConfig.EtherscanURL, networkConfig.ContractABIs, abiCache)
+	ethSubscriber, err := subscriber.NewEthereumSubscriber(wsURL, abiCache.GetAllABIs(), eventHandler)
 	if err != nil {
-		log.Fatalf("Failed to initialize Ethereum adapter: %v", err)
+		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}
 
-	// Start Ethereum event subscription, passing the event handler from the service
-	go ethereumAdapter.SubscribeToEvents(service.HandleEthereumEvent)
+	go ethSubscriber.SubscribeToEvents()
 
-	handler := &api.APIHandler{
-		IndexerService: service,
+	// Initialize API Handler
+	apiHandler := &api.APIHandler{
+		OperatorService: operatorService,
 	}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v0/events_indexer/telegramToken", handler.UpdateTelegramToken).Methods("POST")
-	r.HandleFunc("/api/v0/events_indexer/operatorId", handler.UpdateOperatorID).Methods("POST")
-	r.HandleFunc("/api/v0/event_indexer/lido_report", handler.GetLidoReport).Methods("GET")
-	r.HandleFunc("/api/v0/event_indexer/exit_requests", handler.GetExitRequests).Methods("GET")
+	r.HandleFunc("/api/v0/events_indexer/telegramConfig", apiHandler.UpdateTelegramConfig).Methods("POST")
+	r.HandleFunc("/api/v0/events_indexer/operatorId", apiHandler.UpdateOperatorID).Methods("POST")
+	r.HandleFunc("/api/v0/event_indexer/lido_report", apiHandler.GetLidoReport).Methods("GET")
+	r.HandleFunc("/api/v0/event_indexer/exit_requests", apiHandler.GetExitRequests).Methods("GET")
 
 	log.Println("Server started on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 
 	log.Println("App running...")
-	select {} // Keep the app running
 }

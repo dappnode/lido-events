@@ -26,10 +26,8 @@ func NewABICache(abiPaths map[string]string) (*ABICache, error) {
 	return &ABICache{cache: cache}, nil
 }
 
-// GetABI returns the ABI for a specific contract address
-func (a *ABICache) GetABI(address string) (interface{}, bool) {
-	abi, exists := a.cache[address]
-	return abi, exists
+func (a *ABICache) GetAllABIs() map[string]interface{} {
+	return a.cache
 }
 
 // loadABIFromFile reads and unmarshals the ABI from a file

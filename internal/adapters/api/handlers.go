@@ -5,23 +5,26 @@ import (
 	"net/http"
 	"strconv"
 
-	"lido-events/internal/services"
+	"lido-events/internal/service"
 )
 
 type APIHandler struct {
-	IndexerService *services.Service
+	OperatorService *service.OperatorService
 }
 
 // Handler to update the Telegram token
-func (h *APIHandler) UpdateTelegramToken(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request) {
+	// token or chatId. Only 1 is required at least
 	var req struct {
-		TelegramToken string `json:"telegramToken"`
+		Token  string `json:"token"`
+		ChatID int64  `json:"chatId"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := h.IndexerService.UpdateTelegramToken(req.TelegramToken)
+	err := h.OperatorService.SetTelegramConfig(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -39,7 +42,7 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.IndexerService.UpdateOperatorID(req.OperatorID)
+	err := h.OperatorService.SetOperatorId(req.OperatorID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -50,22 +53,22 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get Lido report within a range of epochs
 func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
-	startEpoch := r.URL.Query().Get("start")
-	endEpoch := r.URL.Query().Get("end")
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
 
-	start, err := strconv.Atoi(startEpoch)
+	_, err := strconv.Atoi(start)
 	if err != nil {
 		http.Error(w, "Invalid start epoch", http.StatusBadRequest)
 		return
 	}
 
-	end, err := strconv.Atoi(endEpoch)
+	_, err = strconv.Atoi(end)
 	if err != nil {
 		http.Error(w, "Invalid end epoch", http.StatusBadRequest)
 		return
 	}
 
-	report, err := h.IndexerService.GetLidoReport(start, end)
+	report, err := h.OperatorService.GetLidoReport(start, end)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,7 +86,7 @@ func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get validator exit requests
 func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
-	exitRequests, err := h.IndexerService.GetExitRequests()
+	exitRequests, err := h.OperatorService.GetExitRequests()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

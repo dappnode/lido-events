@@ -1,4 +1,4 @@
-package telegram
+package notifier
 
 import (
 	"log"
@@ -12,8 +12,8 @@ type TelegramBot struct {
 	ChatID int64
 }
 
-// NewTelegramNotifier creates a new TelegramBot instance
-func NewTelegramNotifier(token string, chatID int64) (*TelegramBot, error) {
+// NewNotifierAdapter creates a new TelegramBot instance
+func NewNotifierAdapter(token string, chatID int64) (*TelegramBot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func NewTelegramNotifier(token string, chatID int64) (*TelegramBot, error) {
 }
 
 // Notify sends a notification message via Telegram
-func (tb *TelegramBot) Notify(message string) error {
+func (tb *TelegramBot) Send(message string) error {
 	msg := tgbotapi.NewMessage(tb.ChatID, message)
 	_, err := tb.Bot.Send(msg)
 	if err != nil {
