@@ -1,7 +1,7 @@
 package eventhandler
 
 import (
-	"lido-events/internal/domain"
+	"lido-events/internal/domain/entities"
 	"lido-events/internal/service"
 	"log"
 
@@ -9,22 +9,20 @@ import (
 )
 
 type EventHandler struct {
-	operatorService *service.OperatorService
+	operatorService *service.StorageService
 	notifier        *service.NotifierService
 }
 
-func NewEventHandler(service *service.OperatorService, notifier *service.NotifierService) *EventHandler {
+func NewEventHandler(service *service.StorageService, notifier *service.NotifierService) *EventHandler {
 	return &EventHandler{operatorService: service}
 }
 
 func (eh *EventHandler) HandleEvent(eventName string, vLog types.Log) {
 	switch eventName {
 	case "ValidatorExitRequest":
-		validator := vLog.Topics[1].Hex() // Supongamos que el validador se encuentra en el segundo topic
-		epoch := "some-epoch-value"       // Ajustar de acuerdo a los datos en el evento
 		// create a fake map[string]string)
-		exitRequests := map[string]string{
-			validator: epoch,
+		exitRequests := entities.ExitRequest{
+			"validator1": "exit-request",
 		}
 		err := eh.operatorService.SetExitRequests(exitRequests)
 		if err != nil {
@@ -32,13 +30,13 @@ func (eh *EventHandler) HandleEvent(eventName string, vLog types.Log) {
 		}
 	case "SubmittedReport":
 		// Aquí se podría parsear el log para obtener los detalles del reporte
-		report := domain.Report{
+		report := entities.Report{
 			Threshold:  "some-threshold", // Ajustar con los valores del evento
-			Validators: map[string]domain.ValidatorPerformance{},
+			Validators: map[string]entities.ValidatorPerformance{},
 		}
 		epoch := "some-epoch-value" // Ajustar con los valores del evento
 		// create a fake report map[string]domain.Report
-		lidoReport := map[string]domain.Report{
+		lidoReport := map[string]entities.Report{
 			epoch: report,
 		}
 		err := eh.operatorService.SaveLidoReport(lidoReport)

@@ -2,13 +2,13 @@ package storage
 
 import (
 	"encoding/json"
-	"lido-events/internal/domain"
+	"lido-events/internal/domain/entities"
 	"lido-events/internal/infrastructure/config"
 	"os"
 )
 
 // SaveTelegramConfig updates the Telegram token in the config file
-func (fs *Storage) SaveTelegramConfig(telegramConfig domain.TelegramConfig) error {
+func (fs *Storage) SaveTelegramConfig(telegramConfig entities.TelegramConfig) error {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return err
@@ -18,30 +18,30 @@ func (fs *Storage) SaveTelegramConfig(telegramConfig domain.TelegramConfig) erro
 }
 
 // GetTelegramConfig loads the Telegram configuration from the config file
-func (fs *Storage) GetTelegramConfig() (domain.TelegramConfig, error) {
+func (fs *Storage) GetTelegramConfig() (entities.TelegramConfig, error) {
 	cfg, err := loadConfig(fs)
 	if err != nil {
-		return domain.TelegramConfig{}, err
+		return entities.TelegramConfig{}, err
 	}
-	return domain.TelegramConfig(cfg.Telegram), nil
+	return entities.TelegramConfig(cfg.Telegram), nil
 }
 
 // SaveOperatorId updates the operator ID in the config file
-func (fs *Storage) SaveOperatorId(operatorID string) error {
+func (fs *Storage) SaveOperatorId(operatorID entities.OperatorId) error {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return err
 	}
-	cfg.OperatorID = operatorID
+	cfg.OperatorID = string(operatorID)
 	return saveConfig(fs, cfg)
 }
 
-func (fs *Storage) GetOperatorId() (string, error) {
+func (fs *Storage) GetOperatorId() (entities.OperatorId, error) {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return "", err
 	}
-	return cfg.OperatorID, nil
+	return entities.OperatorId(cfg.OperatorID), nil
 }
 
 func loadConfig(fs *Storage) (config.Config, error) {

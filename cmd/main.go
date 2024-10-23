@@ -48,10 +48,10 @@ func main() {
 	notifierService := service.NewNotifierService(notifierAdapter)
 
 	// Initialize Operator Service
-	operatorService := service.NewOperatorService(storageAdapter)
+	storageService := service.NewStorageService(storageAdapter)
 
 	// Initialize Event Handler with services
-	eventHandler := eventhandler.NewEventHandler(operatorService, notifierService)
+	eventHandler := eventhandler.NewEventHandler(storageService, notifierService)
 
 	// Initialize Ethereum Subscriber and Start Subscribing to Events
 	wsURL := os.Getenv("WS_URL")
@@ -67,15 +67,16 @@ func main() {
 	go ethSubscriber.SubscribeToEvents()
 
 	// Initialize API Handler
-	apiHandler := &api.APIHandler{
-		OperatorService: operatorService,
+	apiAdapter := &api.APIHandler{
+		StorageService: storageService,
+		Notifier:       notifierService,
 	}
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v0/events_indexer/telegramConfig", apiHandler.UpdateTelegramConfig).Methods("POST")
-	r.HandleFunc("/api/v0/events_indexer/operatorId", apiHandler.UpdateOperatorID).Methods("POST")
-	r.HandleFunc("/api/v0/event_indexer/lido_report", apiHandler.GetLidoReport).Methods("GET")
-	r.HandleFunc("/api/v0/event_indexer/exit_requests", apiHandler.GetExitRequests).Methods("GET")
+	r.HandleFunc("/api/v0/events_indexer/telegramConfig", apiAdapter.UpdateTelegramConfig).Methods("POST")
+	r.HandleFunc("/api/v0/events_indexer/operatorId", apiAdapter.UpdateOperatorID).Methods("POST")
+	r.HandleFunc("/api/v0/event_indexer/lido_report", apiAdapter.GetLidoReport).Methods("GET")
+	r.HandleFunc("/api/v0/event_indexer/exit_requests", apiAdapter.GetExitRequests).Methods("GET")
 
 	log.Println("Server started on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

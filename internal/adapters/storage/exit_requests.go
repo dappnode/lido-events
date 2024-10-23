@@ -2,11 +2,12 @@ package storage
 
 import (
 	"encoding/json"
+	"lido-events/internal/domain/entities"
 	"os"
 )
 
 // GetExitRequests loads exit requests from the JSON file
-func (fs *Storage) GetExitRequests() (map[string]string, error) {
+func (fs *Storage) GetExitRequests() (entities.ExitRequest, error) {
 	file, err := os.ReadFile(fs.ExitRequestFile)
 	if err != nil {
 		return nil, err
@@ -17,7 +18,7 @@ func (fs *Storage) GetExitRequests() (map[string]string, error) {
 }
 
 // SaveExitRequests saves exit requests to the JSON file
-func (fs *Storage) SaveExitRequests(exitRequests map[string]string) error {
+func (fs *Storage) SaveExitRequests(exitRequests entities.ExitRequest) error {
 	file, err := json.MarshalIndent(exitRequests, "", "  ")
 	if err != nil {
 		return err

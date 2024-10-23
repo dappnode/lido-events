@@ -2,14 +2,14 @@ package service
 
 import (
 	"errors"
-	"lido-events/internal/ports"
+	"lido-events/internal/domain/services"
 )
 
 type NotifierService struct {
-	notifier ports.Notifier
+	notifier services.Notifier
 }
 
-func NewNotifierService(notifier ports.Notifier) *NotifierService {
+func NewNotifierService(notifier services.Notifier) *NotifierService {
 	return &NotifierService{
 		notifier: notifier,
 	}

@@ -5,11 +5,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"lido-events/internal/domain/entities"
 	"lido-events/internal/service"
 )
 
 type APIHandler struct {
-	OperatorService *service.OperatorService
+	StorageService *service.StorageService
+	Notifier       *service.NotifierService
 }
 
 // Handler to update the Telegram token
@@ -24,10 +26,12 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := h.OperatorService.SetTelegramConfig(req)
+	err := h.StorageService.SetTelegramConfig(entities.TelegramConfig(req))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
+	h.Notifier.Send("Telegram configuration updated")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -42,12 +46,14 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.OperatorService.SetOperatorId(req.OperatorID)
+	// Convierte req.OperatorID de string a entities.OperatorId
+	err := h.StorageService.SetOperatorId(entities.OperatorId(req.OperatorID))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	h.Notifier.Send("Operator ID updated")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -68,7 +74,7 @@ func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	report, err := h.OperatorService.GetLidoReport(start, end)
+	report, err := h.StorageService.GetLidoReport(start, end)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -86,7 +92,7 @@ func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get validator exit requests
 func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
-	exitRequests, err := h.OperatorService.GetExitRequests()
+	exitRequests, err := h.StorageService.GetExitRequests()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
