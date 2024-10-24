@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	subscriberAdapter, err := ethereum.NewEthereumSubscriber(networkConfig.WsURL, abiCache.GetAllABIs())
+	eventAdapter, err := ethereum.NewEthereumSubscriber(networkConfig.WsURL, abiCache.GetAllABIs())
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}
@@ -55,10 +55,10 @@ func main() {
 	notifierService := services.NewNotifierService(notifierAdapter)
 
 	storageService := services.NewStorageService(storageAdapter)
-	subscriberService := services.NewSubscriberService(storageAdapter, notifierAdapter, subscriberAdapter)
+	eventService := services.NewEventService(storageAdapter, notifierAdapter, eventAdapter)
 
 	// Start subscribing to events. Done by eventService.
-	if err := subscriberService.SubscribeToEvents(context.Background()); err != nil {
+	if err := eventService.SubscribeToEvents(context.Background()); err != nil {
 		log.Fatalf("Failed to subscribe to events: %v", err)
 	}
 

@@ -13,10 +13,10 @@ import (
 type EventService struct {
 	storagePort    ports.StoragePort
 	notifierPort   ports.NotifierPort
-	subscriberPort ports.SubscriberPort
+	subscriberPort ports.EventPort
 }
 
-func NewSubscriberService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.SubscriberPort) *EventService {
+func NewEventService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.EventPort) *EventService {
 	return &EventService{
 		storagePort:    storagePort,
 		notifierPort:   notifierPort,
