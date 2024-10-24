@@ -53,7 +53,6 @@ func main() {
 
 	// Initialize services
 	notifierService := services.NewNotifierService(notifierAdapter)
-
 	storageService := services.NewStorageService(storageAdapter)
 	eventService := services.NewEventService(storageAdapter, notifierAdapter, eventAdapter)
 
