@@ -9,8 +9,6 @@ import (
 	"net/http"
 
 	"lido-events/internal/adapters/api"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -54,23 +52,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}
-
 	go ethSubscriber.SubscribeToEvents()
 
-	// Initialize API Handler
-	apiAdapter := &api.APIHandler{
-		StorageService: storageService,
-		Notifier:       notifierService,
-	}
+	// Initialize the API handler (internally sets up routes)
+	apiHandler := api.NewAPIHandler(storageService, notifierService)
 
-	r := mux.NewRouter()
-	r.HandleFunc("/api/v0/events_indexer/telegramConfig", apiAdapter.UpdateTelegramConfig).Methods("POST")
-	r.HandleFunc("/api/v0/events_indexer/operatorId", apiAdapter.UpdateOperatorID).Methods("POST")
-	r.HandleFunc("/api/v0/event_indexer/lido_report", apiAdapter.GetLidoReport).Methods("GET")
-	r.HandleFunc("/api/v0/event_indexer/exit_requests", apiAdapter.GetExitRequests).Methods("GET")
-
+	// Start the HTTP server
 	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":8080", apiHandler.Router))
 
-	log.Println("App running...")
 }
