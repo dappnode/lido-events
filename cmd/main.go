@@ -13,9 +13,11 @@ import (
 
 // Hexagonal architecrtures principles:
 // - domain: cannot import ✅
-// - services: can only import domain ✅
+// - aplication:
+//   - ports: can only import domain ✅
+//   - services: can only import domain ✅
 // - adapters: can import domain and services ✅
-// - infrastructure: can only import domain ✅
+// - infrastructure: can only import domain and ports ✅
 
 // Key points:
 // - All the communications to the services are done through the ports.
