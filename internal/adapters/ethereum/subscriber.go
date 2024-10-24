@@ -1,4 +1,4 @@
-package infrastructure
+package ethereum
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 type EthereumSubscriber struct {
 	client         *ethclient.Client
 	contractABIs   map[string]interface{} // Contract address mapped to its ABI JSON data
-	eventProcessor ports.EventPort
+	eventProcessor ports.EventPort // We're using a port but not implementing it. Thats why this is not an adapter?
 }
 
 func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, eventProcessor ports.EventPort) (*EthereumSubscriber, error) {
@@ -61,6 +61,8 @@ func (es *EthereumSubscriber) SubscribeToEvents() {
 			continue
 		}
 
+		// TODO: SubscribeToEvents is already called as a go routine, 
+		// is it okay for handlelogs be a go routine?
 		go es.handleLogs(parsedABI, logs, sub)
 	}
 }

@@ -1,4 +1,4 @@
-package infrastructure
+package config
 
 import (
 	"encoding/json"
@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 )
+
+// These components manage configuration loading for the application, including network-specific
+// settings and operator/telegram details
 
 // Config struct representing the full configuration for the application
 type Config struct {
