@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"lido-events/internal/adapters/api"
-	"lido-events/internal/adapters/ethereum"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
+	"lido-events/internal/adapters/subscriber"
 	"lido-events/internal/aplication/services"
 	"lido-events/internal/config"
 	"log"
@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	eventAdapter, err := ethereum.NewEthereumSubscriber(networkConfig.WsURL, abiCache.GetAllABIs())
+	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, abiCache.GetAllABIs())
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}
@@ -54,7 +54,7 @@ func main() {
 	// Initialize services
 	notifierService := services.NewNotifierService(notifierAdapter)
 	storageService := services.NewStorageService(storageAdapter)
-	eventService := services.NewEventService(storageAdapter, notifierAdapter, eventAdapter)
+	eventService := services.NewEventService(storageAdapter, notifierAdapter, subscriberAdapter)
 
 	// Start subscribing to events. Done by eventService.
 	if err := eventService.SubscribeToEvents(context.Background()); err != nil {

@@ -1,4 +1,4 @@
-package ethereum
+package subscriber
 
 import (
 	"context"
@@ -12,24 +12,24 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type EthereumSubscriber struct {
+type SubscriberAdapter struct {
 	client       *ethclient.Client
 	contractABIs map[string]interface{} // Contract address mapped to its ABI JSON data
 }
 
-func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}) (*EthereumSubscriber, error) {
+func NewSubscriberAdapter(wsURL string, contractABIs map[string]interface{}) (*SubscriberAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumSubscriber{
+	return &SubscriberAdapter{
 		client:       client,
 		contractABIs: contractABIs,
 	}, nil
 }
 
 // SubscribeToEvents subscribes to events and calls the provided handler function for each event log.
-func (es *EthereumSubscriber) SubscribeToEvents(ctx context.Context, handleLog func(logData interface{}) error) error {
+func (es *SubscriberAdapter) SubscribeToEvents(ctx context.Context, handleLog func(logData interface{}) error) error {
 	for contractAddr, abiData := range es.contractABIs {
 		contractAddress := common.HexToAddress(contractAddr)
 
@@ -65,7 +65,7 @@ func (es *EthereumSubscriber) SubscribeToEvents(ctx context.Context, handleLog f
 }
 
 // TODO: logData interface{} should be replaced with a custom type. How does an ethereum log look like?
-func (es *EthereumSubscriber) handleLogs(ctx context.Context, logs <-chan types.Log, sub ethereum.Subscription, handleLog func(logData interface{}) error) {
+func (es *SubscriberAdapter) handleLogs(ctx context.Context, logs <-chan types.Log, sub ethereum.Subscription, handleLog func(logData interface{}) error) {
 	for {
 		select {
 		case <-ctx.Done():
