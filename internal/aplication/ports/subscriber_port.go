@@ -3,6 +3,6 @@ package ports
 
 import "context"
 
-type EventPort interface {
+type SubscriberPort interface {
 	SubscribeToEvents(ctx context.Context, handleLog func(logData interface{}) error) error
 }
