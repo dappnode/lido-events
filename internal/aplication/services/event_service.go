@@ -2,17 +2,18 @@ package services
 
 import (
 	"lido-events/internal/aplication/domain"
+	"lido-events/internal/aplication/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type EventService struct {
-	storageService  *StorageService
-	notifierService *NotifierService
+	storagePort  ports.StoragePort
+	notifierPort ports.NotifierPort
 }
 
-func NewEventService(storageService *StorageService, notifierService *NotifierService) *EventService {
+func NewEventService(storageService ports.StoragePort, notifierService ports.NotifierPort) *EventService {
 	return &EventService{storageService, notifierService}
 }
 
@@ -23,7 +24,7 @@ func (eh *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log)
 		exitRequests := domain.ExitRequest{
 			"validator1": "exit-request",
 		}
-		err := eh.storageService.SetExitRequests(exitRequests)
+		err := eh.storagePort.SaveExitRequests(exitRequests)
 		if err != nil {
 			log.Printf("Failed to set exit request: %v", err)
 			return err
@@ -40,7 +41,7 @@ func (eh *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log)
 		lidoReport := map[string]domain.Report{
 			epoch: report,
 		}
-		err := eh.storageService.SaveLidoReport(lidoReport)
+		err := eh.storagePort.SaveLidoReport(lidoReport)
 		if err != nil {
 			log.Printf("Failed to set Lido report: %v", err)
 			return err
@@ -49,7 +50,7 @@ func (eh *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log)
 	default:
 		message := getEventNotificationMessage(eventName)
 		if message != "" {
-			err := eh.notifierService.Send(message)
+			err := eh.notifierPort.Send(message)
 			if err != nil {
 				log.Printf("Failed to send notification: %v", err)
 				return err

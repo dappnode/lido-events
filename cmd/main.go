@@ -58,8 +58,8 @@ func main() {
 	// (SERVICE) Initialize Operator Service
 	storageService := services.NewStorageService(storageAdapter)
 
-	// (SERVICE) Initialize Event Handler with services
-	eventService := services.NewEventService(storageService, notifierService)
+	// (SERVICE) Initialize Event Handler with all adapters it needs
+	eventService := services.NewEventService(storageAdapter, notifierAdapter)
 
 	// (INFRA) Initialize Ethereum Subscriber and Start Subscribing to Events
 	ethSubscriber, err := infrastructure.NewEthereumSubscriber(networkConfig.WsURL, abiCache.GetAllABIs(), eventService)
