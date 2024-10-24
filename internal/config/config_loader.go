@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"lido-events/internal/aplication/domain"
+	"lido-events/internal/application/domain"
 	"log"
 	"os"
 )

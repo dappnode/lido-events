@@ -2,7 +2,7 @@ package services
 
 import (
 	"errors"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/ports"
 )
 
 type NotifierService struct {

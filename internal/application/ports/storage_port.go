@@ -1,6 +1,6 @@
 package ports
 
-import "lido-events/internal/aplication/domain"
+import "lido-events/internal/application/domain"
 
 type StoragePort interface {
 	GetLidoReport(start, end string) (domain.Reports, error)

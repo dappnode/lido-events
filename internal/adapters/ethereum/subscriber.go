@@ -3,8 +3,6 @@ package ethereum
 import (
 	"context"
 	"encoding/json"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum"
@@ -15,24 +13,23 @@ import (
 )
 
 type EthereumSubscriber struct {
-	client         *ethclient.Client
-	contractABIs   map[string]interface{} // Contract address mapped to its ABI JSON data
-	eventProcessor ports.EventPort // We're using a port but not implementing it. Thats why this is not an adapter?
+	client       *ethclient.Client
+	contractABIs map[string]interface{} // Contract address mapped to its ABI JSON data
 }
 
-func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, eventProcessor ports.EventPort) (*EthereumSubscriber, error) {
+func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}) (*EthereumSubscriber, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, err
 	}
 	return &EthereumSubscriber{
-		client:         client,
-		contractABIs:   contractABIs,
-		eventProcessor: eventProcessor,
+		client:       client,
+		contractABIs: contractABIs,
 	}, nil
 }
 
-func (es *EthereumSubscriber) SubscribeToEvents() {
+// SubscribeToEvents subscribes to events and calls the provided handler function for each event log.
+func (es *EthereumSubscriber) SubscribeToEvents(ctx context.Context, handleLog func(logData interface{}) error) error {
 	for contractAddr, abiData := range es.contractABIs {
 		contractAddress := common.HexToAddress(contractAddr)
 
@@ -55,38 +52,34 @@ func (es *EthereumSubscriber) SubscribeToEvents() {
 		}
 
 		logs := make(chan types.Log)
-		sub, err := es.client.SubscribeFilterLogs(context.Background(), query, logs)
+		sub, err := es.client.SubscribeFilterLogs(ctx, query, logs)
 		if err != nil {
 			log.Printf("Failed to subscribe to contract %s: %v", contractAddr, err)
 			continue
 		}
 
-		// TODO: SubscribeToEvents is already called as a go routine, 
-		// is it okay for handlelogs be a go routine?
-		go es.handleLogs(parsedABI, logs, sub)
+		// Handle logs
+		go es.handleLogs(ctx, logs, sub, handleLog)
 	}
+	return nil // TODO: should we return something?
 }
 
-func (es *EthereumSubscriber) handleLogs(parsedABI abi.ABI, logs <-chan types.Log, sub ethereum.Subscription) {
+// TODO: logData interface{} should be replaced with a custom type. How does an ethereum log look like?
+func (es *EthereumSubscriber) handleLogs(ctx context.Context, logs <-chan types.Log, sub ethereum.Subscription, handleLog func(logData interface{}) error) {
 	for {
 		select {
+		case <-ctx.Done():
+			log.Printf("Subscription context cancelled: %v", ctx.Err())
+			return
 		case err := <-sub.Err():
 			log.Printf("Error in subscription: %v", err)
 			return
 		case vLog := <-logs:
-			eventName := ""
-			for name, event := range parsedABI.Events {
-				if vLog.Topics[0] == event.ID {
-					eventName = name
-					break
-				}
-			}
-
-			if eventName != "" {
-				err := es.eventProcessor.ProcessEvent(domain.EventName(eventName), vLog)
-				if err != nil {
-					log.Printf("Failed to process event %s: %v", eventName, err)
-				}
+			// Call the provided handleLog function with the log data
+			// This function needs to be implemented by the core application, since
+			// it will store the log data in the database
+			if err := handleLog(vLog); err != nil {
+				log.Printf("Error handling log: %v", err)
 			}
 		}
 	}
