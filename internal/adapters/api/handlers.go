@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"lido-events/internal/domain/entities"
-	"lido-events/internal/service"
+	service "lido-events/internal/services"
 )
 
 type APIHandler struct {

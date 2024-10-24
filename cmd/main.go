@@ -4,7 +4,7 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/infrastructure"
-	"lido-events/internal/service"
+	service "lido-events/internal/services"
 	"log"
 	"net/http"
 	"os"
