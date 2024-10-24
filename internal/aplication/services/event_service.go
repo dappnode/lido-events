@@ -1,63 +1,95 @@
+// services/eventService.go
 package services
 
 import (
+	"context"
 	"lido-events/internal/aplication/domain"
+	"lido-events/internal/aplication/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type EventService struct {
-	storageService  *StorageService
-	notifierService *NotifierService
+	storagePort    ports.StoragePort
+	notifierPort   ports.NotifierPort
+	subscriberPort ports.SubscriberPort
 }
 
-func NewEventService(storageService *StorageService, notifierService *NotifierService) *EventService {
-	return &EventService{storageService, notifierService}
+func NewEventService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.SubscriberPort) *EventService {
+	return &EventService{
+		storagePort:    storagePort,
+		notifierPort:   notifierPort,
+		subscriberPort: subscriberPort,
+	}
 }
 
-func (eh *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log) error {
+// SubscribeToEvents subscribes to Ethereum events and handles them.
+// It passes to the subscriberPort a function that processes the log data.
+func (es *EventService) SubscribeToEvents(ctx context.Context) error {
+	return es.subscriberPort.SubscribeToEvents(ctx, es.handleLog)
+}
+
+// handleLog processes the log data and saves it.
+func (es *EventService) handleLog(logData interface{}) error {
+	vLog, ok := logData.(types.Log)
+	if !ok {
+		log.Printf("Failed to cast log data")
+		return nil
+	}
+
+	// Process the event name from the log and then process it
+	eventName, found := es.getEventNameFromLog(vLog)
+	if !found {
+		log.Printf("Event name not found")
+		return nil
+	}
+
+	return es.ProcessEvent(domain.EventName(eventName), vLog)
+}
+
+// ProcessEvent processes a specific event by name
+func (es *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log) error {
 	switch eventName {
 	case "ValidatorExitRequest":
-		// create a fake map[string]string)
+		// Handle ValidatorExitRequest
 		exitRequests := domain.ExitRequest{
 			"validator1": "exit-request",
 		}
-		err := eh.storageService.SetExitRequests(exitRequests)
-		if err != nil {
-			log.Printf("Failed to set exit request: %v", err)
+		if err := es.storagePort.SaveExitRequests(exitRequests); err != nil {
+			log.Printf("Failed to save exit requests: %v", err)
 			return err
 		}
-		return nil
 	case "SubmittedReport":
-		// Aquí se podría parsear el log para obtener los detalles del reporte
+		// Handle SubmittedReport
 		report := domain.Report{
-			Threshold:  "some-threshold", // Ajustar con los valores del evento
+			Threshold:  "some-threshold",
 			Validators: map[string]domain.ValidatorPerformance{},
 		}
-		epoch := "some-epoch-value" // Ajustar con los valores del evento
-		// create a fake report map[string]domain.Report
+		epoch := "some-epoch"
 		lidoReport := map[string]domain.Report{
 			epoch: report,
 		}
-		err := eh.storageService.SaveLidoReport(lidoReport)
-		if err != nil {
-			log.Printf("Failed to set Lido report: %v", err)
+		if err := es.storagePort.SaveLidoReport(lidoReport); err != nil {
+			log.Printf("Failed to save Lido report: %v", err)
 			return err
 		}
-		return nil
 	default:
 		message := getEventNotificationMessage(eventName)
 		if message != "" {
-			err := eh.notifierService.Send(message)
-			if err != nil {
+			if err := es.notifierPort.Send(message); err != nil {
 				log.Printf("Failed to send notification: %v", err)
 				return err
 			}
 		}
-		return nil
 	}
+	return nil
+}
 
+func (es *EventService) getEventNameFromLog(vLog types.Log) (string, bool) {
+	// Extract the event name from the log topics using your ABI knowledge
+	// This can involve parsing the log against the ABI you hold.
+	return "EventName", true // Placeholder logic
 }
 
 func getEventNotificationMessage(eventName domain.EventName) string {

@@ -1,4 +1,4 @@
-package infrastructure
+package config
 
 import (
 	"encoding/json"
@@ -7,6 +7,9 @@ import (
 	"os"
 )
 
+// This component manages the caching of Lido Contract ABIs. It loads the ABIs from the
+// given path and stores them in a map for easy access. It is a Support Tool for other adapters
+// like EthereumSubscriber
 type ABICache struct {
 	cache map[string]interface{} // Cache of contract addresses to parsed ABIs
 }

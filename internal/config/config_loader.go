@@ -1,4 +1,4 @@
-package infrastructure
+package config
 
 import (
 	"encoding/json"
@@ -7,7 +7,10 @@ import (
 	"os"
 )
 
-// Config struct representing the full configuration for the application
+// These components manage configuration loading for the aplication, including network-specific
+// settings and operator/telegram details
+
+// Config struct representing the full configuration for the aplication
 type Config struct {
 	OperatorID domain.OperatorId     `json:"operatorId"`
 	Telegram   domain.TelegramConfig `json:"telegram"`
