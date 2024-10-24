@@ -6,12 +6,12 @@ import (
 	"strconv"
 
 	"lido-events/internal/domain/entities"
-	service "lido-events/internal/services"
+	"lido-events/internal/services"
 )
 
 type APIHandler struct {
-	StorageService *service.StorageService
-	Notifier       *service.NotifierService
+	StorageService *services.StorageService
+	Notifier       *services.NotifierService
 }
 
 // Handler to update the Telegram token

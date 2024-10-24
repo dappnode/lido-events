@@ -2,21 +2,16 @@ package infrastructure
 
 import (
 	"encoding/json"
+	"lido-events/internal/domain/entities"
 	"log"
 	"os"
 )
 
 // Config struct representing the full configuration for the application
 type Config struct {
-	OperatorID string         `json:"operatorId"`
-	Telegram   TelegramConfig `json:"telegram"`
-	Network    NetworkConfig  `json:"network"`
-}
-
-// TelegramConfig struct representing the Telegram settings
-type TelegramConfig struct {
-	Token  string `json:"token"`
-	ChatID int64  `json:"chatId"`
+	OperatorID entities.OperatorId     `json:"operatorId"`
+	Telegram   entities.TelegramConfig `json:"telegram"`
+	Network    NetworkConfig           `json:"network"`
 }
 
 // NetworkConfig struct representing relevant network-specific configurations
