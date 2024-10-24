@@ -3,13 +3,22 @@ package main
 import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
+	"lido-events/internal/aplication/services"
 	"lido-events/internal/infrastructure"
-	"lido-events/internal/services"
 	"log"
 	"net/http"
 
 	"lido-events/internal/adapters/api"
 )
+
+// Hexagonal architecrtures principles:
+// - domain: cannot import ✅
+// - services: can only import domain ✅
+// - adapters: can import domain and services ✅
+// - infrastructure: can only import domain ✅
+
+// Key points:
+// - All the communications to the services are done through the ports.
 
 func main() {
 	// Load the network-specific configuration and contract ABIs

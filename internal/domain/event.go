@@ -1,4 +1,4 @@
-package entities
+package domain
 
 // Lengths of hashes and addresses in bytes.
 const (

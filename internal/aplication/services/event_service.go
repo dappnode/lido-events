@@ -1,7 +1,7 @@
 package services
 
 import (
-	"lido-events/internal/domain/entities"
+	"lido-events/internal/domain"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -16,11 +16,11 @@ func NewEventService(storageService *StorageService, notifierService *NotifierSe
 	return &EventService{storageService, notifierService}
 }
 
-func (eh *EventService) ProcessEvent(eventName entities.EventName, vLog types.Log) error {
+func (eh *EventService) ProcessEvent(eventName domain.EventName, vLog types.Log) error {
 	switch eventName {
 	case "ValidatorExitRequest":
 		// create a fake map[string]string)
-		exitRequests := entities.ExitRequest{
+		exitRequests := domain.ExitRequest{
 			"validator1": "exit-request",
 		}
 		err := eh.storageService.SetExitRequests(exitRequests)
@@ -31,13 +31,13 @@ func (eh *EventService) ProcessEvent(eventName entities.EventName, vLog types.Lo
 		return nil
 	case "SubmittedReport":
 		// Aquí se podría parsear el log para obtener los detalles del reporte
-		report := entities.Report{
+		report := domain.Report{
 			Threshold:  "some-threshold", // Ajustar con los valores del evento
-			Validators: map[string]entities.ValidatorPerformance{},
+			Validators: map[string]domain.ValidatorPerformance{},
 		}
 		epoch := "some-epoch-value" // Ajustar con los valores del evento
 		// create a fake report map[string]domain.Report
-		lidoReport := map[string]entities.Report{
+		lidoReport := map[string]domain.Report{
 			epoch: report,
 		}
 		err := eh.storageService.SaveLidoReport(lidoReport)
@@ -60,8 +60,8 @@ func (eh *EventService) ProcessEvent(eventName entities.EventName, vLog types.Lo
 
 }
 
-func getEventNotificationMessage(eventName entities.EventName) string {
-	events := map[entities.EventName]string{
+func getEventNotificationMessage(eventName domain.EventName) string {
+	events := map[domain.EventName]string{
 		"DepositedSigningKeysCountChanged":         "- 🤩 Node Operator's keys received deposits",
 		"ELRewardsStealingPenaltyReported":         "- 🚨 Penalty for stealing EL rewards reported",
 		"ELRewardsStealingPenaltySettled":          "- 🚨 EL rewards stealing penalty confirmed and applied",

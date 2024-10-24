@@ -2,12 +2,12 @@ package storage
 
 import (
 	"encoding/json"
-	"lido-events/internal/domain/entities"
+	"lido-events/internal/domain"
 	"os"
 )
 
 // SaveTelegramConfig updates the Telegram token in the config file
-func (fs *Storage) SaveTelegramConfig(telegramConfig entities.TelegramConfig) error {
+func (fs *Storage) SaveTelegramConfig(telegramConfig domain.TelegramConfig) error {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return err
@@ -17,16 +17,16 @@ func (fs *Storage) SaveTelegramConfig(telegramConfig entities.TelegramConfig) er
 }
 
 // GetTelegramConfig loads the Telegram configuration from the config file
-func (fs *Storage) GetTelegramConfig() (entities.TelegramConfig, error) {
+func (fs *Storage) GetTelegramConfig() (domain.TelegramConfig, error) {
 	cfg, err := loadConfig(fs)
 	if err != nil {
-		return entities.TelegramConfig{}, err
+		return domain.TelegramConfig{}, err
 	}
-	return entities.TelegramConfig(cfg.Telegram), nil
+	return domain.TelegramConfig(cfg.Telegram), nil
 }
 
 // SaveOperatorId updates the operator ID in the config file
-func (fs *Storage) SaveOperatorId(operatorID entities.OperatorId) error {
+func (fs *Storage) SaveOperatorId(operatorID domain.OperatorId) error {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return err
@@ -35,25 +35,25 @@ func (fs *Storage) SaveOperatorId(operatorID entities.OperatorId) error {
 	return saveConfig(fs, cfg)
 }
 
-func (fs *Storage) GetOperatorId() (entities.OperatorId, error) {
+func (fs *Storage) GetOperatorId() (domain.OperatorId, error) {
 	cfg, err := loadConfig(fs)
 	if err != nil {
 		return "", err
 	}
-	return entities.OperatorId(cfg.OperatorID), nil
+	return domain.OperatorId(cfg.OperatorID), nil
 }
 
-func loadConfig(fs *Storage) (entities.Config, error) {
+func loadConfig(fs *Storage) (domain.Config, error) {
 	file, err := os.ReadFile(fs.ConfigFile)
 	if err != nil {
-		return entities.Config{}, err
+		return domain.Config{}, err
 	}
-	var cfg entities.Config
+	var cfg domain.Config
 	err = json.Unmarshal(file, &cfg)
 	return cfg, err
 }
 
-func saveConfig(fs *Storage, cfg entities.Config) error {
+func saveConfig(fs *Storage, cfg domain.Config) error {
 	file, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err

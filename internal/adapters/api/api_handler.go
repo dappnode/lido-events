@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"lido-events/internal/domain/entities"
-	"lido-events/internal/services"
+	"lido-events/internal/aplication/services"
+	"lido-events/internal/domain"
 
 	"github.com/gorilla/mux"
 )
@@ -54,7 +54,7 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := h.StorageService.SetTelegramConfig(entities.TelegramConfig(req))
+	err := h.StorageService.SetTelegramConfig(domain.TelegramConfig(req))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.StorageService.SetOperatorId(entities.OperatorId(req.OperatorID))
+	err := h.StorageService.SetOperatorId(domain.OperatorId(req.OperatorID))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
 		return

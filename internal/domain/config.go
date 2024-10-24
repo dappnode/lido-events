@@ -1,4 +1,4 @@
-package entities
+package domain
 
 type TelegramConfig struct {
 	Token  string `json:"token"`

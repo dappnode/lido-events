@@ -1,4 +1,4 @@
-package entities
+package domain
 
 type Reports map[string]Report // indexed by epoch
 

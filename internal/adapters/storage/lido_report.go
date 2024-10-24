@@ -2,18 +2,18 @@ package storage
 
 import (
 	"encoding/json"
-	"lido-events/internal/domain/entities"
+	"lido-events/internal/domain"
 	"os"
 	"strconv"
 )
 
 // GetLidoReport loads the Lido report data from the performance JSON file for the given epoch range
-func (fs *Storage) GetLidoReport(start, end string) (entities.Reports, error) {
+func (fs *Storage) GetLidoReport(start, end string) (domain.Reports, error) {
 	performanceData, err := loadPerformance(fs)
 	if err != nil {
 		return nil, err
 	}
-	reportData := make(map[string]entities.Report)
+	reportData := make(map[string]domain.Report)
 	for epoch, report := range performanceData {
 		epochInt, err := strconv.Atoi(epoch)
 		if err != nil {
@@ -35,7 +35,7 @@ func (fs *Storage) GetLidoReport(start, end string) (entities.Reports, error) {
 }
 
 // SaveLidoReport saves the Lido report data to the performance JSON file
-func (fs *Storage) SaveLidoReport(reports entities.Reports) error {
+func (fs *Storage) SaveLidoReport(reports domain.Reports) error {
 
 	performanceData, err := loadPerformance(fs)
 	if err != nil {
@@ -50,18 +50,18 @@ func (fs *Storage) SaveLidoReport(reports entities.Reports) error {
 }
 
 // loadPerformance loads the validator performance data from the JSON file
-func loadPerformance(fs *Storage) (map[string]entities.Report, error) {
+func loadPerformance(fs *Storage) (map[string]domain.Report, error) {
 	file, err := os.ReadFile(fs.PerformanceFile)
 	if err != nil {
 		return nil, err
 	}
-	var data map[string]entities.Report
+	var data map[string]domain.Report
 	err = json.Unmarshal(file, &data)
 	return data, err
 }
 
 // savePerformance saves the validator performance data to the JSON file
-func savePerformance(fs *Storage, data map[string]entities.Report) error {
+func savePerformance(fs *Storage, data map[string]domain.Report) error {
 	file, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err

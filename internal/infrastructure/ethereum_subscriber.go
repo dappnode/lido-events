@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"encoding/json"
-	"lido-events/internal/domain/entities"
-	"lido-events/internal/domain/services"
+	"lido-events/internal/aplication/ports"
+	"lido-events/internal/domain"
 	"log"
 
 	"github.com/ethereum/go-ethereum"
@@ -17,10 +17,10 @@ import (
 type EthereumSubscriber struct {
 	client         *ethclient.Client
 	contractABIs   map[string]interface{} // Contract address mapped to its ABI JSON data
-	eventProcessor services.EventProcessor
+	eventProcessor ports.EventPort
 }
 
-func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, eventProcessor services.EventProcessor) (*EthereumSubscriber, error) {
+func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, eventProcessor ports.EventPort) (*EthereumSubscriber, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (es *EthereumSubscriber) handleLogs(parsedABI abi.ABI, logs <-chan types.Lo
 			}
 
 			if eventName != "" {
-				err := es.eventProcessor.ProcessEvent(entities.EventName(eventName), vLog)
+				err := es.eventProcessor.ProcessEvent(domain.EventName(eventName), vLog)
 				if err != nil {
 					log.Printf("Failed to process event %s: %v", eventName, err)
 				}
