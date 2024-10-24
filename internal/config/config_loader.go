@@ -19,6 +19,8 @@ type Config struct {
 
 // NetworkConfig struct representing relevant network-specific configurations
 type NetworkConfig struct {
+	SignerUrl          string
+	IpfsUrl            string
 	WsURL              string
 	CSMStakingModuleID int
 	EtherscanURL       string
@@ -48,17 +50,16 @@ func LoadAppConfig(filePath string) (Config, error) {
 // LoadNetworkConfig loads the relevant network-specific configuration and contract ABIs
 func LoadNetworkConfig() (NetworkConfig, error) {
 	network := os.Getenv("NETWORK")
-
 	wsURL := os.Getenv("WS_URL")
-	if wsURL == "" {
-		wsURL = "wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID" // Replace with your default WebSocket URL
-	}
+	ipfsUrl := os.Getenv("IPFS_URL")
 
 	var config NetworkConfig
 
 	switch network {
 	case "holesky":
 		config = NetworkConfig{
+			SignerUrl:          "http://signer.holesky.dncore.dappnode",
+			IpfsUrl:            ipfsUrl,
 			WsURL:              wsURL,
 			CSMStakingModuleID: 4,
 			EtherscanURL:       "https://holesky.etherscan.io",
@@ -72,6 +73,8 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 		}
 	case "mainnet":
 		config = NetworkConfig{
+			SignerUrl:          "http://signer.mainnet.dncore.dappnode",
+			IpfsUrl:            ipfsUrl,
 			WsURL:              wsURL,
 			CSMStakingModuleID: 3,
 			EtherscanURL:       "https://etherscan.io",

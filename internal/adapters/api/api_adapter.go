@@ -60,7 +60,7 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.Notifier.Send("Telegram configuration updated")
+	err = h.Notifier.SendNotification("Telegram configuration updated")
 	if err != nil {
 		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
 		return
@@ -91,7 +91,7 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Notifier.Send("Operator ID updated")
+	err = h.Notifier.SendNotification("Operator ID updated")
 	if err != nil {
 		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
 		return

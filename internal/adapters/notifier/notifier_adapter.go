@@ -22,7 +22,7 @@ func NewNotifierAdapter(token string, chatID int64) (*TelegramBot, error) {
 }
 
 // Notify sends a notification message via Telegram
-func (tb *TelegramBot) Send(message string) error {
+func (tb *TelegramBot) SendNotification(message string) error {
 	msg := tgbotapi.NewMessage(tb.ChatID, message)
 	_, err := tb.Bot.Send(msg)
 	if err != nil {
