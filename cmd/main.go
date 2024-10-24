@@ -3,11 +3,8 @@ package main
 import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
-	"lido-events/internal/eventhandler"
-	"lido-events/internal/infrastructure/cache"
-	"lido-events/internal/infrastructure/config"
+	"lido-events/internal/infrastructure"
 	"lido-events/internal/service"
-	"lido-events/internal/subscriber"
 	"log"
 	"net/http"
 	"os"
@@ -19,18 +16,18 @@ import (
 
 func main() {
 	// Load the network-specific configuration and contract ABIs
-	networkConfig, err := config.LoadNetworkConfig()
+	networkConfig, err := infrastructure.LoadNetworkConfig()
 	if err != nil {
 		log.Fatalf("Failed to load network configuration: %v", err)
 	}
 
 	// Load the cached ABIs from the network configuration
-	abiCache, err := cache.NewABICache(networkConfig.ContractABIs)
+	abiCache, err := infrastructure.NewABICache(networkConfig.ContractABIs)
 	if err != nil {
 		log.Fatalf("Failed to load ABIs: %v", err)
 	}
 
-	appConfig, err := config.LoadAppConfig("config.json")
+	appConfig, err := infrastructure.LoadAppConfig("config.json")
 	if err != nil {
 		log.Fatalf("Failed to load application configuration: %v", err)
 	}
@@ -51,7 +48,7 @@ func main() {
 	storageService := service.NewStorageService(storageAdapter)
 
 	// Initialize Event Handler with services
-	eventHandler := eventhandler.NewEventHandler(storageService, notifierService)
+	eventService := service.NewEventService(storageService, notifierService)
 
 	// Initialize Ethereum Subscriber and Start Subscribing to Events
 	wsURL := os.Getenv("WS_URL")
@@ -59,7 +56,7 @@ func main() {
 		wsURL = "wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID" // Replace with your default WebSocket URL
 	}
 
-	ethSubscriber, err := subscriber.NewEthereumSubscriber(wsURL, abiCache.GetAllABIs(), eventHandler)
+	ethSubscriber, err := infrastructure.NewEthereumSubscriber(wsURL, abiCache.GetAllABIs(), eventService)
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}

@@ -1,9 +1,10 @@
-package subscriber
+package infrastructure
 
 import (
 	"context"
 	"encoding/json"
-	"lido-events/internal/eventhandler"
+	"lido-events/internal/domain/entities"
+	"lido-events/internal/domain/services"
 	"log"
 
 	"github.com/ethereum/go-ethereum"
@@ -14,20 +15,20 @@ import (
 )
 
 type EthereumSubscriber struct {
-	client        *ethclient.Client
-	contractABIs  map[string]interface{} // Contract address mapped to its ABI JSON data
-	eventHandlers *eventhandler.EventHandler
+	client         *ethclient.Client
+	contractABIs   map[string]interface{} // Contract address mapped to its ABI JSON data
+	eventProcessor services.EventProcessor
 }
 
-func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, handler *eventhandler.EventHandler) (*EthereumSubscriber, error) {
+func NewEthereumSubscriber(wsURL string, contractABIs map[string]interface{}, eventProcessor services.EventProcessor) (*EthereumSubscriber, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, err
 	}
 	return &EthereumSubscriber{
-		client:        client,
-		contractABIs:  contractABIs,
-		eventHandlers: handler,
+		client:         client,
+		contractABIs:   contractABIs,
+		eventProcessor: eventProcessor,
 	}, nil
 }
 
@@ -80,7 +81,10 @@ func (es *EthereumSubscriber) handleLogs(parsedABI abi.ABI, logs <-chan types.Lo
 			}
 
 			if eventName != "" {
-				es.eventHandlers.HandleEvent(eventName, vLog)
+				err := es.eventProcessor.ProcessEvent(entities.EventName(eventName), vLog)
+				if err != nil {
+					log.Printf("Failed to process event %s: %v", eventName, err)
+				}
 			}
 		}
 	}

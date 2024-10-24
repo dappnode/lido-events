@@ -3,7 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"lido-events/internal/domain/entities"
-	"lido-events/internal/infrastructure/config"
+	"lido-events/internal/infrastructure"
 	"os"
 )
 
@@ -13,7 +13,7 @@ func (fs *Storage) SaveTelegramConfig(telegramConfig entities.TelegramConfig) er
 	if err != nil {
 		return err
 	}
-	cfg.Telegram = config.TelegramConfig(telegramConfig)
+	cfg.Telegram = infrastructure.TelegramConfig(telegramConfig)
 	return saveConfig(fs, cfg)
 }
 
@@ -44,17 +44,17 @@ func (fs *Storage) GetOperatorId() (entities.OperatorId, error) {
 	return entities.OperatorId(cfg.OperatorID), nil
 }
 
-func loadConfig(fs *Storage) (config.Config, error) {
+func loadConfig(fs *Storage) (infrastructure.Config, error) {
 	file, err := os.ReadFile(fs.ConfigFile)
 	if err != nil {
-		return config.Config{}, err
+		return infrastructure.Config{}, err
 	}
-	var cfg config.Config
+	var cfg infrastructure.Config
 	err = json.Unmarshal(file, &cfg)
 	return cfg, err
 }
 
-func saveConfig(fs *Storage, cfg config.Config) error {
+func saveConfig(fs *Storage, cfg infrastructure.Config) error {
 	file, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err

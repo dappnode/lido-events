@@ -1,33 +1,34 @@
-package eventhandler
+package service
 
 import (
 	"lido-events/internal/domain/entities"
-	"lido-events/internal/service"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-type EventHandler struct {
-	operatorService *service.StorageService
-	notifier        *service.NotifierService
+type EventService struct {
+	storageService  *StorageService
+	notifierService *NotifierService
 }
 
-func NewEventHandler(service *service.StorageService, notifier *service.NotifierService) *EventHandler {
-	return &EventHandler{operatorService: service}
+func NewEventService(storageService *StorageService, notifierService *NotifierService) *EventService {
+	return &EventService{storageService, notifierService}
 }
 
-func (eh *EventHandler) HandleEvent(eventName string, vLog types.Log) {
+func (eh *EventService) ProcessEvent(eventName entities.EventName, vLog types.Log) error {
 	switch eventName {
 	case "ValidatorExitRequest":
 		// create a fake map[string]string)
 		exitRequests := entities.ExitRequest{
 			"validator1": "exit-request",
 		}
-		err := eh.operatorService.SetExitRequests(exitRequests)
+		err := eh.storageService.SetExitRequests(exitRequests)
 		if err != nil {
 			log.Printf("Failed to set exit request: %v", err)
+			return err
 		}
+		return nil
 	case "SubmittedReport":
 		// Aquí se podría parsear el log para obtener los detalles del reporte
 		report := entities.Report{
@@ -39,23 +40,28 @@ func (eh *EventHandler) HandleEvent(eventName string, vLog types.Log) {
 		lidoReport := map[string]entities.Report{
 			epoch: report,
 		}
-		err := eh.operatorService.SaveLidoReport(lidoReport)
+		err := eh.storageService.SaveLidoReport(lidoReport)
 		if err != nil {
 			log.Printf("Failed to set Lido report: %v", err)
+			return err
 		}
+		return nil
 	default:
 		message := getEventNotificationMessage(eventName)
 		if message != "" {
-			err := eh.notifier.Send(message)
+			err := eh.notifierService.Send(message)
 			if err != nil {
 				log.Printf("Failed to send notification: %v", err)
+				return err
 			}
 		}
+		return nil
 	}
+
 }
 
-func getEventNotificationMessage(eventName string) string {
-	events := map[string]string{
+func getEventNotificationMessage(eventName entities.EventName) string {
+	events := map[entities.EventName]string{
 		"DepositedSigningKeysCountChanged":         "- 🤩 Node Operator's keys received deposits",
 		"ELRewardsStealingPenaltyReported":         "- 🚨 Penalty for stealing EL rewards reported",
 		"ELRewardsStealingPenaltySettled":          "- 🚨 EL rewards stealing penalty confirmed and applied",
