@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"lido-events/internal/domain/entities"

@@ -4,7 +4,7 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/infrastructure"
-	service "lido-events/internal/services"
+	"lido-events/internal/services"
 	"log"
 	"net/http"
 	"os"
@@ -42,13 +42,13 @@ func main() {
 	}
 
 	// Initialize Notifier Service
-	notifierService := service.NewNotifierService(notifierAdapter)
+	notifierService := services.NewNotifierService(notifierAdapter)
 
 	// Initialize Operator Service
-	storageService := service.NewStorageService(storageAdapter)
+	storageService := services.NewStorageService(storageAdapter)
 
 	// Initialize Event Handler with services
-	eventService := service.NewEventService(storageService, notifierService)
+	eventService := services.NewEventService(storageService, notifierService)
 
 	// Initialize Ethereum Subscriber and Start Subscribing to Events
 	wsURL := os.Getenv("WS_URL")
