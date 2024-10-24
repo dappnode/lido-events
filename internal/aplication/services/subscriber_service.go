@@ -16,7 +16,7 @@ type EventService struct {
 	subscriberPort ports.SubscriberPort
 }
 
-func NewEventService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.SubscriberPort) *EventService {
+func NewSubscriberService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.SubscriberPort) *EventService {
 	return &EventService{
 		storagePort:    storagePort,
 		notifierPort:   notifierPort,

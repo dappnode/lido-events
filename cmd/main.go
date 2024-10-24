@@ -55,10 +55,10 @@ func main() {
 	notifierService := services.NewNotifierService(notifierAdapter)
 
 	storageService := services.NewStorageService(storageAdapter)
-	eventService := services.NewEventService(storageAdapter, notifierAdapter, subscriberAdapter)
+	subscriberService := services.NewSubscriberService(storageAdapter, notifierAdapter, subscriberAdapter)
 
 	// Start subscribing to events. Done by eventService.
-	if err := eventService.SubscribeToEvents(context.Background()); err != nil {
+	if err := subscriberService.SubscribeToEvents(context.Background()); err != nil {
 		log.Fatalf("Failed to subscribe to events: %v", err)
 	}
 
