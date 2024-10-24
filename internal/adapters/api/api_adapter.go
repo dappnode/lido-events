@@ -17,8 +17,8 @@ type APIHandler struct {
 	Router         *mux.Router
 }
 
-// NewAPIHandler initializes the APIHandler and sets up the routes
-func NewAPIHandler(storageService *services.StorageService, notifier *services.NotifierService) *APIHandler {
+// NewAPIAdapter initializes the APIHandler and sets up the routes
+func NewAPIAdapter(storageService *services.StorageService, notifier *services.NotifierService) *APIHandler {
 	h := &APIHandler{
 		StorageService: storageService,
 		Notifier:       notifier,
