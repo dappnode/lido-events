@@ -134,7 +134,7 @@ func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "aplication/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
 
@@ -152,13 +152,13 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "aplication/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
 
 // Utility function for consistent error responses
 func writeErrorResponse(w http.ResponseWriter, message string, statusCode int) {
-	w.Header().Set("Content-Type", "aplication/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
