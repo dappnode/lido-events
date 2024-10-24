@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"lido-events/internal/aplication/domain"
 	"lido-events/internal/aplication/services"
-	"lido-events/internal/domain"
 
 	"github.com/gorilla/mux"
 )

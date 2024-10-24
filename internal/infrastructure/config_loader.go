@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"encoding/json"
-	"lido-events/internal/domain"
+	"lido-events/internal/aplication/domain"
 	"log"
 	"os"
 )

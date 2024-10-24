@@ -2,7 +2,7 @@ package storage
 
 import (
 	"encoding/json"
-	"lido-events/internal/domain"
+	"lido-events/internal/aplication/domain"
 	"os"
 	"strconv"
 )

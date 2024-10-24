@@ -6,18 +6,18 @@ import (
 )
 
 type NotifierService struct {
-	notifier ports.NotifierPort
+	notifierAdapter ports.NotifierPort
 }
 
-func NewNotifierService(notifier ports.NotifierPort) *NotifierService {
+func NewNotifierService(notifierAdapter ports.NotifierPort) *NotifierService {
 	return &NotifierService{
-		notifier: notifier,
+		notifierAdapter,
 	}
 }
 
 func (ns *NotifierService) Send(message string) error {
-	if ns.notifier == nil {
+	if ns.notifierAdapter == nil {
 		return errors.New("no notifier available")
 	}
-	return ns.notifier.Send(message)
+	return ns.notifierAdapter.Send(message)
 }

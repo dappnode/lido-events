@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
+	"lido-events/internal/aplication/domain"
 	"lido-events/internal/aplication/ports"
-	"lido-events/internal/domain"
 
 	"log"
 )

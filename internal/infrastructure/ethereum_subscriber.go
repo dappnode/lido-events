@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"encoding/json"
+	"lido-events/internal/aplication/domain"
 	"lido-events/internal/aplication/ports"
-	"lido-events/internal/domain"
 	"log"
 
 	"github.com/ethereum/go-ethereum"

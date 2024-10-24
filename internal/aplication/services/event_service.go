@@ -1,7 +1,7 @@
 package services
 
 import (
-	"lido-events/internal/domain"
+	"lido-events/internal/aplication/domain"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
