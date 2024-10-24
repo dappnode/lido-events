@@ -18,6 +18,7 @@ import (
 //   - services: can only import domain ✅
 // - adapters: can import domain and services ✅
 // - infrastructure: can only import domain and ports ✅
+//     - The infrastructure layer is responsible for handling technical details and external dependencies, such as database connections, configurations, and integrations with third-party services, to support the core application's functionality
 
 // Key points:
 // - All the communications to the services are done through the ports.
