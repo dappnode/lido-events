@@ -7,7 +7,6 @@ import (
 	"lido-events/internal/services"
 	"log"
 	"net/http"
-	"os"
 
 	"lido-events/internal/adapters/api"
 
@@ -51,12 +50,7 @@ func main() {
 	eventService := services.NewEventService(storageService, notifierService)
 
 	// Initialize Ethereum Subscriber and Start Subscribing to Events
-	wsURL := os.Getenv("WS_URL")
-	if wsURL == "" {
-		wsURL = "wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID" // Replace with your default WebSocket URL
-	}
-
-	ethSubscriber, err := infrastructure.NewEthereumSubscriber(wsURL, abiCache.GetAllABIs(), eventService)
+	ethSubscriber, err := infrastructure.NewEthereumSubscriber(networkConfig.WsURL, abiCache.GetAllABIs(), eventService)
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}

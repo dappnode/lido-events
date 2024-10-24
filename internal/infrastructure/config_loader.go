@@ -16,6 +16,7 @@ type Config struct {
 
 // NetworkConfig struct representing relevant network-specific configurations
 type NetworkConfig struct {
+	WsURL              string
 	CSMStakingModuleID int
 	EtherscanURL       string
 	BeaconchainURL     string
@@ -45,11 +46,17 @@ func LoadAppConfig(filePath string) (Config, error) {
 func LoadNetworkConfig() (NetworkConfig, error) {
 	network := os.Getenv("NETWORK")
 
+	wsURL := os.Getenv("WS_URL")
+	if wsURL == "" {
+		wsURL = "wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID" // Replace with your default WebSocket URL
+	}
+
 	var config NetworkConfig
 
 	switch network {
 	case "holesky":
 		config = NetworkConfig{
+			WsURL:              wsURL,
 			CSMStakingModuleID: 4,
 			EtherscanURL:       "https://holesky.etherscan.io",
 			BeaconchainURL:     "https://holesky.beaconcha.in",
@@ -62,6 +69,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 		}
 	case "mainnet":
 		config = NetworkConfig{
+			WsURL:              wsURL,
 			CSMStakingModuleID: 3,
 			EtherscanURL:       "https://etherscan.io",
 			BeaconchainURL:     "https://beaconcha.in",
