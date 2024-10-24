@@ -76,7 +76,7 @@ func (es *EthereumSubscriber) handleLogs(ctx context.Context, logs <-chan types.
 			return
 		case vLog := <-logs:
 			// Call the provided handleLog function with the log data
-			// This function needs to be implemented by the core application, since
+			// This function needs to be implemented by the core aplication, since
 			// it will store the log data in the database
 			if err := handleLog(vLog); err != nil {
 				log.Printf("Error handling log: %v", err)

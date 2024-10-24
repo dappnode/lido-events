@@ -6,7 +6,7 @@ import (
 	"lido-events/internal/adapters/ethereum"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
-	"lido-events/internal/application/services"
+	"lido-events/internal/aplication/services"
 	"lido-events/internal/config"
 	"log"
 	"net/http"
@@ -37,7 +37,7 @@ func main() {
 	}
 	appConfig, err := config.LoadAppConfig("config.json")
 	if err != nil {
-		log.Fatalf("Failed to load application configuration: %v", err)
+		log.Fatalf("Failed to load aplication configuration: %v", err)
 	}
 
 	// Initialize adapters

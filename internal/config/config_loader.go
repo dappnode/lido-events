@@ -2,15 +2,15 @@ package config
 
 import (
 	"encoding/json"
-	"lido-events/internal/application/domain"
+	"lido-events/internal/aplication/domain"
 	"log"
 	"os"
 )
 
-// These components manage configuration loading for the application, including network-specific
+// These components manage configuration loading for the aplication, including network-specific
 // settings and operator/telegram details
 
-// Config struct representing the full configuration for the application
+// Config struct representing the full configuration for the aplication
 type Config struct {
 	OperatorID domain.OperatorId     `json:"operatorId"`
 	Telegram   domain.TelegramConfig `json:"telegram"`

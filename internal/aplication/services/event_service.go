@@ -3,8 +3,8 @@ package services
 
 import (
 	"context"
-	"lido-events/internal/application/domain"
-	"lido-events/internal/application/ports"
+	"lido-events/internal/aplication/domain"
+	"lido-events/internal/aplication/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"

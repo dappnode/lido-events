@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"lido-events/internal/application/domain"
+	"lido-events/internal/aplication/domain"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
