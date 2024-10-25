@@ -16,15 +16,6 @@ type SubscriberAdapter struct {
 	contractABIs map[string]interface{} // Contract address mapped to its ABI JSON data
 }
 
-type DecodedLog struct {
-	Address     common.Address
-	Topics      []common.Hash
-	Data        []byte
-	BlockNumber uint64
-	TxHash      common.Hash
-	EventData   map[string]interface{} // Decoded event fields
-}
-
 func NewSubscriberAdapter(wsURL string, contractABIs map[string]interface{}) (*SubscriberAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
