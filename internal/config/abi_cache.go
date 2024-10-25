@@ -3,8 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 // This component manages the caching of Lido Contract ABIs. It loads the ABIs from the
@@ -19,11 +20,11 @@ func NewABICache(abiPaths map[string]string) (*ABICache, error) {
 	cache := make(map[string]interface{})
 
 	for address, path := range abiPaths {
-		abi, err := loadABIFromFile(path)
+		parsedABI, err := loadABIFromFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load ABI for contract %s from %s: %w", address, path, err)
 		}
-		cache[address] = abi
+		cache[address] = parsedABI
 	}
 
 	return &ABICache{cache: cache}, nil
@@ -34,22 +35,16 @@ func (a *ABICache) GetAllABIs() map[string]interface{} {
 }
 
 // loadABIFromFile reads and unmarshals the ABI from a file
-func loadABIFromFile(filePath string) (interface{}, error) {
-	file, err := os.Open(filePath)
+func loadABIFromFile(path string) (abi.ABI, error) {
+	abiJSON, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	byteValue, err := io.ReadAll(file) // Replaced ioutil.ReadAll with io.ReadAll
-	if err != nil {
-		return nil, err
+		return abi.ABI{}, fmt.Errorf("failed to read ABI file: %w", err)
 	}
 
-	var abi interface{}
-	if err := json.Unmarshal(byteValue, &abi); err != nil {
-		return nil, err
+	var parsedABI abi.ABI
+	if err := json.Unmarshal(abiJSON, &parsedABI); err != nil {
+		return abi.ABI{}, fmt.Errorf("failed to parse ABI JSON: %w", err)
 	}
 
-	return abi, nil
+	return parsedABI, nil
 }
