@@ -17,7 +17,6 @@ type Config struct {
 	Network    NetworkConfig         `json:"network"`
 }
 
-// NetworkConfig struct representing relevant network-specific configurations
 type NetworkConfig struct {
 	SignerUrl          string
 	IpfsUrl            string
@@ -26,7 +25,12 @@ type NetworkConfig struct {
 	EtherscanURL       string
 	BeaconchainURL     string
 	CSMUIURL           string
-	ContractABIs       map[string]string // Map of contract addresses to ABI file paths
+
+	// Individual contract addresses
+	CSAccountingAddress     string
+	CSFeeDistributorAddress string
+	VEBOAddress             string
+	CSModuleAddress         string
 }
 
 // LoadAppConfig loads the operatorId and telegram details from a JSON file
@@ -47,7 +51,6 @@ func LoadAppConfig(filePath string) (Config, error) {
 	return config, nil
 }
 
-// LoadNetworkConfig loads the relevant network-specific configuration and contract ABIs
 func LoadNetworkConfig() (NetworkConfig, error) {
 	network := os.Getenv("NETWORK")
 	wsURL := os.Getenv("WS_URL")
@@ -58,33 +61,31 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 	switch network {
 	case "holesky":
 		config = NetworkConfig{
-			SignerUrl:          "http://signer.holesky.dncore.dappnode",
-			IpfsUrl:            ipfsUrl,
-			WsURL:              wsURL,
-			CSMStakingModuleID: 4,
-			EtherscanURL:       "https://holesky.etherscan.io",
-			BeaconchainURL:     "https://holesky.beaconcha.in",
-			CSMUIURL:           "https://csm.testnet.fi",
-			ContractABIs: map[string]string{
-				"0x4562c3e63c2e586cD1651B958C22F88135aCAd4f": "abi/CSAccounting.json",
-				"0xc093e53e8F4b55A223c18A2Da6fA00e60DD5EFE1": "abi/CSFeeDistributor.json",
-				"0xffDDF7025410412deaa05E3E1cE68FE53208afcb": "abi/VEBO.json",
-			},
+			SignerUrl:               "http://signer.holesky.dncore.dappnode",
+			IpfsUrl:                 ipfsUrl,
+			WsURL:                   wsURL,
+			CSMStakingModuleID:      4,
+			EtherscanURL:            "https://holesky.etherscan.io",
+			BeaconchainURL:          "https://holesky.beaconcha.in",
+			CSMUIURL:                "https://csm.testnet.fi",
+			CSAccountingAddress:     "0x4562c3e63c2e586cD1651B958C22F88135aCAd4f",
+			CSFeeDistributorAddress: "0xc093e53e8F4b55A223c18A2Da6fA00e60DD5EFE1",
+			VEBOAddress:             "0xffDDF7025410412deaa05E3E1cE68FE53208afcb",
+			CSModuleAddress:         "0x4562c3e63c2e586cD1651B958C22F88135aCAd4f",
 		}
 	case "mainnet":
 		config = NetworkConfig{
-			SignerUrl:          "http://signer.mainnet.dncore.dappnode",
-			IpfsUrl:            ipfsUrl,
-			WsURL:              wsURL,
-			CSMStakingModuleID: 3,
-			EtherscanURL:       "https://etherscan.io",
-			BeaconchainURL:     "https://beaconcha.in",
-			CSMUIURL:           "https://csm.lido.fi",
-			ContractABIs: map[string]string{
-				"0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F": "abi/CSAccounting.json",
-				"0x4d72BFF1BeaC69925F8Bd12526a39BAAb069e5Da": "abi/CSFeeDistributor.json",
-				"0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e": "abi/VEBO.json",
-			},
+			SignerUrl:               "http://signer.mainnet.dncore.dappnode",
+			IpfsUrl:                 ipfsUrl,
+			WsURL:                   wsURL,
+			CSMStakingModuleID:      3,
+			EtherscanURL:            "https://etherscan.io",
+			BeaconchainURL:          "https://beaconcha.in",
+			CSMUIURL:                "https://csm.lido.fi",
+			CSAccountingAddress:     "0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F",
+			CSFeeDistributorAddress: "0x4d72BFF1BeaC69925F8Bd12526a39BAAb069e5Da",
+			VEBOAddress:             "0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e",
+			CSModuleAddress:         "0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F",
 		}
 	default:
 		log.Fatalf("Unknown network: %s", network)

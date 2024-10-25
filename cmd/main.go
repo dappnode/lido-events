@@ -31,10 +31,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load network configuration: %v", err)
 	}
-	abiCache, err := config.NewABICache(networkConfig.ContractABIs)
-	if err != nil {
-		log.Fatalf("Failed to load ABIs: %v", err)
-	}
 	appConfig, err := config.LoadAppConfig("config.json")
 	if err != nil {
 		log.Fatalf("Failed to load aplication configuration: %v", err)
@@ -46,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, abiCache.GetAllABIs())
+	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, networkConfig.CSAccountingAddress, networkConfig.CSFeeDistributorAddress, networkConfig.CSModuleAddress, networkConfig.VEBOAddress)
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}
