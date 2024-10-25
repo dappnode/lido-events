@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, networkConfig.CSAccountingAddress, networkConfig.CSFeeDistributorAddress, networkConfig.CSModuleAddress, networkConfig.VEBOAddress)
+	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress, networkConfig.CSModuleAddress, networkConfig.VEBOAddress, appConfig.OperatorID, networkConfig.CSMStakingModuleID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
 	}

@@ -5,22 +5,22 @@ type EventName string
 
 // Define constants for each event name.
 const (
-	DepositedSigningKeysCountChanged         EventName = "DepositedSigningKeysCountChanged"
-	ELRewardsStealingPenaltyReported         EventName = "ELRewardsStealingPenaltyReported"
-	ELRewardsStealingPenaltySettled          EventName = "ELRewardsStealingPenaltySettled"
-	ELRewardsStealingPenaltyCancelled        EventName = "ELRewardsStealingPenaltyCancelled"
-	InitialSlashingSubmitted                 EventName = "InitialSlashingSubmitted"
-	KeyRemovalChargeApplied                  EventName = "KeyRemovalChargeApplied"
-	NodeOperatorManagerAddressChangeProposed EventName = "NodeOperatorManagerAddressChangeProposed"
-	NodeOperatorManagerAddressChanged        EventName = "NodeOperatorManagerAddressChanged"
-	NodeOperatorRewardAddressChangeProposed  EventName = "NodeOperatorRewardAddressChangeProposed"
-	NodeOperatorRewardAddressChanged         EventName = "NodeOperatorRewardAddressChanged"
-	StuckSigningKeysCountChanged             EventName = "StuckSigningKeysCountChanged"
-	VettedSigningKeysCountDecreased          EventName = "VettedSigningKeysCountDecreased"
-	WithdrawalSubmitted                      EventName = "WithdrawalSubmitted"
-	TotalSigningKeysCountChanged             EventName = "TotalSigningKeysCountChanged"
-	ValidatorExitRequest                     EventName = "ValidatorExitRequest" // requires store in db and exit
-	PublicRelease                            EventName = "PublicRelease"
-	DistributionDataUpdated                  EventName = "DistributionDataUpdated"
-	ReportSubmitted                          EventName = "ReportSubmitted" // requires store in db
+	DepositedSigningKeysCountChanged         EventName = "DepositedSigningKeysCountChanged"         // CSModule
+	ELRewardsStealingPenaltyReported         EventName = "ELRewardsStealingPenaltyReported"         // CSModule
+	ELRewardsStealingPenaltySettled          EventName = "ELRewardsStealingPenaltySettled"          // CSModule
+	ELRewardsStealingPenaltyCancelled        EventName = "ELRewardsStealingPenaltyCancelled"        // CSModule
+	InitialSlashingSubmitted                 EventName = "InitialSlashingSubmitted"                 // CSModule
+	KeyRemovalChargeApplied                  EventName = "KeyRemovalChargeApplied"                  // CSModule
+	NodeOperatorManagerAddressChangeProposed EventName = "NodeOperatorManagerAddressChangeProposed" // CSModule
+	NodeOperatorManagerAddressChanged        EventName = "NodeOperatorManagerAddressChanged"        // CSModule
+	NodeOperatorRewardAddressChangeProposed  EventName = "NodeOperatorRewardAddressChangeProposed"  // CSModule
+	NodeOperatorRewardAddressChanged         EventName = "NodeOperatorRewardAddressChanged"         // CSModule
+	StuckSigningKeysCountChanged             EventName = "StuckSigningKeysCountChanged"             // CSModule
+	VettedSigningKeysCountDecreased          EventName = "VettedSigningKeysCountDecreased"          // CSModule
+	WithdrawalSubmitted                      EventName = "WithdrawalSubmitted"                      // CSModule
+	TotalSigningKeysCountChanged             EventName = "TotalSigningKeysCountChanged"             // CSModule
+	ValidatorExitRequest                     EventName = "ValidatorExitRequest"                     // VEBO
+	PublicRelease                            EventName = "PublicRelease"                            // CSModule
+	DistributionDataUpdated                  EventName = "DistributionDataUpdated"                  // CSFeeDistributor
+	ReportSubmitted                          EventName = "ReportSubmitted"                          // VEBO
 )
