@@ -2,7 +2,6 @@ package subscriber
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/ethereum/go-ethereum"
@@ -15,6 +14,15 @@ import (
 type SubscriberAdapter struct {
 	client       *ethclient.Client
 	contractABIs map[string]interface{} // Contract address mapped to its ABI JSON data
+}
+
+type DecodedLog struct {
+	Address     common.Address
+	Topics      []common.Hash
+	Data        []byte
+	BlockNumber uint64
+	TxHash      common.Hash
+	EventData   map[string]interface{} // Decoded event fields
 }
 
 func NewSubscriberAdapter(wsURL string, contractABIs map[string]interface{}) (*SubscriberAdapter, error) {
@@ -33,17 +41,10 @@ func (es *SubscriberAdapter) SubscribeToEvents(ctx context.Context, handleLog fu
 	for contractAddr, abiData := range es.contractABIs {
 		contractAddress := common.HexToAddress(contractAddr)
 
-		// Assert that the ABI data is a JSON string and parse it
-		abiJSONBytes, ok := abiData.([]byte)
+		// Assert that the ABI data is of type abi.ABI
+		_, ok := abiData.(abi.ABI)
 		if !ok {
-			log.Printf("Failed to convert ABI data for contract %s to []byte", contractAddr)
-			continue
-		}
-
-		// Parse the ABI JSON
-		var parsedABI abi.ABI
-		if err := json.Unmarshal(abiJSONBytes, &parsedABI); err != nil {
-			log.Printf("Failed to parse ABI JSON for contract %s: %v", contractAddr, err)
+			log.Printf("Failed to convert ABI data for contract %s to abi.ABI", contractAddr)
 			continue
 		}
 
@@ -59,9 +60,10 @@ func (es *SubscriberAdapter) SubscribeToEvents(ctx context.Context, handleLog fu
 		}
 
 		// Handle logs
+		// go es.handleLogs(ctx, logs, sub, handleLog, parsedABI)
 		go es.handleLogs(ctx, logs, sub, handleLog)
 	}
-	return nil // TODO: should we return something?
+	return nil // Adjust as needed
 }
 
 // TODO: logData interface{} should be replaced with a custom type. How does an ethereum log look like?
