@@ -3,18 +3,16 @@ package ports
 
 import (
 	"context"
+	"lido-events/internal/aplication/domain"
 )
 
-// TODO: consider using a custom DecodedLog: handleLog(logData DecodedLog)
-// type DecodedLog struct {
-// 	Address     common.Address
-// 	Topics      []common.Hash
-// 	Data        []byte
-// 	BlockNumber uint64
-// 	TxHash      common.Hash
-// 	EventData   map[string]interface{} // Decoded event fields
-// }
-
 type SubscriberPort interface {
-	SubscribeToEvents(ctx context.Context, handleLog func(logData interface{}) error) error
+	WatchVeboEvents(ctx context.Context, handlers VeboHandlers) error
+	WatchCsModuleEvents(ctx context.Context, handleLog func(logData interface{}) error) error
+	WatchCsFeeDistributorEvents(ctx context.Context, handleLog func(logData interface{}) error) error
+}
+
+type VeboHandlers interface {
+	HandleValidatorExitRequestEvent(reportSubmitted domain.VeboValidatorExitRequest) error
+	HandleReportSubmittedEvent(reportSubmitted domain.VeboReportSubmitted) error
 }

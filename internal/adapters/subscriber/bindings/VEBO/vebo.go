@@ -5,6 +5,7 @@ package vebo
 
 import (
 	"errors"
+	"lido-events/internal/aplication/domain"
 	"math/big"
 	"strings"
 
@@ -2117,7 +2118,7 @@ func (_Vebo *VeboFilterer) ParseReportDiscarded(log types.Log) (*VeboReportDisca
 
 // VeboReportSubmittedIterator is returned from FilterReportSubmitted and is used to iterate over the raw logs and unpacked data for ReportSubmitted events raised by the Vebo contract.
 type VeboReportSubmittedIterator struct {
-	Event *VeboReportSubmitted // Event containing the contract specifics and raw log
+	Event *domain.VeboReportSubmitted // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2140,7 +2141,7 @@ func (it *VeboReportSubmittedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(VeboReportSubmitted)
+			it.Event = new(domain.VeboReportSubmitted)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2155,7 +2156,7 @@ func (it *VeboReportSubmittedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(VeboReportSubmitted)
+		it.Event = new(domain.VeboReportSubmitted)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2183,12 +2184,12 @@ func (it *VeboReportSubmittedIterator) Close() error {
 }
 
 // VeboReportSubmitted represents a ReportSubmitted event raised by the Vebo contract.
-type VeboReportSubmitted struct {
-	RefSlot                *big.Int
-	Hash                   [32]byte
-	ProcessingDeadlineTime *big.Int
-	Raw                    types.Log // Blockchain specific contextual infos
-}
+// type VeboReportSubmitted struct {
+// 	RefSlot                *big.Int
+// 	Hash                   [32]byte
+// 	ProcessingDeadlineTime *big.Int
+// 	Raw                    types.Log // Blockchain specific contextual infos
+// }
 
 // FilterReportSubmitted is a free log retrieval operation binding the contract event 0xaed7d1a7a1831158dcda1e4214f5862f450bd3eb5721a5f322bf8c9fe1790b0a.
 //
@@ -2210,7 +2211,7 @@ func (_Vebo *VeboFilterer) FilterReportSubmitted(opts *bind.FilterOpts, refSlot 
 // WatchReportSubmitted is a free log subscription operation binding the contract event 0xaed7d1a7a1831158dcda1e4214f5862f450bd3eb5721a5f322bf8c9fe1790b0a.
 //
 // Solidity: event ReportSubmitted(uint256 indexed refSlot, bytes32 hash, uint256 processingDeadlineTime)
-func (_Vebo *VeboFilterer) WatchReportSubmitted(opts *bind.WatchOpts, sink chan<- *VeboReportSubmitted, refSlot []*big.Int) (event.Subscription, error) {
+func (_Vebo *VeboFilterer) WatchReportSubmitted(opts *bind.WatchOpts, sink chan<- *domain.VeboReportSubmitted, refSlot []*big.Int) (event.Subscription, error) {
 
 	var refSlotRule []interface{}
 	for _, refSlotItem := range refSlot {
@@ -2227,7 +2228,7 @@ func (_Vebo *VeboFilterer) WatchReportSubmitted(opts *bind.WatchOpts, sink chan<
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(VeboReportSubmitted)
+				event := new(domain.VeboReportSubmitted)
 				if err := _Vebo.contract.UnpackLog(event, "ReportSubmitted", log); err != nil {
 					return err
 				}
@@ -2252,8 +2253,8 @@ func (_Vebo *VeboFilterer) WatchReportSubmitted(opts *bind.WatchOpts, sink chan<
 // ParseReportSubmitted is a log parse operation binding the contract event 0xaed7d1a7a1831158dcda1e4214f5862f450bd3eb5721a5f322bf8c9fe1790b0a.
 //
 // Solidity: event ReportSubmitted(uint256 indexed refSlot, bytes32 hash, uint256 processingDeadlineTime)
-func (_Vebo *VeboFilterer) ParseReportSubmitted(log types.Log) (*VeboReportSubmitted, error) {
-	event := new(VeboReportSubmitted)
+func (_Vebo *VeboFilterer) ParseReportSubmitted(log types.Log) (*domain.VeboReportSubmitted, error) {
+	event := new(domain.VeboReportSubmitted)
 	if err := _Vebo.contract.UnpackLog(event, "ReportSubmitted", log); err != nil {
 		return nil, err
 	}
@@ -2882,7 +2883,7 @@ func (_Vebo *VeboFilterer) ParseRoleRevoked(log types.Log) (*VeboRoleRevoked, er
 
 // VeboValidatorExitRequestIterator is returned from FilterValidatorExitRequest and is used to iterate over the raw logs and unpacked data for ValidatorExitRequest events raised by the Vebo contract.
 type VeboValidatorExitRequestIterator struct {
-	Event *VeboValidatorExitRequest // Event containing the contract specifics and raw log
+	Event *domain.VeboValidatorExitRequest // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2905,7 +2906,7 @@ func (it *VeboValidatorExitRequestIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(VeboValidatorExitRequest)
+			it.Event = new(domain.VeboValidatorExitRequest)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2920,7 +2921,7 @@ func (it *VeboValidatorExitRequestIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(VeboValidatorExitRequest)
+		it.Event = new(domain.VeboValidatorExitRequest)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2948,14 +2949,14 @@ func (it *VeboValidatorExitRequestIterator) Close() error {
 }
 
 // VeboValidatorExitRequest represents a ValidatorExitRequest event raised by the Vebo contract.
-type VeboValidatorExitRequest struct {
-	StakingModuleId *big.Int
-	NodeOperatorId  *big.Int
-	ValidatorIndex  *big.Int
-	ValidatorPubkey []byte
-	Timestamp       *big.Int
-	Raw             types.Log // Blockchain specific contextual infos
-}
+// type VeboValidatorExitRequest struct {
+// 	StakingModuleId *big.Int
+// 	NodeOperatorId  *big.Int
+// 	ValidatorIndex  *big.Int
+// 	ValidatorPubkey []byte
+// 	Timestamp       *big.Int
+// 	Raw             types.Log // Blockchain specific contextual infos
+// }
 
 // FilterValidatorExitRequest is a free log retrieval operation binding the contract event 0x96395f55c4997466e5035d777f0e1ba82b8cae217aaad05cf07839eb7c75bcf2.
 //
@@ -2985,7 +2986,7 @@ func (_Vebo *VeboFilterer) FilterValidatorExitRequest(opts *bind.FilterOpts, sta
 // WatchValidatorExitRequest is a free log subscription operation binding the contract event 0x96395f55c4997466e5035d777f0e1ba82b8cae217aaad05cf07839eb7c75bcf2.
 //
 // Solidity: event ValidatorExitRequest(uint256 indexed stakingModuleId, uint256 indexed nodeOperatorId, uint256 indexed validatorIndex, bytes validatorPubkey, uint256 timestamp)
-func (_Vebo *VeboFilterer) WatchValidatorExitRequest(opts *bind.WatchOpts, sink chan<- *VeboValidatorExitRequest, stakingModuleId []*big.Int, nodeOperatorId []*big.Int, validatorIndex []*big.Int) (event.Subscription, error) {
+func (_Vebo *VeboFilterer) WatchValidatorExitRequest(opts *bind.WatchOpts, sink chan<- *domain.VeboValidatorExitRequest, stakingModuleId []*big.Int, nodeOperatorId []*big.Int, validatorIndex []*big.Int) (event.Subscription, error) {
 
 	var stakingModuleIdRule []interface{}
 	for _, stakingModuleIdItem := range stakingModuleId {
@@ -3010,7 +3011,7 @@ func (_Vebo *VeboFilterer) WatchValidatorExitRequest(opts *bind.WatchOpts, sink 
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(VeboValidatorExitRequest)
+				event := new(domain.VeboValidatorExitRequest)
 				if err := _Vebo.contract.UnpackLog(event, "ValidatorExitRequest", log); err != nil {
 					return err
 				}
@@ -3035,8 +3036,8 @@ func (_Vebo *VeboFilterer) WatchValidatorExitRequest(opts *bind.WatchOpts, sink 
 // ParseValidatorExitRequest is a log parse operation binding the contract event 0x96395f55c4997466e5035d777f0e1ba82b8cae217aaad05cf07839eb7c75bcf2.
 //
 // Solidity: event ValidatorExitRequest(uint256 indexed stakingModuleId, uint256 indexed nodeOperatorId, uint256 indexed validatorIndex, bytes validatorPubkey, uint256 timestamp)
-func (_Vebo *VeboFilterer) ParseValidatorExitRequest(log types.Log) (*VeboValidatorExitRequest, error) {
-	event := new(VeboValidatorExitRequest)
+func (_Vebo *VeboFilterer) ParseValidatorExitRequest(log types.Log) (*domain.VeboValidatorExitRequest, error) {
+	event := new(domain.VeboValidatorExitRequest)
 	if err := _Vebo.contract.UnpackLog(event, "ValidatorExitRequest", log); err != nil {
 		return nil, err
 	}
