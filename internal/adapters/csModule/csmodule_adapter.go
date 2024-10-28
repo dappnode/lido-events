@@ -14,17 +14,23 @@ import (
 )
 
 type CsModuleAdapter struct {
-	client          *ethclient.Client
-	CsModuleAddress common.Address
-	StakingModuleId []*big.Int
-	NodeOperatorId  []*big.Int
-	ValidatorIndex  []*big.Int // TODO: where to get it?
-	RefSlot         []*big.Int // TODO: where to get it?
+	client             *ethclient.Client
+	CsModuleAddress    common.Address
+	NodeOperatorId     []*big.Int
+	OldAddress         []common.Address // TODO: where to get this
+	NewAddress         []common.Address // TODO: where to get this
+	OldProposedAddress []common.Address // TODO: where to get this
+	NewProposedAddress []common.Address // TODO: where to get this
 }
 
 func NewCsModuleAdapter(
 	wsURL string,
 	csModuleAddress common.Address,
+	nodeOperatorId []*big.Int,
+	oldAddress []common.Address,
+	newAddress []common.Address,
+	oldProposedAddress []common.Address,
+	newProposedAddress []common.Address,
 ) (*CsModuleAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
@@ -32,8 +38,13 @@ func NewCsModuleAdapter(
 	}
 
 	return &CsModuleAdapter{
-		client:          client,
-		CsModuleAddress: csModuleAddress,
+		client:             client,
+		CsModuleAddress:    csModuleAddress,
+		NodeOperatorId:     nodeOperatorId,
+		OldAddress:         oldAddress,
+		NewAddress:         newAddress,
+		OldProposedAddress: oldProposedAddress,
+		NewProposedAddress: newProposedAddress,
 	}, nil
 }
 
@@ -87,28 +98,28 @@ func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers p
 
 	// Watch for NodeOperatorManagerAddressChangeProposed
 	nodeOperatorManagerAddressChangeProposedChan := make(chan *domain.CsmoduleNodeOperatorManagerAddressChangeProposed)
-	subNodeOperatorManagerAddressChangeProposed, err := csModuleContract.WatchNodeOperatorManagerAddressChangeProposed(&bind.WatchOpts{Context: ctx}, nodeOperatorManagerAddressChangeProposedChan, csma.NodeOperatorId, "", "") // TODO: add missing args
+	subNodeOperatorManagerAddressChangeProposed, err := csModuleContract.WatchNodeOperatorManagerAddressChangeProposed(&bind.WatchOpts{Context: ctx}, nodeOperatorManagerAddressChangeProposedChan, csma.NodeOperatorId, csma.OldProposedAddress, csma.NewProposedAddress)
 	if err != nil {
 		return err
 	}
 
 	// Watch for NodeOperatorManagerAddressChanged
 	nodeOperatorManagerAddressChangedChan := make(chan *domain.CsmoduleNodeOperatorManagerAddressChanged)
-	subNodeOperatorManagerAddressChanged, err := csModuleContract.WatchNodeOperatorManagerAddressChanged(&bind.WatchOpts{Context: ctx}, nodeOperatorManagerAddressChangedChan, csma.NodeOperatorId, "", "") // TODO: add missing args
+	subNodeOperatorManagerAddressChanged, err := csModuleContract.WatchNodeOperatorManagerAddressChanged(&bind.WatchOpts{Context: ctx}, nodeOperatorManagerAddressChangedChan, csma.NodeOperatorId, csma.OldAddress, csma.NewAddress)
 	if err != nil {
 		return err
 	}
 
 	// Watch for NodeOperatorRewardAddressChangeProposed
 	nodeOperatorRewardAddressChangeProposedChan := make(chan *domain.CsmoduleNodeOperatorRewardAddressChangeProposed)
-	subNodeOperatorRewardAddressChangeProposed, err := csModuleContract.WatchNodeOperatorRewardAddressChangeProposed(&bind.WatchOpts{Context: ctx}, nodeOperatorRewardAddressChangeProposedChan, csma.NodeOperatorId, "", "") // TODO: add missing args
+	subNodeOperatorRewardAddressChangeProposed, err := csModuleContract.WatchNodeOperatorRewardAddressChangeProposed(&bind.WatchOpts{Context: ctx}, nodeOperatorRewardAddressChangeProposedChan, csma.NodeOperatorId, csma.OldProposedAddress, csma.NewProposedAddress)
 	if err != nil {
 		return err
 	}
 
 	// Watch for NodeOperatorRewardAddressChanged
 	nodeOperatorRewardAddressChangedChan := make(chan *domain.CsmoduleNodeOperatorRewardAddressChanged)
-	subNodeOperatorRewardAddressChanged, err := csModuleContract.WatchNodeOperatorRewardAddressChanged(&bind.WatchOpts{Context: ctx}, nodeOperatorRewardAddressChangedChan, csma.NodeOperatorId, "", "") // TODO: add missing args
+	subNodeOperatorRewardAddressChanged, err := csModuleContract.WatchNodeOperatorRewardAddressChanged(&bind.WatchOpts{Context: ctx}, nodeOperatorRewardAddressChangedChan, csma.NodeOperatorId, csma.OldAddress, csma.NewAddress)
 	if err != nil {
 		return err
 	}

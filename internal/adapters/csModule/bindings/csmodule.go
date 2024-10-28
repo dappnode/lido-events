@@ -5018,7 +5018,7 @@ func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorAdded(log types.Log) (*Csmod
 
 // CsmoduleNodeOperatorManagerAddressChangeProposedIterator is returned from FilterNodeOperatorManagerAddressChangeProposed and is used to iterate over the raw logs and unpacked data for NodeOperatorManagerAddressChangeProposed events raised by the Csmodule contract.
 type CsmoduleNodeOperatorManagerAddressChangeProposedIterator struct {
-	Event *CsmoduleNodeOperatorManagerAddressChangeProposed // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleNodeOperatorManagerAddressChangeProposed // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -5041,7 +5041,7 @@ func (it *CsmoduleNodeOperatorManagerAddressChangeProposedIterator) Next() bool 
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleNodeOperatorManagerAddressChangeProposed)
+			it.Event = new(domain.CsmoduleNodeOperatorManagerAddressChangeProposed)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -5056,7 +5056,7 @@ func (it *CsmoduleNodeOperatorManagerAddressChangeProposedIterator) Next() bool 
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleNodeOperatorManagerAddressChangeProposed)
+		it.Event = new(domain.CsmoduleNodeOperatorManagerAddressChangeProposed)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -5084,12 +5084,12 @@ func (it *CsmoduleNodeOperatorManagerAddressChangeProposedIterator) Close() erro
 }
 
 // CsmoduleNodeOperatorManagerAddressChangeProposed represents a NodeOperatorManagerAddressChangeProposed event raised by the Csmodule contract.
-type CsmoduleNodeOperatorManagerAddressChangeProposed struct {
-	NodeOperatorId     *big.Int
-	OldProposedAddress common.Address
-	NewProposedAddress common.Address
-	Raw                types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleNodeOperatorManagerAddressChangeProposed struct {
+// 	NodeOperatorId     *big.Int
+// 	OldProposedAddress common.Address
+// 	NewProposedAddress common.Address
+// 	Raw                types.Log // Blockchain specific contextual infos
+// }
 
 // FilterNodeOperatorManagerAddressChangeProposed is a free log retrieval operation binding the contract event 0x4048f15a706950765ca59f99d0fa6fe8edaaa3f3e3d0337417082e2131df82fb.
 //
@@ -5119,7 +5119,7 @@ func (_Csmodule *CsmoduleFilterer) FilterNodeOperatorManagerAddressChangePropose
 // WatchNodeOperatorManagerAddressChangeProposed is a free log subscription operation binding the contract event 0x4048f15a706950765ca59f99d0fa6fe8edaaa3f3e3d0337417082e2131df82fb.
 //
 // Solidity: event NodeOperatorManagerAddressChangeProposed(uint256 indexed nodeOperatorId, address indexed oldProposedAddress, address indexed newProposedAddress)
-func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChangeProposed(opts *bind.WatchOpts, sink chan<- *CsmoduleNodeOperatorManagerAddressChangeProposed, nodeOperatorId []*big.Int, oldProposedAddress []common.Address, newProposedAddress []common.Address) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChangeProposed(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleNodeOperatorManagerAddressChangeProposed, nodeOperatorId []*big.Int, oldProposedAddress []common.Address, newProposedAddress []common.Address) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -5144,7 +5144,7 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChangeProposed
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleNodeOperatorManagerAddressChangeProposed)
+				event := new(domain.CsmoduleNodeOperatorManagerAddressChangeProposed)
 				if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorManagerAddressChangeProposed", log); err != nil {
 					return err
 				}
@@ -5169,8 +5169,8 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChangeProposed
 // ParseNodeOperatorManagerAddressChangeProposed is a log parse operation binding the contract event 0x4048f15a706950765ca59f99d0fa6fe8edaaa3f3e3d0337417082e2131df82fb.
 //
 // Solidity: event NodeOperatorManagerAddressChangeProposed(uint256 indexed nodeOperatorId, address indexed oldProposedAddress, address indexed newProposedAddress)
-func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChangeProposed(log types.Log) (*CsmoduleNodeOperatorManagerAddressChangeProposed, error) {
-	event := new(CsmoduleNodeOperatorManagerAddressChangeProposed)
+func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChangeProposed(log types.Log) (*domain.CsmoduleNodeOperatorManagerAddressChangeProposed, error) {
+	event := new(domain.CsmoduleNodeOperatorManagerAddressChangeProposed)
 	if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorManagerAddressChangeProposed", log); err != nil {
 		return nil, err
 	}

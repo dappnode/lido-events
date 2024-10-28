@@ -8,11 +8,14 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
+	"math/big"
 
 	"lido-events/internal/aplication/services"
 	"lido-events/internal/config"
 	"log"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Hexagonal architecrtures principles:
@@ -45,11 +48,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress)
+	// TODO: where to get validatorIndexes and refSlot from
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{networkConfig.CSMStakingModuleID}, []*big.Int{appConfig.OperatorID}, []*big.Int{}, []*big.Int{})
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
 	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress)
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, []*big.Int{appConfig.OperatorID}, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
 	}

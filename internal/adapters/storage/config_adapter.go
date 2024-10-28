@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"lido-events/internal/aplication/domain"
+	"math/big"
 	"os"
 )
 
@@ -38,7 +39,7 @@ func (fs *Storage) SaveOperatorId(operatorID domain.OperatorId) error {
 func (fs *Storage) GetOperatorId() (domain.OperatorId, error) {
 	cfg, err := loadConfig(fs)
 	if err != nil {
-		return "", err
+		return big.NewInt(0), err
 	}
 	return domain.OperatorId(cfg.OperatorID), nil
 }

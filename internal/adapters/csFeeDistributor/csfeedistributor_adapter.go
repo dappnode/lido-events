@@ -6,7 +6,6 @@ import (
 	"lido-events/internal/aplication/domain"
 	"lido-events/internal/aplication/ports"
 	"log"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,10 +15,6 @@ import (
 type CsFeeDistributorAdapter struct {
 	client                  *ethclient.Client
 	CsFeeDistributorAddress common.Address
-	StakingModuleId         []*big.Int
-	NodeOperatorId          []*big.Int
-	ValidatorIndex          []*big.Int // TODO: where to get it?
-	RefSlot                 []*big.Int // TODO: where to get it?
 }
 
 func NewCsFeeDistributorAdapter(

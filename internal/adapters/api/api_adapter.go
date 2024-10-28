@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 
@@ -85,7 +87,14 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.StorageService.SetOperatorId(domain.OperatorId(req.OperatorID))
+	// Convert the string to a big.Int
+	operatorIdNum := new(big.Int)
+	_, ok := operatorIdNum.SetString(req.OperatorID, 10)
+	if !ok {
+		fmt.Println("Error: invalid number string")
+		return
+	}
+	err := h.StorageService.SetOperatorId(domain.OperatorId(operatorIdNum))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
 		return

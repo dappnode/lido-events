@@ -81,15 +81,11 @@ func (os *StorageService) GetOperatorId() (domain.OperatorId, error) {
 
 // SetOperatorId validates and sets the operator ID, then notifies
 func (os *StorageService) SetOperatorId(operatorID domain.OperatorId) error {
-	if operatorID == "" {
-		return errors.New("operator id cannot be empty")
-	}
-
 	err := os.storageService.SaveOperatorId(operatorID)
 	if err != nil {
 		return err
 	}
-	log.Printf("Operator ID set to %s", operatorID)
+	log.Printf("Operator ID updated %v", operatorID)
 
 	return nil
 }

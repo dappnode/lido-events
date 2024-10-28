@@ -25,6 +25,10 @@ type VeboAdapter struct {
 func NewVeboAdapter(
 	wsURL string,
 	veboAddress common.Address,
+	stakingModuleId []*big.Int,
+	nodeOperatorId []*big.Int,
+	validatorIndex []*big.Int,
+	refSlot []*big.Int,
 ) (*VeboAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
@@ -32,8 +36,12 @@ func NewVeboAdapter(
 	}
 
 	return &VeboAdapter{
-		client:      client,
-		VeboAddress: veboAddress,
+		client:          client,
+		VeboAddress:     veboAddress,
+		StakingModuleId: stakingModuleId,
+		NodeOperatorId:  nodeOperatorId,
+		ValidatorIndex:  validatorIndex,
+		RefSlot:         refSlot,
 	}, nil
 }
 

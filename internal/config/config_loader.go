@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"lido-events/internal/aplication/domain"
 	"log"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -23,7 +24,7 @@ type NetworkConfig struct {
 	SignerUrl          string
 	IpfsUrl            string
 	WsURL              string
-	CSMStakingModuleID int
+	CSMStakingModuleID *big.Int
 	EtherscanURL       string
 	BeaconchainURL     string
 	CSMUIURL           string
@@ -66,7 +67,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 			SignerUrl:               "http://signer.holesky.dncore.dappnode",
 			IpfsUrl:                 ipfsUrl,
 			WsURL:                   wsURL,
-			CSMStakingModuleID:      4,
+			CSMStakingModuleID:      big.NewInt(4),
 			EtherscanURL:            "https://holesky.etherscan.io",
 			BeaconchainURL:          "https://holesky.beaconcha.in",
 			CSMUIURL:                "https://csm.testnet.fi",
@@ -80,7 +81,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 			SignerUrl:               "http://signer.mainnet.dncore.dappnode",
 			IpfsUrl:                 ipfsUrl,
 			WsURL:                   wsURL,
-			CSMStakingModuleID:      3,
+			CSMStakingModuleID:      big.NewInt(3),
 			EtherscanURL:            "https://etherscan.io",
 			BeaconchainURL:          "https://beaconcha.in",
 			CSMUIURL:                "https://csm.lido.fi",
