@@ -51,7 +51,8 @@ func main() {
 	// TODO: what happens when operator id changes
 	// TODO: what happens if new validators -> new validatorIndexes. Affects vebo adapter. We should
 	// TODO: where to get validatorIndexes and refSlot from
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{networkConfig.CSMStakingModuleID}, []*big.Int{appConfig.OperatorID}, []*big.Int{}, []*big.Int{})
+	// TODO: where to get ipfsEndpoint from? Dappmanager or given remote
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{networkConfig.CSMStakingModuleID}, []*big.Int{appConfig.OperatorID}, []*big.Int{}, []*big.Int{}, "")
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
 	}

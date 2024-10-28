@@ -21,12 +21,12 @@ func NewStorageService(storage ports.StoragePort) *StorageService {
 }
 
 // GetLidoReport retrieves the Lido report for the given range of epochs
-func (os *StorageService) GetLidoReport(start, end string) (map[string]domain.Report, error) {
+func (os *StorageService) GetLidoReport(start, end string) (map[uint32]domain.Report, error) {
 	return os.storagePort.GetLidoReport(start, end)
 }
 
 // SaveLidoReport saves the Lido report to the repository
-func (os *StorageService) SaveLidoReport(report map[string]domain.Report) error {
+func (os *StorageService) SaveLidoReport(report map[uint32]domain.Report) error {
 	err := os.storagePort.SaveLidoReport(report)
 	if err != nil {
 		return err

@@ -57,15 +57,21 @@ func (vs *VeboService) HandleReportSubmittedEvent(reportSubmitted *domain.VeboRe
 		return err
 	}
 
-	// TODO: use reportSubmitted.Hash to fetch the report from IPFS
+	// TODO: is it better to fetch operatorId from memory or from storage?
+	operatorId, err := vs.storagePort.GetOperatorId()
+	if err != nil {
+		log.Printf("Failed to get operator ID: %v", err)
+		return err
+	}
+	parsedHash, err := vs.veboPort.FetchAndParseIPFSContent(context.Background(), string(reportSubmitted.Hash[:]), operatorId)
 
 	// save the report
 	report := domain.Report{
-		Threshold:  "some-threshold",
-		Validators: map[string]domain.ValidatorPerformance{},
+		Threshold:  parsedHash.Threshold,
+		Validators: parsedHash.Validators,
 	}
-	epoch := "some-epoch"
-	lidoReport := map[string]domain.Report{
+	epoch := parsedHash.RefSlot / 32 // straightforward way to convert slot to epoch
+	lidoReport := map[uint32]domain.Report{
 		epoch: report,
 	}
 	if err := vs.storagePort.SaveLidoReport(lidoReport); err != nil {

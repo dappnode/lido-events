@@ -1,15 +1,16 @@
 package domain
 
-type Reports map[string]Report // indexed by epoch
+type Reports map[uint32]Report // indexed by epoch
 
 type Report struct {
-	Threshold  string
+	Threshold float64
 	Validators Validators
+	RefSlot uint32 // lido report returns `ref_slot`, which can be converted to epoch
 }
 
 type Validators map[string]ValidatorPerformance // indexed by validator pubkey
 
 type ValidatorPerformance struct {
-	Included string
-	Assigned string
+	Included uint
+	Assigned uint
 }

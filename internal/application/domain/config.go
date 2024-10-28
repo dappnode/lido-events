@@ -7,7 +7,7 @@ type TelegramConfig struct {
 	ChatID int64  `json:"chatId"`
 }
 
-type OperatorId *big.Int
+type OperatorId = *big.Int
 
 type Config struct {
 	OperatorID OperatorId     `json:"operatorId"`

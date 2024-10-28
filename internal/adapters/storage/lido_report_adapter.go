@@ -13,21 +13,24 @@ func (fs *Storage) GetLidoReport(start, end string) (domain.Reports, error) {
 	if err != nil {
 		return nil, err
 	}
-	reportData := make(map[string]domain.Report)
+	reportData := make(map[uint32]domain.Report)
 	for epoch, report := range performanceData {
-		epochInt, err := strconv.Atoi(epoch)
-		if err != nil {
-			continue
-		}
-		startInt, err := strconv.Atoi(start)
+		
+		// convert start and end to uint32
+		startInt, err := strconv.ParseUint(start, 10, 32)
 		if err != nil {
 			return nil, err
 		}
-		endInt, err := strconv.Atoi(end)
+		endInt, err := strconv.ParseUint(end, 10, 32)
 		if err != nil {
 			return nil, err
 		}
-		if epochInt >= startInt && epochInt <= endInt {
+
+		// Explicitly convert to uint32 since ParseUint returns uint64
+		startUint32 := uint32(startInt)
+		endUint32 := uint32(endInt)
+
+		if epoch >= startUint32 && epoch <= endUint32 {
 			reportData[epoch] = report
 		}
 	}
@@ -50,18 +53,18 @@ func (fs *Storage) SaveLidoReport(reports domain.Reports) error {
 }
 
 // loadPerformance loads the validator performance data from the JSON file
-func loadPerformance(fs *Storage) (map[string]domain.Report, error) {
+func loadPerformance(fs *Storage) (map[uint32]domain.Report, error) {
 	file, err := os.ReadFile(fs.PerformanceFile)
 	if err != nil {
 		return nil, err
 	}
-	var data map[string]domain.Report
+	var data map[uint32]domain.Report
 	err = json.Unmarshal(file, &data)
 	return data, err
 }
 
 // savePerformance saves the validator performance data to the JSON file
-func savePerformance(fs *Storage, data map[string]domain.Report) error {
+func savePerformance(fs *Storage, data map[uint32]domain.Report) error {
 	file, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
