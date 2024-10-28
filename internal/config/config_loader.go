@@ -20,6 +20,12 @@ type Config struct {
 	Network    NetworkConfig         `json:"network"`
 }
 
+type configUnparsed struct {
+	OperatorID int                   `json:"operatorId"`
+	Telegram   domain.TelegramConfig `json:"telegram"`
+	Network    NetworkConfig         `json:"network"`
+}
+
 type NetworkConfig struct {
 	SignerUrl          string
 	IpfsUrl            string
@@ -44,12 +50,19 @@ func LoadAppConfig(filePath string) (Config, error) {
 		return Config{}, err
 	}
 
-	var config Config
-	err = json.Unmarshal(file, &config)
+	var configUnparsed configUnparsed
+	err = json.Unmarshal(file, &configUnparsed)
 	if err != nil {
 		log.Fatalf("Failed to parse config JSON: %v", err)
 		return Config{}, err
 	}
+
+	// convert operator id to big.Int
+	operatorID := big.NewInt(int64(configUnparsed.OperatorID))
+	var config Config
+	config.OperatorID = domain.OperatorId(operatorID)
+	config.Telegram = configUnparsed.Telegram
+	config.Network = configUnparsed.Network
 
 	return config, nil
 }
