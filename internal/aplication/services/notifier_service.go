@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"lido-events/internal/aplication/domain"
 	"lido-events/internal/aplication/ports"
 )
 
@@ -16,9 +15,9 @@ func NewNotifierService(notifierAdapter ports.NotifierPort) *NotifierService {
 	}
 }
 
-func (ns *NotifierService) SendNotification(eventName domain.EventName) error {
+func (ns *NotifierService) SendNotification(message string) error {
 	if ns.notifierAdapter == nil {
 		return errors.New("no notifier available")
 	}
-	return ns.notifierAdapter.SendNotification(domain.NotificationMessageMap[eventName])
+	return ns.notifierAdapter.SendNotification(message)
 }
