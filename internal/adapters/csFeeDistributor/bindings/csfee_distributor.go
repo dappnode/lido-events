@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package csfeedistributor
+package bindings
 
 import (
 	"errors"
@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+
+	"lido-events/internal/aplication/domain"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -919,7 +921,7 @@ func (_Csfeedistributor *CsfeedistributorTransactorSession) RevokeRole(role [32]
 
 // CsfeedistributorDistributionDataUpdatedIterator is returned from FilterDistributionDataUpdated and is used to iterate over the raw logs and unpacked data for DistributionDataUpdated events raised by the Csfeedistributor contract.
 type CsfeedistributorDistributionDataUpdatedIterator struct {
-	Event *CsfeedistributorDistributionDataUpdated // Event containing the contract specifics and raw log
+	Event *domain.CsfeedistributorDistributionDataUpdated // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -942,7 +944,7 @@ func (it *CsfeedistributorDistributionDataUpdatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsfeedistributorDistributionDataUpdated)
+			it.Event = new(domain.CsfeedistributorDistributionDataUpdated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -957,7 +959,7 @@ func (it *CsfeedistributorDistributionDataUpdatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsfeedistributorDistributionDataUpdated)
+		it.Event = new(domain.CsfeedistributorDistributionDataUpdated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -985,12 +987,12 @@ func (it *CsfeedistributorDistributionDataUpdatedIterator) Close() error {
 }
 
 // CsfeedistributorDistributionDataUpdated represents a DistributionDataUpdated event raised by the Csfeedistributor contract.
-type CsfeedistributorDistributionDataUpdated struct {
-	TotalClaimableShares *big.Int
-	TreeRoot             [32]byte
-	TreeCid              string
-	Raw                  types.Log // Blockchain specific contextual infos
-}
+// type CsfeedistributorDistributionDataUpdated struct {
+// 	TotalClaimableShares *big.Int
+// 	TreeRoot             [32]byte
+// 	TreeCid              string
+// 	Raw                  types.Log // Blockchain specific contextual infos
+// }
 
 // FilterDistributionDataUpdated is a free log retrieval operation binding the contract event 0x26dec7cc117e9b3907dc1f90d2dc5f6e04dbb9f285f5898be2c82ec524dcd424.
 //
@@ -1007,7 +1009,7 @@ func (_Csfeedistributor *CsfeedistributorFilterer) FilterDistributionDataUpdated
 // WatchDistributionDataUpdated is a free log subscription operation binding the contract event 0x26dec7cc117e9b3907dc1f90d2dc5f6e04dbb9f285f5898be2c82ec524dcd424.
 //
 // Solidity: event DistributionDataUpdated(uint256 totalClaimableShares, bytes32 treeRoot, string treeCid)
-func (_Csfeedistributor *CsfeedistributorFilterer) WatchDistributionDataUpdated(opts *bind.WatchOpts, sink chan<- *CsfeedistributorDistributionDataUpdated) (event.Subscription, error) {
+func (_Csfeedistributor *CsfeedistributorFilterer) WatchDistributionDataUpdated(opts *bind.WatchOpts, sink chan<- *domain.CsfeedistributorDistributionDataUpdated) (event.Subscription, error) {
 
 	logs, sub, err := _Csfeedistributor.contract.WatchLogs(opts, "DistributionDataUpdated")
 	if err != nil {
@@ -1019,7 +1021,7 @@ func (_Csfeedistributor *CsfeedistributorFilterer) WatchDistributionDataUpdated(
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsfeedistributorDistributionDataUpdated)
+				event := new(domain.CsfeedistributorDistributionDataUpdated)
 				if err := _Csfeedistributor.contract.UnpackLog(event, "DistributionDataUpdated", log); err != nil {
 					return err
 				}
@@ -1044,8 +1046,8 @@ func (_Csfeedistributor *CsfeedistributorFilterer) WatchDistributionDataUpdated(
 // ParseDistributionDataUpdated is a log parse operation binding the contract event 0x26dec7cc117e9b3907dc1f90d2dc5f6e04dbb9f285f5898be2c82ec524dcd424.
 //
 // Solidity: event DistributionDataUpdated(uint256 totalClaimableShares, bytes32 treeRoot, string treeCid)
-func (_Csfeedistributor *CsfeedistributorFilterer) ParseDistributionDataUpdated(log types.Log) (*CsfeedistributorDistributionDataUpdated, error) {
-	event := new(CsfeedistributorDistributionDataUpdated)
+func (_Csfeedistributor *CsfeedistributorFilterer) ParseDistributionDataUpdated(log types.Log) (*domain.CsfeedistributorDistributionDataUpdated, error) {
+	event := new(domain.CsfeedistributorDistributionDataUpdated)
 	if err := _Csfeedistributor.contract.UnpackLog(event, "DistributionDataUpdated", log); err != nil {
 		return nil, err
 	}

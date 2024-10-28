@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"lido-events/internal/adapters/api"
+	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
+	csmodule "lido-events/internal/adapters/csModule"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
-	"lido-events/internal/adapters/subscriber"
+	"lido-events/internal/adapters/vebo"
+
 	"lido-events/internal/aplication/services"
 	"lido-events/internal/config"
 	"log"
@@ -42,19 +45,35 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	subscriberAdapter, err := subscriber.NewSubscriberAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress, networkConfig.CSModuleAddress, networkConfig.VEBOAddress, appConfig.OperatorID, networkConfig.CSMStakingModuleID)
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress)
 	if err != nil {
-		log.Fatalf("Failed to initialize Ethereum subscriber: %v", err)
+		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
+	}
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress)
+	if err != nil {
+		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
+	}
+	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	if err != nil {
+		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
 	}
 
 	// Initialize services
 	notifierService := services.NewNotifierService(notifierAdapter)
 	storageService := services.NewStorageService(storageAdapter)
-	eventService := services.NewEventService(storageAdapter, notifierAdapter, subscriberAdapter)
+	veboService := services.NewVeboService(storageAdapter, notifierAdapter, veboAdapter)
+	csModuleService := services.NewCsModuleService(storageAdapter, notifierAdapter, csModuleAdapter)
+	csFeeDistributorService := services.NewCsFeeDistributorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
 
-	// Start subscribing to events. Done by eventService.
-	if err := eventService.SubscribeToEvents(context.Background()); err != nil {
-		log.Fatalf("Failed to subscribe to events: %v", err)
+	// Start subscribing to each SC events. Done by sc services.
+	if err := veboService.WatchVeboEvents(context.Background()); err != nil {
+		log.Fatalf("Failed to subscribe to VEBO events: %v", err)
+	}
+	if err := csModuleService.WatchCsModuleEvents(context.Background()); err != nil {
+		log.Fatalf("Failed to subscribe to CSModule events: %v", err)
+	}
+	if err := csFeeDistributorService.WatchCsFeeDistributorEvents(context.Background()); err != nil {
+		log.Fatalf("Failed to subscribe to CSFeeDistributor events: %v", err)
 	}
 
 	// Initialize the API handler (internally sets up routes)

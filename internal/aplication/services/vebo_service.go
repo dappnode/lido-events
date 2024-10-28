@@ -1,4 +1,3 @@
-// services/eventService.go
 package services
 
 import (
@@ -10,13 +9,27 @@ import (
 )
 
 type VeboService struct {
-	storagePort    ports.StoragePort
-	notifierPort   ports.NotifierPort
-	subscriberPort ports.SubscriberPort
+	storagePort  ports.StoragePort
+	notifierPort ports.NotifierPort
+	veboPort     ports.VeboPort
+}
+
+func NewVeboService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort) *VeboService {
+	return &VeboService{
+		storagePort:  storagePort,
+		notifierPort: notifierPort,
+		veboPort:     veboPort,
+	}
+}
+
+// WatchVeboEvents subscribes to Ethereum events and handles them.
+// It passes to the csModule port a function that processes the log data.
+func (vs *VeboService) WatchVeboEvents(ctx context.Context) error {
+	return vs.veboPort.WatchVeboEvents(ctx, vs)
 }
 
 // Make VeboService implement the VeboHandlers interface by adding the methods
-func (vs *VeboService) HandleValidatorExitRequestEvent(reportSubmitted domain.VeboValidatorExitRequest) error {
+func (vs *VeboService) HandleValidatorExitRequestEvent(reportSubmitted *domain.VeboValidatorExitRequest) error {
 	message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s", reportSubmitted.ValidatorIndex)
 	if err := vs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -36,7 +49,7 @@ func (vs *VeboService) HandleValidatorExitRequestEvent(reportSubmitted domain.Ve
 	return nil
 }
 
-func (vs *VeboService) HandleReportSubmittedEvent(reportSubmitted domain.VeboReportSubmitted) error {
+func (vs *VeboService) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
 	// send the notification message
 	message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
 	if err := vs.notifierPort.SendNotification(message); err != nil {
@@ -60,23 +73,5 @@ func (vs *VeboService) HandleReportSubmittedEvent(reportSubmitted domain.VeboRep
 		return err
 	}
 
-	return nil
-}
-
-func NewVeboService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.SubscriberPort) *VeboService {
-	return &VeboService{
-		storagePort:    storagePort,
-		notifierPort:   notifierPort,
-		subscriberPort: subscriberPort,
-	}
-}
-
-func (vs *VeboService) WatchVeboEvents(ctx context.Context) error {
-	// Pass the VeboService as the VeboHandlers implementation
-	err := vs.subscriberPort.WatchVeboEvents(ctx, vs)
-	if err != nil {
-		log.Printf("Failed to watch Vebo events: %v", err)
-		return err
-	}
 	return nil
 }

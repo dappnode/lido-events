@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package csmodule
+package bindings
 
 import (
 	"errors"
@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+
+	"lido-events/internal/aplication/domain"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -2960,7 +2962,7 @@ func (_Csmodule *CsmoduleFilterer) ParseDepositableSigningKeysCountChanged(log t
 
 // CsmoduleDepositedSigningKeysCountChangedIterator is returned from FilterDepositedSigningKeysCountChanged and is used to iterate over the raw logs and unpacked data for DepositedSigningKeysCountChanged events raised by the Csmodule contract.
 type CsmoduleDepositedSigningKeysCountChangedIterator struct {
-	Event *CsmoduleDepositedSigningKeysCountChanged // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleDepositedSigningKeysCountChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2983,7 +2985,7 @@ func (it *CsmoduleDepositedSigningKeysCountChangedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleDepositedSigningKeysCountChanged)
+			it.Event = new(domain.CsmoduleDepositedSigningKeysCountChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2998,7 +3000,7 @@ func (it *CsmoduleDepositedSigningKeysCountChangedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleDepositedSigningKeysCountChanged)
+		it.Event = new(domain.CsmoduleDepositedSigningKeysCountChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -3026,11 +3028,11 @@ func (it *CsmoduleDepositedSigningKeysCountChangedIterator) Close() error {
 }
 
 // CsmoduleDepositedSigningKeysCountChanged represents a DepositedSigningKeysCountChanged event raised by the Csmodule contract.
-type CsmoduleDepositedSigningKeysCountChanged struct {
-	NodeOperatorId     *big.Int
-	DepositedKeysCount *big.Int
-	Raw                types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleDepositedSigningKeysCountChanged struct {
+// 	NodeOperatorId     *big.Int
+// 	DepositedKeysCount *big.Int
+// 	Raw                types.Log // Blockchain specific contextual infos
+// }
 
 // FilterDepositedSigningKeysCountChanged is a free log retrieval operation binding the contract event 0x24eb1c9e765ba41accf9437300ea91ece5ed3f897ec3cdee0e9debd7fe309b78.
 //
@@ -3052,7 +3054,7 @@ func (_Csmodule *CsmoduleFilterer) FilterDepositedSigningKeysCountChanged(opts *
 // WatchDepositedSigningKeysCountChanged is a free log subscription operation binding the contract event 0x24eb1c9e765ba41accf9437300ea91ece5ed3f897ec3cdee0e9debd7fe309b78.
 //
 // Solidity: event DepositedSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 depositedKeysCount)
-func (_Csmodule *CsmoduleFilterer) WatchDepositedSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *CsmoduleDepositedSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchDepositedSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleDepositedSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -3069,7 +3071,7 @@ func (_Csmodule *CsmoduleFilterer) WatchDepositedSigningKeysCountChanged(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleDepositedSigningKeysCountChanged)
+				event := new(domain.CsmoduleDepositedSigningKeysCountChanged)
 				if err := _Csmodule.contract.UnpackLog(event, "DepositedSigningKeysCountChanged", log); err != nil {
 					return err
 				}
@@ -3094,8 +3096,8 @@ func (_Csmodule *CsmoduleFilterer) WatchDepositedSigningKeysCountChanged(opts *b
 // ParseDepositedSigningKeysCountChanged is a log parse operation binding the contract event 0x24eb1c9e765ba41accf9437300ea91ece5ed3f897ec3cdee0e9debd7fe309b78.
 //
 // Solidity: event DepositedSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 depositedKeysCount)
-func (_Csmodule *CsmoduleFilterer) ParseDepositedSigningKeysCountChanged(log types.Log) (*CsmoduleDepositedSigningKeysCountChanged, error) {
-	event := new(CsmoduleDepositedSigningKeysCountChanged)
+func (_Csmodule *CsmoduleFilterer) ParseDepositedSigningKeysCountChanged(log types.Log) (*domain.CsmoduleDepositedSigningKeysCountChanged, error) {
+	event := new(domain.CsmoduleDepositedSigningKeysCountChanged)
 	if err := _Csmodule.contract.UnpackLog(event, "DepositedSigningKeysCountChanged", log); err != nil {
 		return nil, err
 	}
@@ -3105,7 +3107,7 @@ func (_Csmodule *CsmoduleFilterer) ParseDepositedSigningKeysCountChanged(log typ
 
 // CsmoduleELRewardsStealingPenaltyCancelledIterator is returned from FilterELRewardsStealingPenaltyCancelled and is used to iterate over the raw logs and unpacked data for ELRewardsStealingPenaltyCancelled events raised by the Csmodule contract.
 type CsmoduleELRewardsStealingPenaltyCancelledIterator struct {
-	Event *CsmoduleELRewardsStealingPenaltyCancelled // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleELRewardsStealingPenaltyCancelled // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -3128,7 +3130,7 @@ func (it *CsmoduleELRewardsStealingPenaltyCancelledIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleELRewardsStealingPenaltyCancelled)
+			it.Event = new(domain.CsmoduleELRewardsStealingPenaltyCancelled)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -3143,7 +3145,7 @@ func (it *CsmoduleELRewardsStealingPenaltyCancelledIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleELRewardsStealingPenaltyCancelled)
+		it.Event = new(domain.CsmoduleELRewardsStealingPenaltyCancelled)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -3171,11 +3173,11 @@ func (it *CsmoduleELRewardsStealingPenaltyCancelledIterator) Close() error {
 }
 
 // CsmoduleELRewardsStealingPenaltyCancelled represents a ELRewardsStealingPenaltyCancelled event raised by the Csmodule contract.
-type CsmoduleELRewardsStealingPenaltyCancelled struct {
-	NodeOperatorId *big.Int
-	Amount         *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleELRewardsStealingPenaltyCancelled struct {
+// 	NodeOperatorId *big.Int
+// 	Amount         *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterELRewardsStealingPenaltyCancelled is a free log retrieval operation binding the contract event 0x1e7ebd3c5f4de9502000b6f7e6e7cf5d4ecb27d6fe1778e43fb9d1d0ca87d0e7.
 //
@@ -3197,7 +3199,7 @@ func (_Csmodule *CsmoduleFilterer) FilterELRewardsStealingPenaltyCancelled(opts 
 // WatchELRewardsStealingPenaltyCancelled is a free log subscription operation binding the contract event 0x1e7ebd3c5f4de9502000b6f7e6e7cf5d4ecb27d6fe1778e43fb9d1d0ca87d0e7.
 //
 // Solidity: event ELRewardsStealingPenaltyCancelled(uint256 indexed nodeOperatorId, uint256 amount)
-func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyCancelled(opts *bind.WatchOpts, sink chan<- *CsmoduleELRewardsStealingPenaltyCancelled, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyCancelled(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleELRewardsStealingPenaltyCancelled, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -3214,7 +3216,7 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyCancelled(opts *
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleELRewardsStealingPenaltyCancelled)
+				event := new(domain.CsmoduleELRewardsStealingPenaltyCancelled)
 				if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltyCancelled", log); err != nil {
 					return err
 				}
@@ -3239,8 +3241,8 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyCancelled(opts *
 // ParseELRewardsStealingPenaltyCancelled is a log parse operation binding the contract event 0x1e7ebd3c5f4de9502000b6f7e6e7cf5d4ecb27d6fe1778e43fb9d1d0ca87d0e7.
 //
 // Solidity: event ELRewardsStealingPenaltyCancelled(uint256 indexed nodeOperatorId, uint256 amount)
-func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyCancelled(log types.Log) (*CsmoduleELRewardsStealingPenaltyCancelled, error) {
-	event := new(CsmoduleELRewardsStealingPenaltyCancelled)
+func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyCancelled(log types.Log) (*domain.CsmoduleELRewardsStealingPenaltyCancelled, error) {
+	event := new(domain.CsmoduleELRewardsStealingPenaltyCancelled)
 	if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltyCancelled", log); err != nil {
 		return nil, err
 	}
@@ -3250,7 +3252,7 @@ func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyCancelled(log ty
 
 // CsmoduleELRewardsStealingPenaltyReportedIterator is returned from FilterELRewardsStealingPenaltyReported and is used to iterate over the raw logs and unpacked data for ELRewardsStealingPenaltyReported events raised by the Csmodule contract.
 type CsmoduleELRewardsStealingPenaltyReportedIterator struct {
-	Event *CsmoduleELRewardsStealingPenaltyReported // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleELRewardsStealingPenaltyReported // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -3273,7 +3275,7 @@ func (it *CsmoduleELRewardsStealingPenaltyReportedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleELRewardsStealingPenaltyReported)
+			it.Event = new(domain.CsmoduleELRewardsStealingPenaltyReported)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -3288,7 +3290,7 @@ func (it *CsmoduleELRewardsStealingPenaltyReportedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleELRewardsStealingPenaltyReported)
+		it.Event = new(domain.CsmoduleELRewardsStealingPenaltyReported)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -3316,12 +3318,12 @@ func (it *CsmoduleELRewardsStealingPenaltyReportedIterator) Close() error {
 }
 
 // CsmoduleELRewardsStealingPenaltyReported represents a ELRewardsStealingPenaltyReported event raised by the Csmodule contract.
-type CsmoduleELRewardsStealingPenaltyReported struct {
-	NodeOperatorId    *big.Int
-	ProposedBlockHash [32]byte
-	StolenAmount      *big.Int
-	Raw               types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleELRewardsStealingPenaltyReported struct {
+// 	NodeOperatorId    *big.Int
+// 	ProposedBlockHash [32]byte
+// 	StolenAmount      *big.Int
+// 	Raw               types.Log // Blockchain specific contextual infos
+// }
 
 // FilterELRewardsStealingPenaltyReported is a free log retrieval operation binding the contract event 0xeec4d6dbe34149c6728a9638eca869d0e5a7fcd85c7a96178f7e9780b4b7fe4b.
 //
@@ -3343,7 +3345,7 @@ func (_Csmodule *CsmoduleFilterer) FilterELRewardsStealingPenaltyReported(opts *
 // WatchELRewardsStealingPenaltyReported is a free log subscription operation binding the contract event 0xeec4d6dbe34149c6728a9638eca869d0e5a7fcd85c7a96178f7e9780b4b7fe4b.
 //
 // Solidity: event ELRewardsStealingPenaltyReported(uint256 indexed nodeOperatorId, bytes32 proposedBlockHash, uint256 stolenAmount)
-func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyReported(opts *bind.WatchOpts, sink chan<- *CsmoduleELRewardsStealingPenaltyReported, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyReported(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleELRewardsStealingPenaltyReported, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -3360,7 +3362,7 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyReported(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleELRewardsStealingPenaltyReported)
+				event := new(domain.CsmoduleELRewardsStealingPenaltyReported)
 				if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltyReported", log); err != nil {
 					return err
 				}
@@ -3385,8 +3387,8 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltyReported(opts *b
 // ParseELRewardsStealingPenaltyReported is a log parse operation binding the contract event 0xeec4d6dbe34149c6728a9638eca869d0e5a7fcd85c7a96178f7e9780b4b7fe4b.
 //
 // Solidity: event ELRewardsStealingPenaltyReported(uint256 indexed nodeOperatorId, bytes32 proposedBlockHash, uint256 stolenAmount)
-func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyReported(log types.Log) (*CsmoduleELRewardsStealingPenaltyReported, error) {
-	event := new(CsmoduleELRewardsStealingPenaltyReported)
+func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyReported(log types.Log) (*domain.CsmoduleELRewardsStealingPenaltyReported, error) {
+	event := new(domain.CsmoduleELRewardsStealingPenaltyReported)
 	if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltyReported", log); err != nil {
 		return nil, err
 	}
@@ -3396,7 +3398,7 @@ func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltyReported(log typ
 
 // CsmoduleELRewardsStealingPenaltySettledIterator is returned from FilterELRewardsStealingPenaltySettled and is used to iterate over the raw logs and unpacked data for ELRewardsStealingPenaltySettled events raised by the Csmodule contract.
 type CsmoduleELRewardsStealingPenaltySettledIterator struct {
-	Event *CsmoduleELRewardsStealingPenaltySettled // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleELRewardsStealingPenaltySettled // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -3419,7 +3421,7 @@ func (it *CsmoduleELRewardsStealingPenaltySettledIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleELRewardsStealingPenaltySettled)
+			it.Event = new(domain.CsmoduleELRewardsStealingPenaltySettled)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -3434,7 +3436,7 @@ func (it *CsmoduleELRewardsStealingPenaltySettledIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleELRewardsStealingPenaltySettled)
+		it.Event = new(domain.CsmoduleELRewardsStealingPenaltySettled)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -3462,10 +3464,10 @@ func (it *CsmoduleELRewardsStealingPenaltySettledIterator) Close() error {
 }
 
 // CsmoduleELRewardsStealingPenaltySettled represents a ELRewardsStealingPenaltySettled event raised by the Csmodule contract.
-type CsmoduleELRewardsStealingPenaltySettled struct {
-	NodeOperatorId *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleELRewardsStealingPenaltySettled struct {
+// 	NodeOperatorId *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterELRewardsStealingPenaltySettled is a free log retrieval operation binding the contract event 0x00f4fe19c0404d2fbb58da6f646c0a3ee5a6994a034213bbd22b072ed1ca5c27.
 //
@@ -3487,7 +3489,7 @@ func (_Csmodule *CsmoduleFilterer) FilterELRewardsStealingPenaltySettled(opts *b
 // WatchELRewardsStealingPenaltySettled is a free log subscription operation binding the contract event 0x00f4fe19c0404d2fbb58da6f646c0a3ee5a6994a034213bbd22b072ed1ca5c27.
 //
 // Solidity: event ELRewardsStealingPenaltySettled(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltySettled(opts *bind.WatchOpts, sink chan<- *CsmoduleELRewardsStealingPenaltySettled, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltySettled(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleELRewardsStealingPenaltySettled, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -3504,7 +3506,7 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltySettled(opts *bi
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleELRewardsStealingPenaltySettled)
+				event := new(domain.CsmoduleELRewardsStealingPenaltySettled)
 				if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltySettled", log); err != nil {
 					return err
 				}
@@ -3529,8 +3531,8 @@ func (_Csmodule *CsmoduleFilterer) WatchELRewardsStealingPenaltySettled(opts *bi
 // ParseELRewardsStealingPenaltySettled is a log parse operation binding the contract event 0x00f4fe19c0404d2fbb58da6f646c0a3ee5a6994a034213bbd22b072ed1ca5c27.
 //
 // Solidity: event ELRewardsStealingPenaltySettled(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltySettled(log types.Log) (*CsmoduleELRewardsStealingPenaltySettled, error) {
-	event := new(CsmoduleELRewardsStealingPenaltySettled)
+func (_Csmodule *CsmoduleFilterer) ParseELRewardsStealingPenaltySettled(log types.Log) (*domain.CsmoduleELRewardsStealingPenaltySettled, error) {
+	event := new(domain.CsmoduleELRewardsStealingPenaltySettled)
 	if err := _Csmodule.contract.UnpackLog(event, "ELRewardsStealingPenaltySettled", log); err != nil {
 		return nil, err
 	}
@@ -4297,7 +4299,7 @@ func (_Csmodule *CsmoduleFilterer) ParseExitedSigningKeysCountChanged(log types.
 
 // CsmoduleInitialSlashingSubmittedIterator is returned from FilterInitialSlashingSubmitted and is used to iterate over the raw logs and unpacked data for InitialSlashingSubmitted events raised by the Csmodule contract.
 type CsmoduleInitialSlashingSubmittedIterator struct {
-	Event *CsmoduleInitialSlashingSubmitted // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleInitialSlashingSubmitted // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4320,7 +4322,7 @@ func (it *CsmoduleInitialSlashingSubmittedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleInitialSlashingSubmitted)
+			it.Event = new(domain.CsmoduleInitialSlashingSubmitted)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4335,7 +4337,7 @@ func (it *CsmoduleInitialSlashingSubmittedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleInitialSlashingSubmitted)
+		it.Event = new(domain.CsmoduleInitialSlashingSubmitted)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4363,11 +4365,11 @@ func (it *CsmoduleInitialSlashingSubmittedIterator) Close() error {
 }
 
 // CsmoduleInitialSlashingSubmitted represents a InitialSlashingSubmitted event raised by the Csmodule contract.
-type CsmoduleInitialSlashingSubmitted struct {
-	NodeOperatorId *big.Int
-	KeyIndex       *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleInitialSlashingSubmitted struct {
+// 	NodeOperatorId *big.Int
+// 	KeyIndex       *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterInitialSlashingSubmitted is a free log retrieval operation binding the contract event 0xd34db8e8c0ddbc9c7b6dd8c397623dfbe01929e41e527540bff8794685d9b407.
 //
@@ -4389,7 +4391,7 @@ func (_Csmodule *CsmoduleFilterer) FilterInitialSlashingSubmitted(opts *bind.Fil
 // WatchInitialSlashingSubmitted is a free log subscription operation binding the contract event 0xd34db8e8c0ddbc9c7b6dd8c397623dfbe01929e41e527540bff8794685d9b407.
 //
 // Solidity: event InitialSlashingSubmitted(uint256 indexed nodeOperatorId, uint256 keyIndex)
-func (_Csmodule *CsmoduleFilterer) WatchInitialSlashingSubmitted(opts *bind.WatchOpts, sink chan<- *CsmoduleInitialSlashingSubmitted, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchInitialSlashingSubmitted(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleInitialSlashingSubmitted, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -4406,7 +4408,7 @@ func (_Csmodule *CsmoduleFilterer) WatchInitialSlashingSubmitted(opts *bind.Watc
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleInitialSlashingSubmitted)
+				event := new(domain.CsmoduleInitialSlashingSubmitted)
 				if err := _Csmodule.contract.UnpackLog(event, "InitialSlashingSubmitted", log); err != nil {
 					return err
 				}
@@ -4431,8 +4433,8 @@ func (_Csmodule *CsmoduleFilterer) WatchInitialSlashingSubmitted(opts *bind.Watc
 // ParseInitialSlashingSubmitted is a log parse operation binding the contract event 0xd34db8e8c0ddbc9c7b6dd8c397623dfbe01929e41e527540bff8794685d9b407.
 //
 // Solidity: event InitialSlashingSubmitted(uint256 indexed nodeOperatorId, uint256 keyIndex)
-func (_Csmodule *CsmoduleFilterer) ParseInitialSlashingSubmitted(log types.Log) (*CsmoduleInitialSlashingSubmitted, error) {
-	event := new(CsmoduleInitialSlashingSubmitted)
+func (_Csmodule *CsmoduleFilterer) ParseInitialSlashingSubmitted(log types.Log) (*domain.CsmoduleInitialSlashingSubmitted, error) {
+	event := new(domain.CsmoduleInitialSlashingSubmitted)
 	if err := _Csmodule.contract.UnpackLog(event, "InitialSlashingSubmitted", log); err != nil {
 		return nil, err
 	}
@@ -4576,7 +4578,7 @@ func (_Csmodule *CsmoduleFilterer) ParseInitialized(log types.Log) (*CsmoduleIni
 
 // CsmoduleKeyRemovalChargeAppliedIterator is returned from FilterKeyRemovalChargeApplied and is used to iterate over the raw logs and unpacked data for KeyRemovalChargeApplied events raised by the Csmodule contract.
 type CsmoduleKeyRemovalChargeAppliedIterator struct {
-	Event *CsmoduleKeyRemovalChargeApplied // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleKeyRemovalChargeApplied // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4599,7 +4601,7 @@ func (it *CsmoduleKeyRemovalChargeAppliedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleKeyRemovalChargeApplied)
+			it.Event = new(domain.CsmoduleKeyRemovalChargeApplied)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4614,7 +4616,7 @@ func (it *CsmoduleKeyRemovalChargeAppliedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleKeyRemovalChargeApplied)
+		it.Event = new(domain.CsmoduleKeyRemovalChargeApplied)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4642,10 +4644,10 @@ func (it *CsmoduleKeyRemovalChargeAppliedIterator) Close() error {
 }
 
 // CsmoduleKeyRemovalChargeApplied represents a KeyRemovalChargeApplied event raised by the Csmodule contract.
-type CsmoduleKeyRemovalChargeApplied struct {
-	NodeOperatorId *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleKeyRemovalChargeApplied struct {
+// 	NodeOperatorId *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterKeyRemovalChargeApplied is a free log retrieval operation binding the contract event 0x1cbb8dafbedbdf4f813a8ed1f50d871def63e1104f8729b677af57905eda90f6.
 //
@@ -4667,7 +4669,7 @@ func (_Csmodule *CsmoduleFilterer) FilterKeyRemovalChargeApplied(opts *bind.Filt
 // WatchKeyRemovalChargeApplied is a free log subscription operation binding the contract event 0x1cbb8dafbedbdf4f813a8ed1f50d871def63e1104f8729b677af57905eda90f6.
 //
 // Solidity: event KeyRemovalChargeApplied(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) WatchKeyRemovalChargeApplied(opts *bind.WatchOpts, sink chan<- *CsmoduleKeyRemovalChargeApplied, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchKeyRemovalChargeApplied(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleKeyRemovalChargeApplied, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -4684,7 +4686,7 @@ func (_Csmodule *CsmoduleFilterer) WatchKeyRemovalChargeApplied(opts *bind.Watch
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleKeyRemovalChargeApplied)
+				event := new(domain.CsmoduleKeyRemovalChargeApplied)
 				if err := _Csmodule.contract.UnpackLog(event, "KeyRemovalChargeApplied", log); err != nil {
 					return err
 				}
@@ -4709,8 +4711,8 @@ func (_Csmodule *CsmoduleFilterer) WatchKeyRemovalChargeApplied(opts *bind.Watch
 // ParseKeyRemovalChargeApplied is a log parse operation binding the contract event 0x1cbb8dafbedbdf4f813a8ed1f50d871def63e1104f8729b677af57905eda90f6.
 //
 // Solidity: event KeyRemovalChargeApplied(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) ParseKeyRemovalChargeApplied(log types.Log) (*CsmoduleKeyRemovalChargeApplied, error) {
-	event := new(CsmoduleKeyRemovalChargeApplied)
+func (_Csmodule *CsmoduleFilterer) ParseKeyRemovalChargeApplied(log types.Log) (*domain.CsmoduleKeyRemovalChargeApplied, error) {
+	event := new(domain.CsmoduleKeyRemovalChargeApplied)
 	if err := _Csmodule.contract.UnpackLog(event, "KeyRemovalChargeApplied", log); err != nil {
 		return nil, err
 	}
@@ -5178,7 +5180,7 @@ func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChangeProposed
 
 // CsmoduleNodeOperatorManagerAddressChangedIterator is returned from FilterNodeOperatorManagerAddressChanged and is used to iterate over the raw logs and unpacked data for NodeOperatorManagerAddressChanged events raised by the Csmodule contract.
 type CsmoduleNodeOperatorManagerAddressChangedIterator struct {
-	Event *CsmoduleNodeOperatorManagerAddressChanged // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleNodeOperatorManagerAddressChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -5201,7 +5203,7 @@ func (it *CsmoduleNodeOperatorManagerAddressChangedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleNodeOperatorManagerAddressChanged)
+			it.Event = new(domain.CsmoduleNodeOperatorManagerAddressChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -5216,7 +5218,7 @@ func (it *CsmoduleNodeOperatorManagerAddressChangedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleNodeOperatorManagerAddressChanged)
+		it.Event = new(domain.CsmoduleNodeOperatorManagerAddressChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -5244,12 +5246,12 @@ func (it *CsmoduleNodeOperatorManagerAddressChangedIterator) Close() error {
 }
 
 // CsmoduleNodeOperatorManagerAddressChanged represents a NodeOperatorManagerAddressChanged event raised by the Csmodule contract.
-type CsmoduleNodeOperatorManagerAddressChanged struct {
-	NodeOperatorId *big.Int
-	OldAddress     common.Address
-	NewAddress     common.Address
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleNodeOperatorManagerAddressChanged struct {
+// 	NodeOperatorId *big.Int
+// 	OldAddress     common.Address
+// 	NewAddress     common.Address
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterNodeOperatorManagerAddressChanged is a free log retrieval operation binding the contract event 0x862021f23449d6e8516867bd839be15a3d8698a7561c5c2c35069074b7e91e61.
 //
@@ -5279,7 +5281,7 @@ func (_Csmodule *CsmoduleFilterer) FilterNodeOperatorManagerAddressChanged(opts 
 // WatchNodeOperatorManagerAddressChanged is a free log subscription operation binding the contract event 0x862021f23449d6e8516867bd839be15a3d8698a7561c5c2c35069074b7e91e61.
 //
 // Solidity: event NodeOperatorManagerAddressChanged(uint256 indexed nodeOperatorId, address indexed oldAddress, address indexed newAddress)
-func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChanged(opts *bind.WatchOpts, sink chan<- *CsmoduleNodeOperatorManagerAddressChanged, nodeOperatorId []*big.Int, oldAddress []common.Address, newAddress []common.Address) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChanged(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleNodeOperatorManagerAddressChanged, nodeOperatorId []*big.Int, oldAddress []common.Address, newAddress []common.Address) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -5304,7 +5306,7 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChanged(opts *
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleNodeOperatorManagerAddressChanged)
+				event := new(domain.CsmoduleNodeOperatorManagerAddressChanged)
 				if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorManagerAddressChanged", log); err != nil {
 					return err
 				}
@@ -5329,8 +5331,8 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorManagerAddressChanged(opts *
 // ParseNodeOperatorManagerAddressChanged is a log parse operation binding the contract event 0x862021f23449d6e8516867bd839be15a3d8698a7561c5c2c35069074b7e91e61.
 //
 // Solidity: event NodeOperatorManagerAddressChanged(uint256 indexed nodeOperatorId, address indexed oldAddress, address indexed newAddress)
-func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChanged(log types.Log) (*CsmoduleNodeOperatorManagerAddressChanged, error) {
-	event := new(CsmoduleNodeOperatorManagerAddressChanged)
+func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChanged(log types.Log) (*domain.CsmoduleNodeOperatorManagerAddressChanged, error) {
+	event := new(domain.CsmoduleNodeOperatorManagerAddressChanged)
 	if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorManagerAddressChanged", log); err != nil {
 		return nil, err
 	}
@@ -5340,7 +5342,7 @@ func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorManagerAddressChanged(log ty
 
 // CsmoduleNodeOperatorRewardAddressChangeProposedIterator is returned from FilterNodeOperatorRewardAddressChangeProposed and is used to iterate over the raw logs and unpacked data for NodeOperatorRewardAddressChangeProposed events raised by the Csmodule contract.
 type CsmoduleNodeOperatorRewardAddressChangeProposedIterator struct {
-	Event *CsmoduleNodeOperatorRewardAddressChangeProposed // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleNodeOperatorRewardAddressChangeProposed // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -5363,7 +5365,7 @@ func (it *CsmoduleNodeOperatorRewardAddressChangeProposedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleNodeOperatorRewardAddressChangeProposed)
+			it.Event = new(domain.CsmoduleNodeOperatorRewardAddressChangeProposed)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -5378,7 +5380,7 @@ func (it *CsmoduleNodeOperatorRewardAddressChangeProposedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleNodeOperatorRewardAddressChangeProposed)
+		it.Event = new(domain.CsmoduleNodeOperatorRewardAddressChangeProposed)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -5406,12 +5408,12 @@ func (it *CsmoduleNodeOperatorRewardAddressChangeProposedIterator) Close() error
 }
 
 // CsmoduleNodeOperatorRewardAddressChangeProposed represents a NodeOperatorRewardAddressChangeProposed event raised by the Csmodule contract.
-type CsmoduleNodeOperatorRewardAddressChangeProposed struct {
-	NodeOperatorId     *big.Int
-	OldProposedAddress common.Address
-	NewProposedAddress common.Address
-	Raw                types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleNodeOperatorRewardAddressChangeProposed struct {
+// 	NodeOperatorId     *big.Int
+// 	OldProposedAddress common.Address
+// 	NewProposedAddress common.Address
+// 	Raw                types.Log // Blockchain specific contextual infos
+// }
 
 // FilterNodeOperatorRewardAddressChangeProposed is a free log retrieval operation binding the contract event 0xb5878cdb1d66f971efe3b138a71c64bc5bc519314db2533e0e4cde954409ea5a.
 //
@@ -5441,7 +5443,7 @@ func (_Csmodule *CsmoduleFilterer) FilterNodeOperatorRewardAddressChangeProposed
 // WatchNodeOperatorRewardAddressChangeProposed is a free log subscription operation binding the contract event 0xb5878cdb1d66f971efe3b138a71c64bc5bc519314db2533e0e4cde954409ea5a.
 //
 // Solidity: event NodeOperatorRewardAddressChangeProposed(uint256 indexed nodeOperatorId, address indexed oldProposedAddress, address indexed newProposedAddress)
-func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChangeProposed(opts *bind.WatchOpts, sink chan<- *CsmoduleNodeOperatorRewardAddressChangeProposed, nodeOperatorId []*big.Int, oldProposedAddress []common.Address, newProposedAddress []common.Address) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChangeProposed(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleNodeOperatorRewardAddressChangeProposed, nodeOperatorId []*big.Int, oldProposedAddress []common.Address, newProposedAddress []common.Address) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -5466,7 +5468,7 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChangeProposed(
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleNodeOperatorRewardAddressChangeProposed)
+				event := new(domain.CsmoduleNodeOperatorRewardAddressChangeProposed)
 				if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorRewardAddressChangeProposed", log); err != nil {
 					return err
 				}
@@ -5491,8 +5493,8 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChangeProposed(
 // ParseNodeOperatorRewardAddressChangeProposed is a log parse operation binding the contract event 0xb5878cdb1d66f971efe3b138a71c64bc5bc519314db2533e0e4cde954409ea5a.
 //
 // Solidity: event NodeOperatorRewardAddressChangeProposed(uint256 indexed nodeOperatorId, address indexed oldProposedAddress, address indexed newProposedAddress)
-func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorRewardAddressChangeProposed(log types.Log) (*CsmoduleNodeOperatorRewardAddressChangeProposed, error) {
-	event := new(CsmoduleNodeOperatorRewardAddressChangeProposed)
+func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorRewardAddressChangeProposed(log types.Log) (*domain.CsmoduleNodeOperatorRewardAddressChangeProposed, error) {
+	event := new(domain.CsmoduleNodeOperatorRewardAddressChangeProposed)
 	if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorRewardAddressChangeProposed", log); err != nil {
 		return nil, err
 	}
@@ -5502,7 +5504,7 @@ func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorRewardAddressChangeProposed(
 
 // CsmoduleNodeOperatorRewardAddressChangedIterator is returned from FilterNodeOperatorRewardAddressChanged and is used to iterate over the raw logs and unpacked data for NodeOperatorRewardAddressChanged events raised by the Csmodule contract.
 type CsmoduleNodeOperatorRewardAddressChangedIterator struct {
-	Event *CsmoduleNodeOperatorRewardAddressChanged // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleNodeOperatorRewardAddressChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -5525,7 +5527,7 @@ func (it *CsmoduleNodeOperatorRewardAddressChangedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleNodeOperatorRewardAddressChanged)
+			it.Event = new(domain.CsmoduleNodeOperatorRewardAddressChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -5540,7 +5542,7 @@ func (it *CsmoduleNodeOperatorRewardAddressChangedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleNodeOperatorRewardAddressChanged)
+		it.Event = new(domain.CsmoduleNodeOperatorRewardAddressChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -5568,12 +5570,12 @@ func (it *CsmoduleNodeOperatorRewardAddressChangedIterator) Close() error {
 }
 
 // CsmoduleNodeOperatorRewardAddressChanged represents a NodeOperatorRewardAddressChanged event raised by the Csmodule contract.
-type CsmoduleNodeOperatorRewardAddressChanged struct {
-	NodeOperatorId *big.Int
-	OldAddress     common.Address
-	NewAddress     common.Address
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleNodeOperatorRewardAddressChanged struct {
+// 	NodeOperatorId *big.Int
+// 	OldAddress     common.Address
+// 	NewAddress     common.Address
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterNodeOperatorRewardAddressChanged is a free log retrieval operation binding the contract event 0x069ac7cd8230db015b7250c8e5425149cf1a3e912d9569f497165e55b3b6b7b2.
 //
@@ -5603,7 +5605,7 @@ func (_Csmodule *CsmoduleFilterer) FilterNodeOperatorRewardAddressChanged(opts *
 // WatchNodeOperatorRewardAddressChanged is a free log subscription operation binding the contract event 0x069ac7cd8230db015b7250c8e5425149cf1a3e912d9569f497165e55b3b6b7b2.
 //
 // Solidity: event NodeOperatorRewardAddressChanged(uint256 indexed nodeOperatorId, address indexed oldAddress, address indexed newAddress)
-func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChanged(opts *bind.WatchOpts, sink chan<- *CsmoduleNodeOperatorRewardAddressChanged, nodeOperatorId []*big.Int, oldAddress []common.Address, newAddress []common.Address) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChanged(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleNodeOperatorRewardAddressChanged, nodeOperatorId []*big.Int, oldAddress []common.Address, newAddress []common.Address) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -5628,7 +5630,7 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChanged(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleNodeOperatorRewardAddressChanged)
+				event := new(domain.CsmoduleNodeOperatorRewardAddressChanged)
 				if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorRewardAddressChanged", log); err != nil {
 					return err
 				}
@@ -5653,8 +5655,8 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorRewardAddressChanged(opts *b
 // ParseNodeOperatorRewardAddressChanged is a log parse operation binding the contract event 0x069ac7cd8230db015b7250c8e5425149cf1a3e912d9569f497165e55b3b6b7b2.
 //
 // Solidity: event NodeOperatorRewardAddressChanged(uint256 indexed nodeOperatorId, address indexed oldAddress, address indexed newAddress)
-func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorRewardAddressChanged(log types.Log) (*CsmoduleNodeOperatorRewardAddressChanged, error) {
-	event := new(CsmoduleNodeOperatorRewardAddressChanged)
+func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorRewardAddressChanged(log types.Log) (*domain.CsmoduleNodeOperatorRewardAddressChanged, error) {
+	event := new(domain.CsmoduleNodeOperatorRewardAddressChanged)
 	if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorRewardAddressChanged", log); err != nil {
 		return nil, err
 	}
@@ -5932,7 +5934,7 @@ func (_Csmodule *CsmoduleFilterer) ParsePaused(log types.Log) (*CsmodulePaused, 
 
 // CsmodulePublicReleaseIterator is returned from FilterPublicRelease and is used to iterate over the raw logs and unpacked data for PublicRelease events raised by the Csmodule contract.
 type CsmodulePublicReleaseIterator struct {
-	Event *CsmodulePublicRelease // Event containing the contract specifics and raw log
+	Event *domain.CsmodulePublicRelease // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -5955,7 +5957,7 @@ func (it *CsmodulePublicReleaseIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmodulePublicRelease)
+			it.Event = new(domain.CsmodulePublicRelease)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -5970,7 +5972,7 @@ func (it *CsmodulePublicReleaseIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmodulePublicRelease)
+		it.Event = new(domain.CsmodulePublicRelease)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -5998,9 +6000,9 @@ func (it *CsmodulePublicReleaseIterator) Close() error {
 }
 
 // CsmodulePublicRelease represents a PublicRelease event raised by the Csmodule contract.
-type CsmodulePublicRelease struct {
-	Raw types.Log // Blockchain specific contextual infos
-}
+// type CsmodulePublicRelease struct {
+// 	Raw types.Log // Blockchain specific contextual infos
+// }
 
 // FilterPublicRelease is a free log retrieval operation binding the contract event 0xe5eb57aa4d841adeece4ac87bd294965df4a894f0aa24db4a4a55a39ab101d6e.
 //
@@ -6017,7 +6019,7 @@ func (_Csmodule *CsmoduleFilterer) FilterPublicRelease(opts *bind.FilterOpts) (*
 // WatchPublicRelease is a free log subscription operation binding the contract event 0xe5eb57aa4d841adeece4ac87bd294965df4a894f0aa24db4a4a55a39ab101d6e.
 //
 // Solidity: event PublicRelease()
-func (_Csmodule *CsmoduleFilterer) WatchPublicRelease(opts *bind.WatchOpts, sink chan<- *CsmodulePublicRelease) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchPublicRelease(opts *bind.WatchOpts, sink chan<- *domain.CsmodulePublicRelease) (event.Subscription, error) {
 
 	logs, sub, err := _Csmodule.contract.WatchLogs(opts, "PublicRelease")
 	if err != nil {
@@ -6029,7 +6031,7 @@ func (_Csmodule *CsmoduleFilterer) WatchPublicRelease(opts *bind.WatchOpts, sink
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmodulePublicRelease)
+				event := new(domain.CsmodulePublicRelease)
 				if err := _Csmodule.contract.UnpackLog(event, "PublicRelease", log); err != nil {
 					return err
 				}
@@ -6054,8 +6056,8 @@ func (_Csmodule *CsmoduleFilterer) WatchPublicRelease(opts *bind.WatchOpts, sink
 // ParsePublicRelease is a log parse operation binding the contract event 0xe5eb57aa4d841adeece4ac87bd294965df4a894f0aa24db4a4a55a39ab101d6e.
 //
 // Solidity: event PublicRelease()
-func (_Csmodule *CsmoduleFilterer) ParsePublicRelease(log types.Log) (*CsmodulePublicRelease, error) {
-	event := new(CsmodulePublicRelease)
+func (_Csmodule *CsmoduleFilterer) ParsePublicRelease(log types.Log) (*domain.CsmodulePublicRelease, error) {
+	event := new(domain.CsmodulePublicRelease)
 	if err := _Csmodule.contract.UnpackLog(event, "PublicRelease", log); err != nil {
 		return nil, err
 	}
@@ -7272,7 +7274,7 @@ func (_Csmodule *CsmoduleFilterer) ParseStETHSharesRecovered(log types.Log) (*Cs
 
 // CsmoduleStuckSigningKeysCountChangedIterator is returned from FilterStuckSigningKeysCountChanged and is used to iterate over the raw logs and unpacked data for StuckSigningKeysCountChanged events raised by the Csmodule contract.
 type CsmoduleStuckSigningKeysCountChangedIterator struct {
-	Event *CsmoduleStuckSigningKeysCountChanged // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleStuckSigningKeysCountChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -7295,7 +7297,7 @@ func (it *CsmoduleStuckSigningKeysCountChangedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleStuckSigningKeysCountChanged)
+			it.Event = new(domain.CsmoduleStuckSigningKeysCountChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -7310,7 +7312,7 @@ func (it *CsmoduleStuckSigningKeysCountChangedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleStuckSigningKeysCountChanged)
+		it.Event = new(domain.CsmoduleStuckSigningKeysCountChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -7338,11 +7340,11 @@ func (it *CsmoduleStuckSigningKeysCountChangedIterator) Close() error {
 }
 
 // CsmoduleStuckSigningKeysCountChanged represents a StuckSigningKeysCountChanged event raised by the Csmodule contract.
-type CsmoduleStuckSigningKeysCountChanged struct {
-	NodeOperatorId *big.Int
-	StuckKeysCount *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleStuckSigningKeysCountChanged struct {
+// 	NodeOperatorId *big.Int
+// 	StuckKeysCount *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterStuckSigningKeysCountChanged is a free log retrieval operation binding the contract event 0xb4f5879eca27b32881cec7907d1310378e9b4c79927062fb7d4a321434b5b04a.
 //
@@ -7364,7 +7366,7 @@ func (_Csmodule *CsmoduleFilterer) FilterStuckSigningKeysCountChanged(opts *bind
 // WatchStuckSigningKeysCountChanged is a free log subscription operation binding the contract event 0xb4f5879eca27b32881cec7907d1310378e9b4c79927062fb7d4a321434b5b04a.
 //
 // Solidity: event StuckSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 stuckKeysCount)
-func (_Csmodule *CsmoduleFilterer) WatchStuckSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *CsmoduleStuckSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchStuckSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleStuckSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -7381,7 +7383,7 @@ func (_Csmodule *CsmoduleFilterer) WatchStuckSigningKeysCountChanged(opts *bind.
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleStuckSigningKeysCountChanged)
+				event := new(domain.CsmoduleStuckSigningKeysCountChanged)
 				if err := _Csmodule.contract.UnpackLog(event, "StuckSigningKeysCountChanged", log); err != nil {
 					return err
 				}
@@ -7406,8 +7408,8 @@ func (_Csmodule *CsmoduleFilterer) WatchStuckSigningKeysCountChanged(opts *bind.
 // ParseStuckSigningKeysCountChanged is a log parse operation binding the contract event 0xb4f5879eca27b32881cec7907d1310378e9b4c79927062fb7d4a321434b5b04a.
 //
 // Solidity: event StuckSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 stuckKeysCount)
-func (_Csmodule *CsmoduleFilterer) ParseStuckSigningKeysCountChanged(log types.Log) (*CsmoduleStuckSigningKeysCountChanged, error) {
-	event := new(CsmoduleStuckSigningKeysCountChanged)
+func (_Csmodule *CsmoduleFilterer) ParseStuckSigningKeysCountChanged(log types.Log) (*domain.CsmoduleStuckSigningKeysCountChanged, error) {
+	event := new(domain.CsmoduleStuckSigningKeysCountChanged)
 	if err := _Csmodule.contract.UnpackLog(event, "StuckSigningKeysCountChanged", log); err != nil {
 		return nil, err
 	}
@@ -7563,7 +7565,7 @@ func (_Csmodule *CsmoduleFilterer) ParseTargetValidatorsCountChanged(log types.L
 
 // CsmoduleTotalSigningKeysCountChangedIterator is returned from FilterTotalSigningKeysCountChanged and is used to iterate over the raw logs and unpacked data for TotalSigningKeysCountChanged events raised by the Csmodule contract.
 type CsmoduleTotalSigningKeysCountChangedIterator struct {
-	Event *CsmoduleTotalSigningKeysCountChanged // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleTotalSigningKeysCountChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -7586,7 +7588,7 @@ func (it *CsmoduleTotalSigningKeysCountChangedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleTotalSigningKeysCountChanged)
+			it.Event = new(domain.CsmoduleTotalSigningKeysCountChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -7601,7 +7603,7 @@ func (it *CsmoduleTotalSigningKeysCountChangedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleTotalSigningKeysCountChanged)
+		it.Event = new(domain.CsmoduleTotalSigningKeysCountChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -7629,11 +7631,11 @@ func (it *CsmoduleTotalSigningKeysCountChangedIterator) Close() error {
 }
 
 // CsmoduleTotalSigningKeysCountChanged represents a TotalSigningKeysCountChanged event raised by the Csmodule contract.
-type CsmoduleTotalSigningKeysCountChanged struct {
-	NodeOperatorId *big.Int
-	TotalKeysCount *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleTotalSigningKeysCountChanged struct {
+// 	NodeOperatorId *big.Int
+// 	TotalKeysCount *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterTotalSigningKeysCountChanged is a free log retrieval operation binding the contract event 0xdd01838a366ae4dc9a86e1922512c0716abebc9a440baae0e22d2dec578223f0.
 //
@@ -7655,7 +7657,7 @@ func (_Csmodule *CsmoduleFilterer) FilterTotalSigningKeysCountChanged(opts *bind
 // WatchTotalSigningKeysCountChanged is a free log subscription operation binding the contract event 0xdd01838a366ae4dc9a86e1922512c0716abebc9a440baae0e22d2dec578223f0.
 //
 // Solidity: event TotalSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 totalKeysCount)
-func (_Csmodule *CsmoduleFilterer) WatchTotalSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *CsmoduleTotalSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchTotalSigningKeysCountChanged(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleTotalSigningKeysCountChanged, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -7672,7 +7674,7 @@ func (_Csmodule *CsmoduleFilterer) WatchTotalSigningKeysCountChanged(opts *bind.
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleTotalSigningKeysCountChanged)
+				event := new(domain.CsmoduleTotalSigningKeysCountChanged)
 				if err := _Csmodule.contract.UnpackLog(event, "TotalSigningKeysCountChanged", log); err != nil {
 					return err
 				}
@@ -7697,8 +7699,8 @@ func (_Csmodule *CsmoduleFilterer) WatchTotalSigningKeysCountChanged(opts *bind.
 // ParseTotalSigningKeysCountChanged is a log parse operation binding the contract event 0xdd01838a366ae4dc9a86e1922512c0716abebc9a440baae0e22d2dec578223f0.
 //
 // Solidity: event TotalSigningKeysCountChanged(uint256 indexed nodeOperatorId, uint256 totalKeysCount)
-func (_Csmodule *CsmoduleFilterer) ParseTotalSigningKeysCountChanged(log types.Log) (*CsmoduleTotalSigningKeysCountChanged, error) {
-	event := new(CsmoduleTotalSigningKeysCountChanged)
+func (_Csmodule *CsmoduleFilterer) ParseTotalSigningKeysCountChanged(log types.Log) (*domain.CsmoduleTotalSigningKeysCountChanged, error) {
+	event := new(domain.CsmoduleTotalSigningKeysCountChanged)
 	if err := _Csmodule.contract.UnpackLog(event, "TotalSigningKeysCountChanged", log); err != nil {
 		return nil, err
 	}
@@ -7853,7 +7855,7 @@ func (_Csmodule *CsmoduleFilterer) ParseVettedSigningKeysCountChanged(log types.
 
 // CsmoduleVettedSigningKeysCountDecreasedIterator is returned from FilterVettedSigningKeysCountDecreased and is used to iterate over the raw logs and unpacked data for VettedSigningKeysCountDecreased events raised by the Csmodule contract.
 type CsmoduleVettedSigningKeysCountDecreasedIterator struct {
-	Event *CsmoduleVettedSigningKeysCountDecreased // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleVettedSigningKeysCountDecreased // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -7876,7 +7878,7 @@ func (it *CsmoduleVettedSigningKeysCountDecreasedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleVettedSigningKeysCountDecreased)
+			it.Event = new(domain.CsmoduleVettedSigningKeysCountDecreased)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -7891,7 +7893,7 @@ func (it *CsmoduleVettedSigningKeysCountDecreasedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleVettedSigningKeysCountDecreased)
+		it.Event = new(domain.CsmoduleVettedSigningKeysCountDecreased)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -7919,10 +7921,10 @@ func (it *CsmoduleVettedSigningKeysCountDecreasedIterator) Close() error {
 }
 
 // CsmoduleVettedSigningKeysCountDecreased represents a VettedSigningKeysCountDecreased event raised by the Csmodule contract.
-type CsmoduleVettedSigningKeysCountDecreased struct {
-	NodeOperatorId *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleVettedSigningKeysCountDecreased struct {
+// 	NodeOperatorId *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterVettedSigningKeysCountDecreased is a free log retrieval operation binding the contract event 0xe5725d045d5c47bd1483feba445e395dc8647486963e6d54aad9ed03ff7d6ce6.
 //
@@ -7944,7 +7946,7 @@ func (_Csmodule *CsmoduleFilterer) FilterVettedSigningKeysCountDecreased(opts *b
 // WatchVettedSigningKeysCountDecreased is a free log subscription operation binding the contract event 0xe5725d045d5c47bd1483feba445e395dc8647486963e6d54aad9ed03ff7d6ce6.
 //
 // Solidity: event VettedSigningKeysCountDecreased(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) WatchVettedSigningKeysCountDecreased(opts *bind.WatchOpts, sink chan<- *CsmoduleVettedSigningKeysCountDecreased, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchVettedSigningKeysCountDecreased(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleVettedSigningKeysCountDecreased, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -7961,7 +7963,7 @@ func (_Csmodule *CsmoduleFilterer) WatchVettedSigningKeysCountDecreased(opts *bi
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleVettedSigningKeysCountDecreased)
+				event := new(domain.CsmoduleVettedSigningKeysCountDecreased)
 				if err := _Csmodule.contract.UnpackLog(event, "VettedSigningKeysCountDecreased", log); err != nil {
 					return err
 				}
@@ -7986,8 +7988,8 @@ func (_Csmodule *CsmoduleFilterer) WatchVettedSigningKeysCountDecreased(opts *bi
 // ParseVettedSigningKeysCountDecreased is a log parse operation binding the contract event 0xe5725d045d5c47bd1483feba445e395dc8647486963e6d54aad9ed03ff7d6ce6.
 //
 // Solidity: event VettedSigningKeysCountDecreased(uint256 indexed nodeOperatorId)
-func (_Csmodule *CsmoduleFilterer) ParseVettedSigningKeysCountDecreased(log types.Log) (*CsmoduleVettedSigningKeysCountDecreased, error) {
-	event := new(CsmoduleVettedSigningKeysCountDecreased)
+func (_Csmodule *CsmoduleFilterer) ParseVettedSigningKeysCountDecreased(log types.Log) (*domain.CsmoduleVettedSigningKeysCountDecreased, error) {
+	event := new(domain.CsmoduleVettedSigningKeysCountDecreased)
 	if err := _Csmodule.contract.UnpackLog(event, "VettedSigningKeysCountDecreased", log); err != nil {
 		return nil, err
 	}
@@ -7997,7 +7999,7 @@ func (_Csmodule *CsmoduleFilterer) ParseVettedSigningKeysCountDecreased(log type
 
 // CsmoduleWithdrawalSubmittedIterator is returned from FilterWithdrawalSubmitted and is used to iterate over the raw logs and unpacked data for WithdrawalSubmitted events raised by the Csmodule contract.
 type CsmoduleWithdrawalSubmittedIterator struct {
-	Event *CsmoduleWithdrawalSubmitted // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleWithdrawalSubmitted // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -8020,7 +8022,7 @@ func (it *CsmoduleWithdrawalSubmittedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleWithdrawalSubmitted)
+			it.Event = new(domain.CsmoduleWithdrawalSubmitted)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -8035,7 +8037,7 @@ func (it *CsmoduleWithdrawalSubmittedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleWithdrawalSubmitted)
+		it.Event = new(domain.CsmoduleWithdrawalSubmitted)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -8063,12 +8065,12 @@ func (it *CsmoduleWithdrawalSubmittedIterator) Close() error {
 }
 
 // CsmoduleWithdrawalSubmitted represents a WithdrawalSubmitted event raised by the Csmodule contract.
-type CsmoduleWithdrawalSubmitted struct {
-	NodeOperatorId *big.Int
-	KeyIndex       *big.Int
-	Amount         *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleWithdrawalSubmitted struct {
+// 	NodeOperatorId *big.Int
+// 	KeyIndex       *big.Int
+// 	Amount         *big.Int
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterWithdrawalSubmitted is a free log retrieval operation binding the contract event 0xcb2f99f65711a7d6df7f552255b910bf59f09fcd5935f44c170b4cb0d1b50995.
 //
@@ -8090,7 +8092,7 @@ func (_Csmodule *CsmoduleFilterer) FilterWithdrawalSubmitted(opts *bind.FilterOp
 // WatchWithdrawalSubmitted is a free log subscription operation binding the contract event 0xcb2f99f65711a7d6df7f552255b910bf59f09fcd5935f44c170b4cb0d1b50995.
 //
 // Solidity: event WithdrawalSubmitted(uint256 indexed nodeOperatorId, uint256 keyIndex, uint256 amount)
-func (_Csmodule *CsmoduleFilterer) WatchWithdrawalSubmitted(opts *bind.WatchOpts, sink chan<- *CsmoduleWithdrawalSubmitted, nodeOperatorId []*big.Int) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchWithdrawalSubmitted(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleWithdrawalSubmitted, nodeOperatorId []*big.Int) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -8107,7 +8109,7 @@ func (_Csmodule *CsmoduleFilterer) WatchWithdrawalSubmitted(opts *bind.WatchOpts
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleWithdrawalSubmitted)
+				event := new(domain.CsmoduleWithdrawalSubmitted)
 				if err := _Csmodule.contract.UnpackLog(event, "WithdrawalSubmitted", log); err != nil {
 					return err
 				}
@@ -8132,8 +8134,8 @@ func (_Csmodule *CsmoduleFilterer) WatchWithdrawalSubmitted(opts *bind.WatchOpts
 // ParseWithdrawalSubmitted is a log parse operation binding the contract event 0xcb2f99f65711a7d6df7f552255b910bf59f09fcd5935f44c170b4cb0d1b50995.
 //
 // Solidity: event WithdrawalSubmitted(uint256 indexed nodeOperatorId, uint256 keyIndex, uint256 amount)
-func (_Csmodule *CsmoduleFilterer) ParseWithdrawalSubmitted(log types.Log) (*CsmoduleWithdrawalSubmitted, error) {
-	event := new(CsmoduleWithdrawalSubmitted)
+func (_Csmodule *CsmoduleFilterer) ParseWithdrawalSubmitted(log types.Log) (*domain.CsmoduleWithdrawalSubmitted, error) {
+	event := new(domain.CsmoduleWithdrawalSubmitted)
 	if err := _Csmodule.contract.UnpackLog(event, "WithdrawalSubmitted", log); err != nil {
 		return nil, err
 	}
