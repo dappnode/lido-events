@@ -7,23 +7,21 @@ import (
 	"net/http"
 	"strconv"
 
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/services"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/services"
 
 	"github.com/gorilla/mux"
 )
 
 type APIHandler struct {
 	StorageService *services.StorageService
-	Notifier       *services.NotifierService
 	Router         *mux.Router
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up the routes
-func NewAPIAdapter(storageService *services.StorageService, notifier *services.NotifierService) *APIHandler {
+func NewAPIAdapter(storageService *services.StorageService) *APIHandler {
 	h := &APIHandler{
 		StorageService: storageService,
-		Notifier:       notifier,
 		Router:         mux.NewRouter(),
 	}
 
@@ -62,12 +60,6 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.Notifier.SendNotification("Telegram configuration updated")
-	if err != nil {
-		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -97,12 +89,6 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 	err := h.StorageService.SetOperatorId(domain.OperatorId(operatorIdNum))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
-		return
-	}
-
-	err = h.Notifier.SendNotification("Operator ID updated")
-	if err != nil {
-		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
 		return
 	}
 

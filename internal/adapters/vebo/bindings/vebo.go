@@ -5,7 +5,7 @@ package bindings
 
 import (
 	"errors"
-	"lido-events/internal/aplication/domain"
+	"lido-events/internal/application/domain"
 	"math/big"
 	"strings"
 

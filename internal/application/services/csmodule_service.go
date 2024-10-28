@@ -3,29 +3,29 @@ package services
 import (
 	"context"
 	"fmt"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 	"log"
 )
 
 type CsModuleService struct {
 	notifierPort ports.NotifierPort
 	storagePort  ports.StoragePort
-	csModule     ports.CsModulePort
+	csModulePort ports.CsModulePort
 }
 
 func NewCsModuleService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, csModulePort ports.CsModulePort) *CsModuleService {
 	return &CsModuleService{
-		notifierPort: notifierPort,
-		storagePort:  storagePort,
-		csModule:     csModulePort,
+		notifierPort,
+		storagePort,
+		csModulePort,
 	}
 }
 
 // WatchCsModuleEvents subscribes to Ethereum events and handles them.
 // It passes to the csModule port a function that processes the log data.
 func (csms *CsModuleService) WatchCsModuleEvents(ctx context.Context) error {
-	return csms.csModule.WatchCsModuleEvents(ctx, csms)
+	return csms.csModulePort.WatchCsModuleEvents(ctx, csms)
 }
 
 // Make CsModuleService implement the CsModuleHandlers interface by adding the methods

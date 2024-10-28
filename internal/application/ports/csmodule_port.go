@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	"lido-events/internal/aplication/domain"
+	"lido-events/internal/application/domain"
 )
 
 type CsModulePort interface {

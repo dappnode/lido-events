@@ -2,31 +2,32 @@ package services
 
 import (
 	"errors"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 
 	"log"
 )
 
 type StorageService struct {
-	storageService ports.StoragePort
+	storagePort ports.StoragePort
+	notiferPort ports.NotifierPort
 }
 
 // NewStorageService creates a new instance of OperatorService
 func NewStorageService(storage ports.StoragePort) *StorageService {
 	return &StorageService{
-		storageService: storage,
+		storagePort: storage,
 	}
 }
 
 // GetLidoReport retrieves the Lido report for the given range of epochs
 func (os *StorageService) GetLidoReport(start, end string) (map[string]domain.Report, error) {
-	return os.storageService.GetLidoReport(start, end)
+	return os.storagePort.GetLidoReport(start, end)
 }
 
 // SaveLidoReport saves the Lido report to the repository
 func (os *StorageService) SaveLidoReport(report map[string]domain.Report) error {
-	err := os.storageService.SaveLidoReport(report)
+	err := os.storagePort.SaveLidoReport(report)
 	if err != nil {
 		return err
 	}
@@ -37,12 +38,12 @@ func (os *StorageService) SaveLidoReport(report map[string]domain.Report) error 
 
 // GetExitRequests retrieves the exit requests from the repository
 func (os *StorageService) GetExitRequests() (domain.ExitRequest, error) {
-	return os.storageService.GetExitRequests()
+	return os.storagePort.GetExitRequests()
 }
 
 // SetExitRequests saves the exit requests to the repository
 func (os *StorageService) SetExitRequests(exitRequests domain.ExitRequest) error {
-	err := os.storageService.SaveExitRequests(exitRequests)
+	err := os.storagePort.SaveExitRequests(exitRequests)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func (os *StorageService) SetExitRequests(exitRequests domain.ExitRequest) error
 
 // GetTelegramConfig retrieves the Telegram configuration from the repository
 func (os *StorageService) GetTelegramConfig() (domain.TelegramConfig, error) {
-	return os.storageService.GetTelegramConfig()
+	return os.storagePort.GetTelegramConfig()
 }
 
 // SetTelegramConfig validates and saves the Telegram configuration, then notifies
@@ -65,10 +66,16 @@ func (os *StorageService) SetTelegramConfig(config domain.TelegramConfig) error 
 		return errors.New("telegram chat id cannot be empty")
 	}
 
-	err := os.storageService.SaveTelegramConfig(config)
+	err := os.storagePort.SaveTelegramConfig(config)
 	if err != nil {
 		return err
 	}
+
+	err = os.notiferPort.SendNotification("Telegram configuration updated")
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Telegram config updated")
 
 	return nil
@@ -76,15 +83,21 @@ func (os *StorageService) SetTelegramConfig(config domain.TelegramConfig) error 
 
 // GetOperatorId retrieves the operator ID from the repository
 func (os *StorageService) GetOperatorId() (domain.OperatorId, error) {
-	return os.storageService.GetOperatorId()
+	return os.storagePort.GetOperatorId()
 }
 
 // SetOperatorId validates and sets the operator ID, then notifies
 func (os *StorageService) SetOperatorId(operatorID domain.OperatorId) error {
-	err := os.storageService.SaveOperatorId(operatorID)
+	err := os.storagePort.SaveOperatorId(operatorID)
 	if err != nil {
 		return err
 	}
+
+	err = os.notiferPort.SendNotification("Operator ID updated")
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Operator ID updated %v", operatorID)
 
 	return nil

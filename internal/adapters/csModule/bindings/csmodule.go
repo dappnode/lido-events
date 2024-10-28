@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 
-	"lido-events/internal/aplication/domain"
+	"lido-events/internal/application/domain"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

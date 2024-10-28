@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 	"log"
 )
 
@@ -13,10 +13,10 @@ type CsFeeDistributorService struct {
 	csFeeDistributorPort ports.CsFeeDistributorPort
 }
 
-func NewCsFeeDistributorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, subscriberPort ports.CsFeeDistributorPort) *CsFeeDistributorService {
+func NewCsFeeDistributorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, csFeeDistributorPort ports.CsFeeDistributorPort) *CsFeeDistributorService {
 	return &CsFeeDistributorService{
-		notifierPort:         notifierPort,
-		csFeeDistributorPort: subscriberPort,
+		notifierPort,
+		csFeeDistributorPort,
 	}
 }
 

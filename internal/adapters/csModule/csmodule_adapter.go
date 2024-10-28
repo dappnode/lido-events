@@ -3,8 +3,8 @@ package csmodule
 import (
 	"context"
 	"lido-events/internal/adapters/csModule/bindings"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 	"log"
 	"math/big"
 

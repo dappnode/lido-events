@@ -3,8 +3,8 @@ package csfeedistributor
 import (
 	"context"
 	"lido-events/internal/adapters/csFeeDistributor/bindings"
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/ports"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

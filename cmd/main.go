@@ -10,7 +10,7 @@ import (
 	"lido-events/internal/adapters/vebo"
 	"math/big"
 
-	"lido-events/internal/aplication/services"
+	"lido-events/internal/application/services"
 	"lido-events/internal/config"
 	"log"
 	"net/http"
@@ -66,7 +66,6 @@ func main() {
 	}
 
 	// Initialize services
-	notifierService := services.NewNotifierService(notifierAdapter)
 	storageService := services.NewStorageService(storageAdapter)
 	veboService := services.NewVeboService(storageAdapter, notifierAdapter, veboAdapter)
 	csModuleService := services.NewCsModuleService(storageAdapter, notifierAdapter, csModuleAdapter)
@@ -84,7 +83,7 @@ func main() {
 	}
 
 	// Initialize the API handler (internally sets up routes)
-	apiAdapter := api.NewAPIAdapter(storageService, notifierService)
+	apiAdapter := api.NewAPIAdapter(storageService)
 	log.Println("Server started on :8080")
 	log.Fatal(http.ListenAndServe(":8080", apiAdapter.Router))
 }
