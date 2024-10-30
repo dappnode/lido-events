@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"lido-events/internal/adapters/api"
-	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csmodule "lido-events/internal/adapters/csModule"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/notifier"
-	"lido-events/internal/adapters/signer"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"math/big"
@@ -47,9 +45,7 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
-	signerAdapter := signer.NewSignerAdapter(networkConfig.SignerUrl)
-	beaconchainAdapter := beaconchain.NewBeaconChainAdapter(networkConfig.BeaconchainURL)
-	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, signerAdapter)
+	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(networkConfig.BeaconchainURL, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)

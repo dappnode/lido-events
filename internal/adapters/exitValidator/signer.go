@@ -1,4 +1,4 @@
-package signer
+package exitvalidator
 
 import (
 	"bytes"
@@ -7,23 +7,10 @@ import (
 	"net/http"
 )
 
-// TODO: add return type
-
-type SignerAdapter struct {
-	signerUrl string
-}
-
-// NewSignerAdapter initializes a new SignerAdapter with the given signerUrl
-func NewSignerAdapter(signerUrl string) *SignerAdapter {
-	return &SignerAdapter{
-		signerUrl: signerUrl,
-	}
-}
-
 // VoluntaryExitRequest holds parameters needed to sign a voluntary exit
 type VoluntaryExitRequest struct {
-	PubKey                string
-	SigningRoot           string
+	PubKey string
+	// SigningRoot           string
 	GenesisValidatorsRoot string
 	ForkInfo              ForkInfo
 	VoluntaryExit         VoluntaryExit
@@ -32,13 +19,13 @@ type VoluntaryExitRequest struct {
 // Eth2SignVoluntaryExit sends a request to the Web3Signer URL to sign a voluntary exit message
 // and returns the signature as a string.
 // API docs: https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Signing/operation/ETH2_SIGN
-func (sa *SignerAdapter) Eth2SignVoluntaryExit(req VoluntaryExitRequest) (string, error) {
+func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, error) {
 	identifier := req.PubKey // Identifier is the BLS public key in hex format.
 
 	// Define the request body structure
 	body := map[string]interface{}{
-		"type":        "VOLUNTARY_EXIT",
-		"signingRoot": req.SigningRoot,
+		"type": "VOLUNTARY_EXIT",
+		//"signingRoot": req.SigningRoot,
 		"fork_info": map[string]interface{}{
 			"fork": map[string]interface{}{
 				"previous_version": req.ForkInfo.PreviousVersion,
@@ -60,7 +47,7 @@ func (sa *SignerAdapter) Eth2SignVoluntaryExit(req VoluntaryExitRequest) (string
 	}
 
 	// Make the HTTP request
-	url := fmt.Sprintf("%s/api/v1/eth2/sign/%s", sa.signerUrl, identifier)
+	url := fmt.Sprintf("%s/api/v1/eth2/sign/%s", signerUrl, identifier)
 	reqHttp, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)

@@ -1,4 +1,4 @@
-package beaconchain
+package exitvalidator
 
 import (
 	"bytes"
@@ -7,21 +7,9 @@ import (
 	"net/http"
 )
 
-// BeaconChainAdapter holds the URL for the Beacon chain API
-type BeaconChainAdapter struct {
-	beaconChainUrl string
-}
-
-// NewBeaconChainAdapter initializes a new BeaconChainAdapter with the given beaconChainUrl
-func NewBeaconChainAdapter(beaconChainUrl string) *BeaconChainAdapter {
-	return &BeaconChainAdapter{
-		beaconChainUrl: beaconChainUrl,
-	}
-}
-
 // SubmitPoolVoluntaryExit submits a voluntary exit message to the Beacon chain pool.
 // It takes epoch, validatorIndex, and signature as arguments.
-func (bca *BeaconChainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature string) error {
+func SubmitPoolVoluntaryExit(beaconChainUrl string, epoch, validatorIndex, signature string) error {
 	// Define the request body structure
 	body := map[string]interface{}{
 		"message": map[string]string{
@@ -38,7 +26,7 @@ func (bca *BeaconChainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, si
 	}
 
 	// Make the HTTP request
-	url := fmt.Sprintf("%s/eth/v1/beacon/pool/voluntary_exits", bca.beaconChainUrl)
+	url := fmt.Sprintf("%s/eth/v1/beacon/pool/voluntary_exits", beaconChainUrl)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
@@ -59,11 +47,10 @@ func (bca *BeaconChainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, si
 	return nil
 }
 
-
 // GetStateFork retrieves the state fork for a specified state_id.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
-func (bca *BeaconChainAdapter) GetStateFork(stateID string) (*StateForkResponse, error) {
-	url := fmt.Sprintf("%s/eth/v1/beacon/states/%s/fork", bca.beaconChainUrl, stateID)
+func GetStateFork(beaconChainUrl string, stateID string) (*StateForkResponse, error) {
+	url := fmt.Sprintf("%s/eth/v1/beacon/states/%s/fork", beaconChainUrl, stateID)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -79,8 +66,8 @@ func (bca *BeaconChainAdapter) GetStateFork(stateID string) (*StateForkResponse,
 
 // GetGenesis retrieves the genesis data.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getGenesis
-func (bca *BeaconChainAdapter) GetGenesis() (*GenesisResponse, error) {
-	url := fmt.Sprintf("%s/eth/v1/beacon/genesis", bca.beaconChainUrl)
+func GetGenesis(beaconChainUrl string) (*GenesisResponse, error) {
+	url := fmt.Sprintf("%s/eth/v1/beacon/genesis", beaconChainUrl)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -96,8 +83,8 @@ func (bca *BeaconChainAdapter) GetGenesis() (*GenesisResponse, error) {
 
 // GetBlockHeader retrieves the block header for a given block ID.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockHeader
-func (bca *BeaconChainAdapter) GetBlockHeader(blockID string) (*BlockHeaderResponse, error) {
-	url := fmt.Sprintf("%s/eth/v1/beacon/headers/%s", bca.beaconChainUrl, blockID)
+func GetBlockHeader(beaconChainUrl string, blockID string) (*BlockHeaderResponse, error) {
+	url := fmt.Sprintf("%s/eth/v1/beacon/headers/%s", beaconChainUrl, blockID)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -112,18 +99,18 @@ func (bca *BeaconChainAdapter) GetBlockHeader(blockID string) (*BlockHeaderRespo
 }
 
 // GetEpochHeader retrieves the epoch header for a specified block ID.
-func (bca *BeaconChainAdapter) GetEpochHeader(blockID string) (int, error) {
-	header, err := bca.GetBlockHeader(blockID)
+func GetEpochHeader(beaconChainUrl string, blockID string) (int, error) {
+	header, err := GetBlockHeader(beaconChainUrl, blockID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get block header: %w", err)
 	}
 	slot := header.Data.Header.Message.Slot
-	epoch := bca.getEpochFromSlot(slot)
+	epoch := getEpochFromSlot(slot)
 	return epoch, nil
 }
 
 // Helper function to convert slot to epoch.
-func (bca *BeaconChainAdapter) getEpochFromSlot(slot string) int {
+func getEpochFromSlot(slot string) int {
 	// Convert slot to int and calculate epoch
 	// Assume slot 0 is epoch 0, with slots per epoch set to 32
 	const slotsPerEpoch = 32
