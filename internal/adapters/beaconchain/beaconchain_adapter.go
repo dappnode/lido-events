@@ -1,6 +1,7 @@
 package beaconchain
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,6 +18,47 @@ func NewBeaconChainAdapter(beaconChainUrl string) *BeaconChainAdapter {
 		beaconChainUrl: beaconChainUrl,
 	}
 }
+
+// SubmitPoolVoluntaryExit submits a voluntary exit message to the Beacon chain pool.
+// It takes epoch, validatorIndex, and signature as arguments.
+func (bca *BeaconChainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature string) error {
+	// Define the request body structure
+	body := map[string]interface{}{
+		"message": map[string]string{
+			"epoch":           epoch,
+			"validator_index": validatorIndex,
+		},
+		"signature": signature,
+	}
+
+	// Marshal the body to JSON
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	// Make the HTTP request
+	url := fmt.Sprintf("%s/eth/v1/beacon/pool/voluntary_exits", bca.beaconChainUrl)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 
 // GetStateFork retrieves the state fork for a specified state_id.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
