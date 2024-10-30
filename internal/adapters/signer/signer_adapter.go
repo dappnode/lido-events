@@ -20,27 +20,36 @@ func NewSignerAdapter(signerUrl string) *SignerAdapter {
 	}
 }
 
+// VoluntaryExitRequest holds parameters needed to sign a voluntary exit
+type VoluntaryExitRequest struct {
+	PubKey                string
+	SigningRoot           string
+	GenesisValidatorsRoot string
+	ForkInfo              ForkInfo
+	VoluntaryExit         VoluntaryExit
+}
+
 // Eth2SignVoluntaryExit sends a request to the Web3Signer URL to sign a voluntary exit message
 // and returns the signature as a string.
 // API docs: https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Signing/operation/ETH2_SIGN
-func (sa *SignerAdapter) Eth2SignVoluntaryExit(pubKey, signingRoot, genesisValidatorsRoot string, forkInfo ForkInfo, voluntaryExit VoluntaryExit) (string, error) {
-	identifier := pubKey // Identifier is the BLS public key in hex format.
+func (sa *SignerAdapter) Eth2SignVoluntaryExit(req VoluntaryExitRequest) (string, error) {
+	identifier := req.PubKey // Identifier is the BLS public key in hex format.
 
 	// Define the request body structure
 	body := map[string]interface{}{
 		"type":        "VOLUNTARY_EXIT",
-		"signingRoot": signingRoot,
+		"signingRoot": req.SigningRoot,
 		"fork_info": map[string]interface{}{
 			"fork": map[string]interface{}{
-				"previous_version": forkInfo.PreviousVersion,
-				"current_version":  forkInfo.CurrentVersion,
-				"epoch":            forkInfo.Epoch,
+				"previous_version": req.ForkInfo.PreviousVersion,
+				"current_version":  req.ForkInfo.CurrentVersion,
+				"epoch":            req.ForkInfo.Epoch,
 			},
-			"genesis_validators_root": genesisValidatorsRoot,
+			"genesis_validators_root": req.GenesisValidatorsRoot,
 		},
 		"voluntary_exit": map[string]interface{}{
-			"epoch":           voluntaryExit.Epoch,
-			"validator_index": voluntaryExit.ValidatorIndex,
+			"epoch":           req.VoluntaryExit.Epoch,
+			"validator_index": req.VoluntaryExit.ValidatorIndex,
 		},
 	}
 
@@ -52,14 +61,14 @@ func (sa *SignerAdapter) Eth2SignVoluntaryExit(pubKey, signingRoot, genesisValid
 
 	// Make the HTTP request
 	url := fmt.Sprintf("%s/api/v1/eth2/sign/%s", sa.signerUrl, identifier)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	reqHttp, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	reqHttp.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(reqHttp)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
@@ -79,7 +88,6 @@ func (sa *SignerAdapter) Eth2SignVoluntaryExit(pubKey, signingRoot, genesisValid
 
 	return result.Signature, nil
 }
-
 
 // ForkInfo holds the fork information
 type ForkInfo struct {

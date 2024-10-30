@@ -8,14 +8,14 @@ import (
 	"log"
 )
 
-type CsModuleService struct {
+type CsmEventsProcessorervice struct {
 	notifierPort ports.NotifierPort
 	storagePort  ports.StoragePort
 	csModulePort ports.CsModulePort
 }
 
-func NewCsModuleService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, csModulePort ports.CsModulePort) *CsModuleService {
-	return &CsModuleService{
+func NewCsmEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, csModulePort ports.CsModulePort) *CsmEventsProcessorervice {
+	return &CsmEventsProcessorervice{
 		notifierPort,
 		storagePort,
 		csModulePort,
@@ -24,13 +24,13 @@ func NewCsModuleService(storagePort ports.StoragePort, notifierPort ports.Notifi
 
 // WatchCsModuleEvents subscribes to Ethereum events and handles them.
 // It passes to the csModule port a function that processes the log data.
-func (csms *CsModuleService) WatchCsModuleEvents(ctx context.Context) error {
+func (csms *CsmEventsProcessorervice) WatchCsModuleEvents(ctx context.Context) error {
 	return csms.csModulePort.WatchCsModuleEvents(ctx, csms)
 }
 
 // Make CsModuleService implement the CsModuleHandlers interface by adding the methods
 
-func (cs *CsModuleService) HandleDepositedSigningKeysCountChanged(depositedSigningKeysCountChanged *domain.CsmoduleDepositedSigningKeysCountChanged) error {
+func (cs *CsmEventsProcessorervice) HandleDepositedSigningKeysCountChanged(depositedSigningKeysCountChanged *domain.CsmoduleDepositedSigningKeysCountChanged) error {
 	message := fmt.Sprintf("- 🤩 Node Operator's keys received depositst: %s", depositedSigningKeysCountChanged.DepositedKeysCount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -39,7 +39,7 @@ func (cs *CsModuleService) HandleDepositedSigningKeysCountChanged(depositedSigni
 	return nil
 }
 
-func (cs *CsModuleService) HandleElRewardsStealingPenaltyReported(eLRewardsStealingPenaltyReported *domain.CsmoduleELRewardsStealingPenaltyReported) error {
+func (cs *CsmEventsProcessorervice) HandleElRewardsStealingPenaltyReported(eLRewardsStealingPenaltyReported *domain.CsmoduleELRewardsStealingPenaltyReported) error {
 	message := fmt.Sprintf("- 🚨 Penalty for stealing EL rewards reported: %s", eLRewardsStealingPenaltyReported.StolenAmount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -48,7 +48,7 @@ func (cs *CsModuleService) HandleElRewardsStealingPenaltyReported(eLRewardsSteal
 	return nil
 }
 
-func (cs *CsModuleService) HandleElRewardsStealingPenaltySettled(eLRewardsStealingPenaltySettled *domain.CsmoduleELRewardsStealingPenaltySettled) error {
+func (cs *CsmEventsProcessorervice) HandleElRewardsStealingPenaltySettled(eLRewardsStealingPenaltySettled *domain.CsmoduleELRewardsStealingPenaltySettled) error {
 	message := fmt.Sprintf("- 🚨 EL rewards stealing penalty confirmed and applied: %s", eLRewardsStealingPenaltySettled.NodeOperatorId)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -57,7 +57,7 @@ func (cs *CsModuleService) HandleElRewardsStealingPenaltySettled(eLRewardsSteali
 	return nil
 }
 
-func (cs *CsModuleService) HandleElRewardsStealingPenaltyCancelled(eLRewardsStealingPenaltyCancelled *domain.CsmoduleELRewardsStealingPenaltyCancelled) error {
+func (cs *CsmEventsProcessorervice) HandleElRewardsStealingPenaltyCancelled(eLRewardsStealingPenaltyCancelled *domain.CsmoduleELRewardsStealingPenaltyCancelled) error {
 	message := fmt.Sprintf("- 😮‍💨 Cancelled penalty for stealing EL reward: %s", eLRewardsStealingPenaltyCancelled.Amount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -66,7 +66,7 @@ func (cs *CsModuleService) HandleElRewardsStealingPenaltyCancelled(eLRewardsStea
 	return nil
 }
 
-func (cs *CsModuleService) HandleInitialSlashingSubmitted(initialSlashingSubmitted *domain.CsmoduleInitialSlashingSubmitted) error {
+func (cs *CsmEventsProcessorervice) HandleInitialSlashingSubmitted(initialSlashingSubmitted *domain.CsmoduleInitialSlashingSubmitted) error {
 	message := fmt.Sprintf("- 🚨 Initial slashing submitted for one of the validators: %s", initialSlashingSubmitted.KeyIndex)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -75,7 +75,7 @@ func (cs *CsModuleService) HandleInitialSlashingSubmitted(initialSlashingSubmitt
 	return nil
 }
 
-func (cs *CsModuleService) HandleKeyRemovalChargeApplied(keyRemovalChargeApplied *domain.CsmoduleKeyRemovalChargeApplied) error {
+func (cs *CsmEventsProcessorervice) HandleKeyRemovalChargeApplied(keyRemovalChargeApplied *domain.CsmoduleKeyRemovalChargeApplied) error {
 	message := fmt.Sprintf("- 🔑 Applied charge for key removal: %s", keyRemovalChargeApplied.NodeOperatorId)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -84,7 +84,7 @@ func (cs *CsModuleService) HandleKeyRemovalChargeApplied(keyRemovalChargeApplied
 	return nil
 }
 
-func (cs *CsModuleService) HandleNodeOperatorManagerAddressChangeProposed(nodeOperatorManagerAddressChangeProposed *domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error {
+func (cs *CsmEventsProcessorervice) HandleNodeOperatorManagerAddressChangeProposed(nodeOperatorManagerAddressChangeProposed *domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error {
 	message := fmt.Sprintf("- ℹ️ New manager address proposed: %s", nodeOperatorManagerAddressChangeProposed.NewProposedAddress)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -93,7 +93,7 @@ func (cs *CsModuleService) HandleNodeOperatorManagerAddressChangeProposed(nodeOp
 	return nil
 }
 
-func (cs *CsModuleService) HandleNodeOperatorManagerAddressChanged(nodeOperatorManagerAddressChanged *domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+func (cs *CsmEventsProcessorervice) HandleNodeOperatorManagerAddressChanged(nodeOperatorManagerAddressChanged *domain.CsmoduleNodeOperatorManagerAddressChanged) error {
 	message := fmt.Sprintf("- ✅ Manager address changedt: %s", nodeOperatorManagerAddressChanged.NewAddress)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -102,7 +102,7 @@ func (cs *CsModuleService) HandleNodeOperatorManagerAddressChanged(nodeOperatorM
 	return nil
 }
 
-func (cs *CsModuleService) HandleNodeOperatorRewardAddressChangeProposed(nodeOperatorRewardAddressChangeProposed *domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error {
+func (cs *CsmEventsProcessorervice) HandleNodeOperatorRewardAddressChangeProposed(nodeOperatorRewardAddressChangeProposed *domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error {
 	message := fmt.Sprintf("- ℹ️ New rewards address proposed: %s", nodeOperatorRewardAddressChangeProposed.NewProposedAddress)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -112,7 +112,7 @@ func (cs *CsModuleService) HandleNodeOperatorRewardAddressChangeProposed(nodeOpe
 	return nil
 }
 
-func (cs *CsModuleService) HandleNodeOperatorRewardAddressChanged(nodeOperatorRewardAddressChanged *domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+func (cs *CsmEventsProcessorervice) HandleNodeOperatorRewardAddressChanged(nodeOperatorRewardAddressChanged *domain.CsmoduleNodeOperatorRewardAddressChanged) error {
 	message := fmt.Sprintf("- ✅ Rewards address changed: %s", nodeOperatorRewardAddressChanged.NewAddress)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -121,7 +121,7 @@ func (cs *CsModuleService) HandleNodeOperatorRewardAddressChanged(nodeOperatorRe
 	return nil
 }
 
-func (cs *CsModuleService) HandleStuckSigningKeysCountChanged(stuckSigningKeysCountChanged *domain.CsmoduleStuckSigningKeysCountChanged) error {
+func (cs *CsmEventsProcessorervice) HandleStuckSigningKeysCountChanged(stuckSigningKeysCountChanged *domain.CsmoduleStuckSigningKeysCountChanged) error {
 	message := fmt.Sprintf("- 🚨 Reported stuck keys that were not exited in time: %s", stuckSigningKeysCountChanged.StuckKeysCount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -130,7 +130,7 @@ func (cs *CsModuleService) HandleStuckSigningKeysCountChanged(stuckSigningKeysCo
 	return nil
 }
 
-func (cs *CsModuleService) HandleVettedSigningKeysCountDecreased(vettedSigningKeysCountDecreased *domain.CsmoduleVettedSigningKeysCountDecreased) error {
+func (cs *CsmEventsProcessorervice) HandleVettedSigningKeysCountDecreased(vettedSigningKeysCountDecreased *domain.CsmoduleVettedSigningKeysCountDecreased) error {
 	message := fmt.Sprintf("- 🚨 Uploaded invalid keys: %s", vettedSigningKeysCountDecreased.NodeOperatorId)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -139,7 +139,7 @@ func (cs *CsModuleService) HandleVettedSigningKeysCountDecreased(vettedSigningKe
 	return nil
 }
 
-func (cs *CsModuleService) HandleWithdrawalSubmitted(withdrawalSubmitted *domain.CsmoduleWithdrawalSubmitted) error {
+func (cs *CsmEventsProcessorervice) HandleWithdrawalSubmitted(withdrawalSubmitted *domain.CsmoduleWithdrawalSubmitted) error {
 	message := fmt.Sprintf("- 👀 Key withdrawal information submitted: %s", withdrawalSubmitted.Amount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -148,7 +148,7 @@ func (cs *CsModuleService) HandleWithdrawalSubmitted(withdrawalSubmitted *domain
 	return nil
 }
 
-func (cs *CsModuleService) HandleTotalSigningKeysCountChanged(totalSigningKeysCountChanged *domain.CsmoduleTotalSigningKeysCountChanged) error {
+func (cs *CsmEventsProcessorervice) HandleTotalSigningKeysCountChanged(totalSigningKeysCountChanged *domain.CsmoduleTotalSigningKeysCountChanged) error {
 	message := fmt.Sprintf("- 👀 New keys uploaded or removedt: %s", totalSigningKeysCountChanged.TotalKeysCount)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
@@ -157,7 +157,7 @@ func (cs *CsModuleService) HandleTotalSigningKeysCountChanged(totalSigningKeysCo
 	return nil
 }
 
-func (cs *CsModuleService) HandlePublicRelease(publicRelease *domain.CsmodulePublicRelease) error {
+func (cs *CsmEventsProcessorervice) HandlePublicRelease(publicRelease *domain.CsmodulePublicRelease) error {
 	message := fmt.Sprintf("- 🎉 Public release of CSM!: %s", publicRelease.Raw.TxHash)
 	if err := cs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)

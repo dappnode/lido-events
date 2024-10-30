@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"lido-events/internal/adapters/api"
+	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csmodule "lido-events/internal/adapters/csModule"
+	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/notifier"
+	"lido-events/internal/adapters/signer"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"math/big"
@@ -44,6 +47,9 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
+	signerAdapter := signer.NewSignerAdapter(networkConfig.SignerUrl)
+	beaconchainAdapter := beaconchain.NewBeaconChainAdapter(networkConfig.BeaconchainURL)
+	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, signerAdapter)
 	notifierAdapter, err := notifier.NewNotifierAdapter(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
@@ -67,9 +73,9 @@ func main() {
 
 	// Initialize services
 	storageService := services.NewStorageService(storageAdapter)
-	veboService := services.NewVeboService(storageAdapter, notifierAdapter, veboAdapter)
-	csModuleService := services.NewCsModuleService(storageAdapter, notifierAdapter, csModuleAdapter)
-	csFeeDistributorService := services.NewCsFeeDistributorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
+	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter)
+	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
+	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
 
 	// Start subscribing to each SC events. Done by sc services.
 	if err := veboService.WatchVeboEvents(context.Background()); err != nil {
