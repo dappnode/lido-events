@@ -4,7 +4,6 @@ import (
 	"context"
 	"lido-events/internal/adapters/vebo/bindings"
 	"lido-events/internal/application/domain"
-	"lido-events/internal/application/ports"
 	"log"
 	"math/big"
 
@@ -45,15 +44,34 @@ func NewVeboAdapter(
 	}, nil
 }
 
-func (va *VeboAdapter) WatchVeboEvents(ctx context.Context, handlers ports.VeboHandlers) error {
+// ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events.
+func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
 	if err != nil {
 		return err
 	}
 
-	// Watch for ValidatorExitRequest
-	validatorExitRequestChan := make(chan *domain.VeboValidatorExitRequest)
-	subExit, err := veboContract.WatchValidatorExitRequest(&bind.WatchOpts{Context: ctx}, validatorExitRequestChan, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
+	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx}, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
+	if err != nil {
+		return err
+	}
+
+	for validatorExitRequestEvents.Next() {
+		if err := handleValidatorExitRequestEvent(&domain.VeboValidatorExitRequest{
+			ValidatorIndex:  validatorExitRequestEvents.Event.ValidatorIndex,
+			ValidatorPubkey: validatorExitRequestEvents.Event.ValidatorPubkey,
+			Raw:             validatorExitRequestEvents.Event.Raw,
+		}); err != nil {
+			log.Printf("Error handling ValidatorExitRequest: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
+func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
 	if err != nil {
 		return err
 	}
@@ -66,21 +84,13 @@ func (va *VeboAdapter) WatchVeboEvents(ctx context.Context, handlers ports.VeboH
 	}
 
 	go func() {
-		defer subExit.Unsubscribe()
 		defer subReport.Unsubscribe()
 		for {
 			select {
-			case event := <-validatorExitRequestChan:
-				if err := handlers.HandleValidatorExitRequestEvent(event); err != nil {
-					log.Printf("Error handling ValidatorExitRequest: %v", err)
-				}
 			case event := <-reportSubmittedChan:
-				if err := handlers.HandleReportSubmittedEvent(event); err != nil {
+				if err := handleReportSubmittedEvent(event); err != nil {
 					log.Printf("Error handling ReportSubmitted: %v", err)
 				}
-			case err := <-subExit.Err():
-				log.Printf("Subscription error (ValidatorExitRequest): %v", err)
-				return
 			case err := <-subReport.Err():
 				log.Printf("Subscription error (ReportSubmitted): %v", err)
 				return

@@ -37,12 +37,12 @@ func (os *StorageService) SaveLidoReport(report map[string]domain.Report) error 
 }
 
 // GetExitRequests retrieves the exit requests from the repository
-func (os *StorageService) GetExitRequests() (domain.ExitRequest, error) {
+func (os *StorageService) GetExitRequests() (domain.ExitRequests, error) {
 	return os.storagePort.GetExitRequests()
 }
 
 // SetExitRequests saves the exit requests to the repository
-func (os *StorageService) SetExitRequests(exitRequests domain.ExitRequest) error {
+func (os *StorageService) SetExitRequests(exitRequests domain.ExitRequests) error {
 	err := os.storagePort.SaveExitRequests(exitRequests)
 	if err != nil {
 		return err

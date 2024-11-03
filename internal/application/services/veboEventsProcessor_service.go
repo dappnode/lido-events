@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
+	"time"
 )
 
 type VeboEventsProcessor struct {
@@ -24,10 +25,30 @@ func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort p
 	}
 }
 
-// WatchVeboEvents subscribes to Ethereum events and handles them.
+// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
 // It passes to the csModule port a function that processes the log data.
-func (vs *VeboEventsProcessor) WatchVeboEvents(ctx context.Context) error {
-	return vs.veboPort.WatchVeboEvents(ctx, vs)
+func (vs *VeboEventsProcessor) WatchReportSubmittedEvents(ctx context.Context) error {
+	return vs.veboPort.WatchReportSubmittedEvents(ctx, vs.HandleReportSubmittedEvent)
+}
+
+// ScanVeboValidatorExitRequestEventCron starts a periodic scan for ValidatorExitRequest events.
+func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Call the scan method periodically
+			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, vs.HandleValidatorExitRequestEvent); err != nil {
+				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
+			}
+		case <-ctx.Done():
+			// Stop the periodic scan if the context is canceled
+			log.Println("Stopping periodic scan for ValidatorExitRequest events")
+			return
+		}
+	}
 }
 
 // Make VeboService implement the VeboHandlers interface by adding the methods
@@ -52,9 +73,13 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 	}
 
 	// save the exit request
-	exitRequests := domain.ExitRequest{
-		string(validatorExitEvent.ValidatorPubkey): string(validatorExitEvent.Raw.BlockNumber),
+	exitRequests := domain.ExitRequests{
+		validatorExitEvent.ValidatorIndex.String(): domain.ExitRequest{
+			ValidatorPubkey: validatorExitEvent.ValidatorPubkey,
+			Raw:             validatorExitEvent.Raw,
+		},
 	}
+
 	if err := vs.storagePort.SaveExitRequests(exitRequests); err != nil {
 		log.Printf("Failed to save exit requests: %v", err)
 		return err

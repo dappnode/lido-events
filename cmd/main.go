@@ -10,6 +10,7 @@ import (
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"math/big"
+	"time"
 
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
@@ -73,8 +74,15 @@ func main() {
 	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
 	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
 
+	// Start periodic scan for ValidatorExitRequest events
+	// Set up context to control the lifetime of the service
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// Start VeboService for periodic scanning every 10 minutes
+	go veboService.ScanVeboValidatorExitRequestEventCron(ctx, 10*time.Minute)
+
 	// Start subscribing to each SC events. Done by sc services.
-	if err := veboService.WatchVeboEvents(context.Background()); err != nil {
+	if err := veboService.WatchReportSubmittedEvents(context.Background()); err != nil {
 		log.Fatalf("Failed to subscribe to VEBO events: %v", err)
 	}
 	if err := csModuleService.WatchCsModuleEvents(context.Background()); err != nil {
