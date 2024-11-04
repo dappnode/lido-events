@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"lido-events/internal/adapters/api"
+	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csmodule "lido-events/internal/adapters/csModule"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
@@ -46,7 +47,8 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
-	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(networkConfig.BeaconchainURL, networkConfig.SignerUrl)
+	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
+	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
@@ -70,7 +72,7 @@ func main() {
 
 	// Initialize services
 	storageService := services.NewStorageService(storageAdapter)
-	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter)
+	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter, beaconchainAdapter)
 	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
 	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
 
@@ -79,7 +81,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	// Start VeboService for periodic scanning every 10 minutes
-	go veboService.ScanVeboValidatorExitRequestEventCron(ctx, 10*time.Minute)
+	go veboService.ScanVeboValidatorExitRequestEventCron(ctx, 10*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC events. Done by sc services.
 	if err := veboService.WatchReportSubmittedEvents(context.Background()); err != nil {

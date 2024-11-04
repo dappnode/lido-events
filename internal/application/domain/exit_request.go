@@ -1,8 +1,8 @@
 package domain
 
 type ExitRequests struct {
-	LastProcessedEpochFinalized int                    `json:"lastProcessedEpochFinalized"`
-	Validators                  map[string]ExitRequest `json:"validators"` // indexed by validator pubkey
+	LastProcessedEpoch uint64                 `json:"lastProcessedEpoch"`
+	Requests           map[string]ExitRequest `json:"validators"` // indexed by validator pubkey
 }
 
 type ExitRequest struct {

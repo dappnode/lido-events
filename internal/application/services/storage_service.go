@@ -25,31 +25,9 @@ func (os *StorageService) GetLidoReport(start, end string) (map[string]domain.Re
 	return os.storagePort.GetLidoReport(start, end)
 }
 
-// SaveLidoReport saves the Lido report to the repository
-func (os *StorageService) SaveLidoReport(report map[string]domain.Report) error {
-	err := os.storagePort.SaveLidoReport(report)
-	if err != nil {
-		return err
-	}
-	log.Printf("Lido report updated")
-
-	return nil
-}
-
 // GetExitRequests retrieves the exit requests from the repository
 func (os *StorageService) GetExitRequests() (domain.ExitRequests, error) {
 	return os.storagePort.GetExitRequests()
-}
-
-// SetExitRequests saves the exit requests to the repository
-func (os *StorageService) SetExitRequests(exitRequests domain.ExitRequests) error {
-	err := os.storagePort.SaveExitRequests(exitRequests)
-	if err != nil {
-		return err
-	}
-	log.Printf("Exit requests updated")
-
-	return nil
 }
 
 // GetTelegramConfig retrieves the Telegram configuration from the repository
@@ -79,11 +57,6 @@ func (os *StorageService) SetTelegramConfig(config domain.TelegramConfig) error 
 	log.Printf("Telegram config updated")
 
 	return nil
-}
-
-// GetOperatorId retrieves the operator ID from the repository
-func (os *StorageService) GetOperatorId() (domain.OperatorId, error) {
-	return os.storagePort.GetOperatorId()
 }
 
 // SetOperatorId validates and sets the operator ID, then notifies

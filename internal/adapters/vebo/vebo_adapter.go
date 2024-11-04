@@ -45,13 +45,13 @@ func NewVeboAdapter(
 }
 
 // ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events.
-func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
+func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
 	if err != nil {
 		return err
 	}
 
-	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx}, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
+	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
 	if err != nil {
 		return err
 	}

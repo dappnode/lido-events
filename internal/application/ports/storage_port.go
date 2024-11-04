@@ -7,6 +7,9 @@ type StoragePort interface {
 	SaveLidoReport(report domain.Reports) error
 	GetExitRequests() (domain.ExitRequests, error)
 	SaveExitRequests(requests domain.ExitRequests) error
+	UpdateExitRequestStatus(pubkey string, status domain.ValidatorStatus) error
+	GetLastProcessedEpoch() (uint64, error)
+	SaveLastProcessedEpoch(epoch uint64) error
 	GetTelegramConfig() (domain.TelegramConfig, error)
 	SaveTelegramConfig(config domain.TelegramConfig) error
 	GetOperatorId() (domain.OperatorId, error)

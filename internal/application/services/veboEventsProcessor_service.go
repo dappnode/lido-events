@@ -14,14 +14,16 @@ type VeboEventsProcessor struct {
 	notifierPort      ports.NotifierPort
 	veboPort          ports.VeboPort
 	exitValidatorPort ports.ExitValidator
+	beaconchainPort   ports.Beaconchain
 }
 
-func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, exitValidatorPort ports.ExitValidator) *VeboEventsProcessor {
+func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *VeboEventsProcessor {
 	return &VeboEventsProcessor{
 		storagePort,
 		notifierPort,
 		veboPort,
 		exitValidatorPort,
+		beaconchainPort,
 	}
 }
 
@@ -40,8 +42,28 @@ func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context
 		select {
 		case <-ticker.C:
 			// Call the scan method periodically
-			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, vs.HandleValidatorExitRequestEvent); err != nil {
+
+			// Get start from last processed epoch finalized from storage
+			// TODO: default start should be the epoch (block) where was deployed the SC
+			start, err := vs.storagePort.GetLastProcessedEpoch()
+			if err != nil {
+				log.Printf("Failed to get last processed epoch: %v", err)
+			}
+
+			// Get end from latest finalized epoch from the chain
+			end, err := vs.beaconchainPort.GetEpochHeader("finalized")
+			if err != nil {
+				log.Printf("Failed to get latest finalized epoch: %v", err)
+			}
+
+			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
+				break
+			}
+
+			// update last processed epoch finalized if no error
+			if err := vs.storagePort.SaveLastProcessedEpoch(end); err != nil {
+				log.Printf("Failed to save last processed epoch: %v", err)
 			}
 		case <-ctx.Done():
 			// Stop the periodic scan if the context is canceled
@@ -53,30 +75,37 @@ func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context
 
 // Make VeboService implement the VeboHandlers interface by adding the methods
 func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
-	message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s", validatorExitEvent.ValidatorIndex)
-	if err := vs.notifierPort.SendNotification(message); err != nil {
-		log.Printf("Failed to send notification: %v", err)
+	// get validator status
+	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))
+	if err != nil {
+		log.Printf("Failed to get validator status: %v", err)
 		return err
 	}
 
-	// validate the exit request
-	if err := vs.exitValidatorPort.ExitValidator(string(validatorExitEvent.ValidatorPubkey), validatorExitEvent.ValidatorIndex.String()); err != nil {
-		log.Printf("Failed to validate exit request: %v", err)
+	if validatorStatus == domain.StatusActiveOngoing {
+		message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
+		if err := vs.notifierPort.SendNotification(message); err != nil {
+			log.Printf("Failed to send notification: %v", err)
+			return err
+		}
+	}
+
+	// get last processed epoch finalized from the block hash of the event
+	blockHash := fmt.Sprintf("0x%x", validatorExitEvent.Raw.BlockHash)
+	epoch, err := vs.beaconchainPort.GetEpochHeader(blockHash)
+	if err != nil {
+		log.Printf("Failed to get epoch header: %v", err)
 		return err
 	}
 
-	// notify the validator has been exited
-	message = fmt.Sprintf("- 🚪 Validator %s has been exited", validatorExitEvent.ValidatorIndex)
-	if err := vs.notifierPort.SendNotification(message); err != nil {
-		log.Printf("Failed to send notification: %v", err)
-		return err
-	}
-
-	// save the exit request
+	// Save the exit request with the appropriate structure and status call SaveExitRequest
 	exitRequests := domain.ExitRequests{
-		validatorExitEvent.ValidatorIndex.String(): domain.ExitRequest{
-			ValidatorPubkey: validatorExitEvent.ValidatorPubkey,
-			Raw:             validatorExitEvent.Raw,
+		LastProcessedEpoch: epoch, // Example value, you might want to replace this with the actual finalized epoch
+		Requests: map[string]domain.ExitRequest{
+			string(validatorExitEvent.ValidatorPubkey): {
+				Event:  *validatorExitEvent,
+				Status: validatorStatus,
+			},
 		},
 	}
 
