@@ -40,6 +40,9 @@ type NetworkConfig struct {
 	CSFeeDistributorAddress common.Address
 	VEBOAddress             common.Address
 	CSModuleAddress         common.Address
+
+	// Block number of the deployment of the Vebo contract
+	VeboBlockDeployment uint64
 }
 
 // LoadAppConfig loads the operatorId and telegram details from a JSON file
@@ -87,6 +90,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 			CSAccountingAddress:     common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSFeeDistributorAddress: common.HexToAddress("0xc093e53e8F4b55A223c18A2Da6fA00e60DD5EFE1"),
 			VEBOAddress:             common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
+			VeboBlockDeployment:     uint64(30701),
 			CSModuleAddress:         common.HexToAddress("common.HexToAddress(0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 		}
 	case "mainnet":
@@ -101,6 +105,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 			CSAccountingAddress:     common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSFeeDistributorAddress: common.HexToAddress("0x4d72BFF1BeaC69925F8Bd12526a39BAAb069e5Da"),
 			VEBOAddress:             common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
+			VeboBlockDeployment:     uint64(17172556),
 			CSModuleAddress:         common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 		}
 	default:

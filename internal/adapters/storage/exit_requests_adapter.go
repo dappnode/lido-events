@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+// TODO initialize start epoch with 0
+
 // GetExitRequests loads exit requests from the JSON file
 func (fs *Storage) GetExitRequests() (domain.ExitRequests, error) {
 	file, err := os.ReadFile(fs.ExitRequestFile)

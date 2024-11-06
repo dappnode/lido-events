@@ -53,9 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	// TODO: what happens when operator id changes
-	// TODO: what happens if new validators -> new validatorIndexes. Affects vebo adapter. We should
-	// TODO: where to get validatorIndexes and refSlot from
+	// TODO: what happens when operator id changes?
 	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{}, []*big.Int{appConfig.OperatorID}, []*big.Int{}, []*big.Int{})
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
@@ -72,7 +70,7 @@ func main() {
 
 	// Initialize services
 	storageService := services.NewStorageService(storageAdapter)
-	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter, beaconchainAdapter)
+	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
 	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
 

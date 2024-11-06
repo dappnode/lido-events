@@ -10,20 +10,22 @@ import (
 )
 
 type VeboEventsProcessor struct {
-	storagePort       ports.StoragePort
-	notifierPort      ports.NotifierPort
-	veboPort          ports.VeboPort
-	exitValidatorPort ports.ExitValidator
-	beaconchainPort   ports.Beaconchain
+	storagePort         ports.StoragePort
+	notifierPort        ports.NotifierPort
+	veboPort            ports.VeboPort
+	exitValidatorPort   ports.ExitValidator
+	beaconchainPort     ports.Beaconchain
+	veboBlockDeployment uint64
 }
 
-func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *VeboEventsProcessor {
+func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *VeboEventsProcessor {
 	return &VeboEventsProcessor{
 		storagePort,
 		notifierPort,
 		veboPort,
 		exitValidatorPort,
 		beaconchainPort,
+		veboBlockDeployment,
 	}
 }
 
@@ -48,6 +50,11 @@ func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context
 			start, err := vs.storagePort.GetLastProcessedEpoch()
 			if err != nil {
 				log.Printf("Failed to get last processed epoch: %v", err)
+			}
+			// if start is nil, use the block where the SC was deployed
+			// TODO: what value can take? on initialization when there has not been any epoch processed yet
+			if start == nil {
+				start = vs.veboBlockDeployment
 			}
 
 			// Get end from latest finalized epoch from the chain
