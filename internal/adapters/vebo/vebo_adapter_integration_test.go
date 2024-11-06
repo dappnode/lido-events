@@ -1,9 +1,12 @@
-// vebo/vebo_adapter_test.go
+//go:build integration
+// +build integration
+
 package vebo
 
 import (
 	"context"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -16,17 +19,19 @@ import (
 
 // Updated setupVeboAdapter function with real ethclient and hardcoded values
 func setupVeboAdapter() (*VeboAdapter, error) {
+	// Read wsURL from  env
+	wsURL := os.Getenv("WS_URL")
 	// Real WebSocket connection to Ethereum node
-	client, err := ethclient.Dial("wss://holesky.infura.io/ws/v3/e6c920580178424bbdf6dde266bfb5bd")
+	client, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, err
 	}
 
-	veboAddress := common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb")
-	stakingModuleId := []*big.Int{big.NewInt(1)}
-	nodeOperatorId := []*big.Int{big.NewInt(19)}
-	validatorIndex := []*big.Int{big.NewInt(1686582), big.NewInt(1686586)}
-	refSlot := []*big.Int{big.NewInt(1)}
+	veboAddress := common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e")
+	stakingModuleId := []*big.Int{}
+	nodeOperatorId := []*big.Int{big.NewInt(20)}
+	validatorIndex := []*big.Int{}
+	refSlot := []*big.Int{}
 
 	return &VeboAdapter{
 		client:          client,
@@ -39,9 +44,9 @@ func setupVeboAdapter() (*VeboAdapter, error) {
 }
 
 // Test ScanVeboValidatorExitRequestEvent with real query
-func TestScanVeboValidatorExitRequestEvent(t *testing.T) {
-	start := uint64(2597000)
-	end := uint64(2597999)
+func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
+	start := uint64(21071257)
+	end := uint64(21071259)
 	adapter, err := setupVeboAdapter()
 	assert.NoError(t, err)
 
@@ -76,11 +81,11 @@ func TestScanVeboValidatorExitRequestEvent(t *testing.T) {
 
 	// Check that the expected events are present
 	assert.NoError(t, err)
-	assert.Contains(t, foundEvents, "1686582")
-	assert.Equal(t, "b6736f5a5b7df8c6a1e03d6c3225807a5fc6de1b244b40ce18e52d9faee9033f2aed0370bc3e0736231eb002b0c88fb9", foundEvents["1686582"].ValidatorPubkey)
-	assert.Equal(t, uint64(2597903), foundEvents["1686582"].BlockNumber)
+	assert.Contains(t, foundEvents, "370637")
+	assert.Equal(t, "b07c5cc5abd773d24c460140f872d24fb6584027626a4cba7b43e4f79f22c7b4846ea55d11ba96a322ba663c55cf3523", foundEvents["370637"].ValidatorPubkey)
+	assert.Equal(t, uint64(21071258), foundEvents["370637"].BlockNumber)
 
-	assert.Contains(t, foundEvents, "1686586")
-	assert.Equal(t, "b1266f71ef236b60a66b033ab3f5273850261a87b82cad2b1427f1023c7ff029b76688ee6ca0eb4beb3ce3875cbef3c5", foundEvents["1686586"].ValidatorPubkey)
-	assert.Equal(t, uint64(2597903), foundEvents["1686586"].BlockNumber)
+	assert.Contains(t, foundEvents, "370638")
+	assert.Equal(t, "92404310ad54447f6ab3277351a0da37f9b75696409056e855cfbe9838c649def1ca24cba994f6394f436c940d4cc3bc", foundEvents["370638"].ValidatorPubkey)
+	assert.Equal(t, uint64(21071258), foundEvents["370638"].BlockNumber)
 }
