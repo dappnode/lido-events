@@ -35,12 +35,12 @@ func NewVeboAdapter(
 	}
 
 	return &VeboAdapter{
-		client:          client,
-		VeboAddress:     veboAddress,
-		StakingModuleId: stakingModuleId,
-		NodeOperatorId:  nodeOperatorId,
-		ValidatorIndex:  validatorIndex,
-		RefSlot:         refSlot,
+		client,
+		veboAddress,
+		stakingModuleId,
+		nodeOperatorId,
+		validatorIndex,
+		refSlot,
 	}, nil
 }
 
