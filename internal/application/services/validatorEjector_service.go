@@ -46,7 +46,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 // ejectValidator orchestrates the voluntary exit process for a validator
 func (ve *ValidatorEjector) ejectValidator() error {
 	//  get exit requests
-	exitRequests, err := ve.storagePort.GetExitRequests()
+	exitRequests, err := ve.storagePort.LoadOrInitializeExitRequests()
 	if err != nil {
 		return err
 	}

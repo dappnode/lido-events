@@ -13,7 +13,7 @@ import (
 )
 
 type VeboAdapter struct {
-	client          *ethclient.Client
+	Client          *ethclient.Client
 	VeboAddress     common.Address
 	StakingModuleId []*big.Int
 	NodeOperatorId  []*big.Int
@@ -46,7 +46,7 @@ func NewVeboAdapter(
 
 // ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events.
 func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 
 // WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
 func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import "lido-events/internal/application/domain"
 type StoragePort interface {
 	GetLidoReport(start, end string) (domain.Reports, error)
 	SaveLidoReport(report domain.Reports) error
-	GetExitRequests() (domain.ExitRequests, error)
+	LoadOrInitializeExitRequests() (domain.ExitRequests, error)
 	SaveExitRequests(requests domain.ExitRequests) error
 	UpdateExitRequestStatus(pubkey string, status domain.ValidatorStatus) error
 	GetLastProcessedEpoch() (uint64, error)

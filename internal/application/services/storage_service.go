@@ -27,7 +27,7 @@ func (os *StorageService) GetLidoReport(start, end string) (map[string]domain.Re
 
 // GetExitRequests retrieves the exit requests from the repository
 func (os *StorageService) GetExitRequests() (domain.ExitRequests, error) {
-	return os.storagePort.GetExitRequests()
+	return os.storagePort.LoadOrInitializeExitRequests()
 }
 
 // GetTelegramConfig retrieves the Telegram configuration from the repository

@@ -43,17 +43,13 @@ func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context
 	for {
 		select {
 		case <-ticker.C:
-			// Call the scan method periodically
-
 			// Get start from last processed epoch finalized from storage
-			// TODO: default start should be the epoch (block) where was deployed the SC
 			start, err := vs.storagePort.GetLastProcessedEpoch()
 			if err != nil {
 				log.Printf("Failed to get last processed epoch: %v", err)
 			}
-			// if start is nil, use the block where the SC was deployed
-			// TODO: what value can take? on initialization when there has not been any epoch processed yet
-			if start == nil {
+			// 0 is the default value for the first run
+			if start == 0 {
 				start = vs.veboBlockDeployment
 			}
 
@@ -63,6 +59,7 @@ func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context
 				log.Printf("Failed to get latest finalized epoch: %v", err)
 			}
 
+			// Scan the events
 			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
 				break

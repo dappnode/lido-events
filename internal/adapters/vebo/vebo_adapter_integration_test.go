@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package vebo
+package vebo_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"lido-events/internal/adapters/vebo"
 	"lido-events/internal/application/domain"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +19,7 @@ import (
 )
 
 // Updated setupVeboAdapter function with real ethclient and hardcoded values
-func setupVeboAdapter() (*VeboAdapter, error) {
+func setupVeboAdapter() (*vebo.VeboAdapter, error) {
 	// Read wsURL from  env
 	wsURL := os.Getenv("WS_URL")
 	// Real WebSocket connection to Ethereum node
@@ -33,13 +34,13 @@ func setupVeboAdapter() (*VeboAdapter, error) {
 	validatorIndex := []*big.Int{}
 	refSlot := []*big.Int{}
 
-	return &VeboAdapter{
-		client:          client,
-		VeboAddress:     veboAddress,
-		StakingModuleId: stakingModuleId,
-		NodeOperatorId:  nodeOperatorId,
-		ValidatorIndex:  validatorIndex,
-		RefSlot:         refSlot,
+	return &vebo.VeboAdapter{
+		client,
+		veboAddress,
+		stakingModuleId,
+		nodeOperatorId,
+		validatorIndex,
+		refSlot,
 	}, nil
 }
 
