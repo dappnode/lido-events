@@ -4,6 +4,7 @@ import (
 	"errors"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
+	"math/big"
 
 	"log"
 )
@@ -20,14 +21,14 @@ func NewStorageService(storage ports.StoragePort) *StorageService {
 	}
 }
 
-// GetLidoReport retrieves the Lido report for the given range of epochs
-func (os *StorageService) GetLidoReport(start, end string) (map[string]domain.Report, error) {
-	return os.storagePort.GetLidoReport(start, end)
+// GetOperatorPerformance retrieves the Lido report for the given range of epochs
+func (os *StorageService) GetOperatorPerformance(operatorID *big.Int, start, end string) (map[string]domain.Report, error) {
+	return os.storagePort.GetOperatorPerformance(operatorID, start, end)
 }
 
 // GetExitRequests retrieves the exit requests from the repository
-func (os *StorageService) GetExitRequests() (domain.ExitRequests, error) {
-	return os.storagePort.LoadOrInitializeExitRequests()
+func (os *StorageService) GetExitRequests(operatorID string) (map[string]domain.ExitRequest, error) {
+	return os.storagePort.GetExitRequests(operatorID)
 }
 
 // GetTelegramConfig retrieves the Telegram configuration from the repository
@@ -60,7 +61,7 @@ func (os *StorageService) SetTelegramConfig(config domain.TelegramConfig) error 
 }
 
 // SetOperatorId validates and sets the operator ID, then notifies
-func (os *StorageService) SetOperatorId(operatorID domain.OperatorId) error {
+func (os *StorageService) SetOperatorId(operatorID string) error {
 	err := os.storagePort.SaveOperatorId(operatorID)
 	if err != nil {
 		return err

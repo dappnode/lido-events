@@ -16,7 +16,7 @@ type VeboAdapter struct {
 	Client          *ethclient.Client
 	VeboAddress     common.Address
 	StakingModuleId []*big.Int
-	NodeOperatorId  []*big.Int
+	NodeOperatorIds []*big.Int
 	ValidatorIndex  []*big.Int // TODO: where to get it?
 	RefSlot         []*big.Int // TODO: where to get it?
 }
@@ -25,7 +25,7 @@ func NewVeboAdapter(
 	wsURL string,
 	veboAddress common.Address,
 	stakingModuleId []*big.Int,
-	nodeOperatorId []*big.Int,
+	nodeOperatorIds []*big.Int,
 	validatorIndex []*big.Int,
 	refSlot []*big.Int,
 ) (*VeboAdapter, error) {
@@ -38,7 +38,7 @@ func NewVeboAdapter(
 		client,
 		veboAddress,
 		stakingModuleId,
-		nodeOperatorId,
+		nodeOperatorIds,
 		validatorIndex,
 		refSlot,
 	}, nil
@@ -51,7 +51,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 		return err
 	}
 
-	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
+	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, va.StakingModuleId, va.NodeOperatorIds, va.ValidatorIndex)
 	if err != nil {
 		return err
 	}

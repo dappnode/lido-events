@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
+	"math/big"
 	"time"
 )
 
@@ -102,21 +103,24 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 		return err
 	}
 
-	// Save the exit request with the appropriate structure and status call SaveExitRequest
-	exitRequests := domain.ExitRequests{
-		LastProcessedEpoch: epoch, // Example value, you might want to replace this with the actual finalized epoch
-		Requests: map[string]domain.ExitRequest{
-			string(validatorExitEvent.ValidatorPubkey): {
-				Event:  *validatorExitEvent,
-				Status: validatorStatus,
-			},
-		},
+	exitRequest := domain.ExitRequest{
+		Event:  *validatorExitEvent,
+		Status: validatorStatus,
 	}
 
-	if err := vs.storagePort.SaveExitRequests(exitRequests); err != nil {
+	// save exit request
+	// TODO: verify NodeOperatorId trully exists in the event
+	if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {
 		log.Printf("Failed to save exit requests: %v", err)
 		return err
 	}
+
+	// save epoch
+	if err := vs.storagePort.SaveLastProcessedEpoch(epoch); err != nil {
+		log.Printf("Failed to save last processed epoch: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -131,15 +135,13 @@ func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domai
 	// TODO: use reportSubmitted.Hash to fetch the report from IPFS
 
 	// save the report
-	report := domain.Report{
+	lidoReport := domain.Report{
 		Threshold:  "some-threshold",
 		Validators: map[string]domain.ValidatorPerformance{},
 	}
-	epoch := "some-epoch"
-	lidoReport := map[string]domain.Report{
-		epoch: report,
-	}
-	if err := vs.storagePort.SaveLidoReport(lidoReport); err != nil {
+	epoch := "123456"
+	operatorId := big.NewInt(0)
+	if err := vs.storagePort.SaveOperatorPerformance(operatorId, epoch, lidoReport); err != nil {
 		log.Printf("Failed to save Lido report: %v", err)
 		return err
 	}

@@ -1,8 +1,6 @@
 package config
 
 import (
-	"encoding/json"
-	"lido-events/internal/application/domain"
 	"log"
 	"math/big"
 	"os"
@@ -10,23 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// These components manage configuration loading for the aplication, including network-specific
-// settings and operator/telegram details
-
-// Config struct representing the full configuration for the aplication
 type Config struct {
-	OperatorID domain.OperatorId     `json:"operatorId"`
-	Telegram   domain.TelegramConfig `json:"telegram"`
-	Network    NetworkConfig         `json:"network"`
-}
-
-type configUnparsed struct {
-	OperatorID int                   `json:"operatorId"`
-	Telegram   domain.TelegramConfig `json:"telegram"`
-	Network    NetworkConfig         `json:"network"`
-}
-
-type NetworkConfig struct {
 	SignerUrl          string
 	IpfsUrl            string
 	WsURL              string
@@ -45,41 +27,16 @@ type NetworkConfig struct {
 	VeboBlockDeployment uint64
 }
 
-// LoadAppConfig loads the operatorId and telegram details from a JSON file
-func LoadAppConfig(filePath string) (Config, error) {
-	file, err := os.ReadFile(filePath)
-	if err != nil {
-		log.Fatalf("Failed to read config file: %v", err)
-		return Config{}, err
-	}
-
-	var configUnparsed configUnparsed
-	err = json.Unmarshal(file, &configUnparsed)
-	if err != nil {
-		log.Fatalf("Failed to parse config JSON: %v", err)
-		return Config{}, err
-	}
-
-	// convert operator id to big.Int
-	operatorID := big.NewInt(int64(configUnparsed.OperatorID))
-	var config Config
-	config.OperatorID = domain.OperatorId(operatorID)
-	config.Telegram = configUnparsed.Telegram
-	config.Network = configUnparsed.Network
-
-	return config, nil
-}
-
-func LoadNetworkConfig() (NetworkConfig, error) {
+func LoadNetworkConfig() (Config, error) {
 	network := os.Getenv("NETWORK")
 	wsURL := os.Getenv("WS_URL")
 	ipfsUrl := os.Getenv("IPFS_URL")
 
-	var config NetworkConfig
+	var config Config
 
 	switch network {
 	case "holesky":
-		config = NetworkConfig{
+		config = Config{
 			SignerUrl:               "http://signer.holesky.dncore.dappnode",
 			IpfsUrl:                 ipfsUrl,
 			WsURL:                   wsURL,
@@ -94,7 +51,7 @@ func LoadNetworkConfig() (NetworkConfig, error) {
 			CSModuleAddress:         common.HexToAddress("common.HexToAddress(0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 		}
 	case "mainnet":
-		config = NetworkConfig{
+		config = Config{
 			SignerUrl:               "http://signer.mainnet.dncore.dappnode",
 			IpfsUrl:                 ipfsUrl,
 			WsURL:                   wsURL,

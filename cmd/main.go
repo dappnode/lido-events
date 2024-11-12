@@ -35,31 +35,43 @@ import (
 // - It is okey that 1 service uses another service in ordert to be initiated.
 
 func main() {
+	// Set up context to control the lifetime of the service
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Load configurations
 	networkConfig, err := config.LoadNetworkConfig()
 	if err != nil {
 		log.Fatalf("Failed to load network configuration: %v", err)
 	}
-	appConfig, err := config.LoadAppConfig("config.json")
-	if err != nil {
-		log.Fatalf("Failed to load aplication configuration: %v", err)
-	}
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
+	// get operator ids
+	operatorIds, err := storageAdapter.GetOperatorIds()
+	if err != nil {
+		log.Fatalf("Failed to get operator ids: %v", err)
+	}
+	// get telegram config
+	telegramConfig, err := storageAdapter.GetTelegramConfig()
+	if err != nil {
+		log.Fatalf("Failed to get telegram config: %v", err)
+	}
+
+	configManager := config.NewConfigManager(operatorIds, telegramConfig)
+
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	notifierAdapter, err := notifier.NewNotifierAdapter(appConfig.Telegram.Token, appConfig.Telegram.ChatID)
+	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, configManager)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
 	// TODO: what happens when operator id changes?
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{}, []*big.Int{appConfig.OperatorID}, []*big.Int{}, []*big.Int{})
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{}, operatorIds, []*big.Int{}, []*big.Int{})
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
 	}
 	// TODO: where to get oldAddress, newAddress, oldProposedAddress, newProposedAddress from
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, []*big.Int{appConfig.OperatorID}, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, operatorIds, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
 	}
@@ -72,11 +84,10 @@ func main() {
 	storageService := services.NewStorageService(storageAdapter)
 	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
-	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(storageAdapter, notifierAdapter, csFeeDistributorAdapter)
+	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(notifierAdapter, csFeeDistributorAdapter)
 
 	// Start periodic scan for ValidatorExitRequest events
-	// Set up context to control the lifetime of the service
-	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 	// Start VeboService for periodic scanning every 10 minutes
 	go veboService.ScanVeboValidatorExitRequestEventCron(ctx, 10*time.Minute) // TODO: determine interval

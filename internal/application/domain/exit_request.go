@@ -1,10 +1,5 @@
 package domain
 
-type ExitRequests struct {
-	LastProcessedEpoch uint64                 `json:"lastProcessedEpoch"`
-	Requests           map[string]ExitRequest `json:"validators"` // indexed by validator pubkey
-}
-
 type ExitRequest struct {
 	Event  VeboValidatorExitRequest `json:"event"`
 	Status ValidatorStatus          `json:"status"`
