@@ -126,11 +126,12 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 
 func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
 	// Send the notification message
-	message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
-	if err := vs.notifierPort.SendNotification(message); err != nil {
-		log.Printf("Failed to send notification: %v", err)
-		return err
-	}
+	// Its too spammy to send a notification for every report submitted
+	// message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
+	// if err := vs.notifierPort.SendNotification(message); err != nil {
+	// 	log.Printf("Failed to send notification: %v", err)
+	// 	return err
+	// }
 
 	// Store the pending hash
 	stringHash := fmt.Sprintf("0x%x", reportSubmitted.Hash)
