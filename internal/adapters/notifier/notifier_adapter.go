@@ -2,69 +2,63 @@ package notifier
 
 import (
 	"context"
-	"lido-events/internal/application/domain"
-	"lido-events/internal/config"
+	"lido-events/internal/application/ports"
 	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// TelegramBot implements the Notifier interface
 type TelegramBot struct {
 	Bot    *tgbotapi.BotAPI
 	ChatID int64
-	mu     sync.Mutex // Mutex for safe concurrent updates
+	mu     sync.RWMutex
 }
 
-// NewNotifierAdapter creates a new TelegramBot instance and starts listening for config updates.
-func NewNotifierAdapter(ctx context.Context, configManager *config.ConfigManager) (*TelegramBot, error) {
-	// Get the initial Telegram configuration
-	initialConfig := configManager.GetTelegramConfig()
+func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (*TelegramBot, error) {
+	// Load the initial configuration for Telegram
+	initialConfig, err := storageAdapter.GetTelegramConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	// Create the Telegram bot with the initial configuration
+	// Initialize the bot with the initial token
 	bot, err := tgbotapi.NewBotAPI(initialConfig.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	// Initialize the TelegramBot instance
-	telegramBot := &TelegramBot{
+	adapter := &TelegramBot{
 		Bot:    bot,
 		ChatID: initialConfig.ChatID,
 	}
 
-	// Start listening for configuration updates
-	updateChan := configManager.GetTelegramConfigUpdateChannel()
-	telegramBot.ListenForTelegramConfigUpdates(ctx, updateChan)
-
-	return telegramBot, nil
-}
-
-func (tb *TelegramBot) ListenForTelegramConfigUpdates(ctx context.Context, updateChan <-chan domain.TelegramConfig) {
+	// Listen for configuration updates in a separate goroutine
+	telegramConfigUpdates := storageAdapter.RegisterTelegramConfigListener()
 	go func() {
-		for {
-			select {
-			case newConfig := <-updateChan:
-				tb.mu.Lock()
-				tb.Bot, _ = tgbotapi.NewBotAPI(newConfig.Token) // Reinitialize with new token
-				tb.ChatID = newConfig.ChatID
-				tb.mu.Unlock()
-				log.Println("Updated TelegramBot config")
-			case <-ctx.Done():
-				return
+		for newConfig := range telegramConfigUpdates {
+			adapter.mu.Lock()
+			adapter.ChatID = newConfig.ChatID
+			// Update the bot API instance with the new token
+			updatedBot, err := tgbotapi.NewBotAPI(newConfig.Token)
+			if err == nil {
+				adapter.Bot = updatedBot
+			} else {
+				log.Printf("NotifierAdapter: Failed to update bot API with new token: %v", err)
 			}
+			adapter.mu.Unlock()
 		}
 	}()
+
+	return adapter, nil
 }
 
-// Notify sends a notification message via Telegram
+// SendNotification sends a message via Telegram
 func (tb *TelegramBot) SendNotification(message string) error {
+	tb.mu.RLock()
+	defer tb.mu.RUnlock()
+
 	msg := tgbotapi.NewMessage(tb.ChatID, message)
 	_, err := tb.Bot.Send(msg)
-	if err != nil {
-		log.Printf("Error sending message via Telegram: %s", err)
-		return err
-	}
-	return nil
+	return err
 }

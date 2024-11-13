@@ -4,6 +4,7 @@ import (
 	"context"
 	"lido-events/internal/adapters/vebo/bindings"
 	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 	"log"
 	"math/big"
 
@@ -13,21 +14,15 @@ import (
 )
 
 type VeboAdapter struct {
-	Client          *ethclient.Client
-	VeboAddress     common.Address
-	StakingModuleId []*big.Int
-	NodeOperatorIds []*big.Int
-	ValidatorIndex  []*big.Int // TODO: where to get it?
-	RefSlot         []*big.Int // TODO: where to get it?
+	Client         *ethclient.Client
+	VeboAddress    common.Address
+	StorageAdapter ports.StoragePort
 }
 
 func NewVeboAdapter(
 	wsURL string,
 	veboAddress common.Address,
-	stakingModuleId []*big.Int,
-	nodeOperatorIds []*big.Int,
-	validatorIndex []*big.Int,
-	refSlot []*big.Int,
+	storageAdapter ports.StoragePort,
 ) (*VeboAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
@@ -37,10 +32,7 @@ func NewVeboAdapter(
 	return &VeboAdapter{
 		client,
 		veboAddress,
-		stakingModuleId,
-		nodeOperatorIds,
-		validatorIndex,
-		refSlot,
+		storageAdapter,
 	}, nil
 }
 
@@ -51,7 +43,18 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 		return err
 	}
 
-	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, va.StakingModuleId, va.NodeOperatorIds, va.ValidatorIndex)
+	// Get operator ids
+	operatorIds, err := va.StorageAdapter.GetOperatorIds()
+	if err != nil {
+		return err
+	}
+
+	// print operator ids
+	for _, operatorId := range operatorIds {
+		log.Printf("Operator ID: %v", operatorId)
+	}
+
+	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, operatorIds, []*big.Int{})
 	if err != nil {
 		return err
 	}
@@ -78,7 +81,7 @@ func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleRep
 
 	// Watch for ReportSubmitted
 	reportSubmittedChan := make(chan *domain.VeboReportSubmitted)
-	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, va.RefSlot)
+	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, []*big.Int{})
 	if err != nil {
 		return err
 	}

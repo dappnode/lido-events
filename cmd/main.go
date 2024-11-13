@@ -35,7 +35,7 @@ import (
 // - It is okey that 1 service uses another service in ordert to be initiated.
 
 func main() {
-	// Set up context to control the lifetime of the service
+	// Set up context to control the lifetime of the services
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Load configurations
@@ -46,32 +46,17 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
-	// get operator ids
-	operatorIds, err := storageAdapter.GetOperatorIds()
-	if err != nil {
-		log.Fatalf("Failed to get operator ids: %v", err)
-	}
-	// get telegram config
-	telegramConfig, err := storageAdapter.GetTelegramConfig()
-	if err != nil {
-		log.Fatalf("Failed to get telegram config: %v", err)
-	}
-
-	configManager := config.NewConfigManager(operatorIds, telegramConfig)
-
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, configManager)
+	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
-	// TODO: what happens when operator id changes?
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, []*big.Int{}, operatorIds, []*big.Int{}, []*big.Int{})
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
 	}
-	// TODO: where to get oldAddress, newAddress, oldProposedAddress, newProposedAddress from
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, operatorIds, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, []*big.Int{}, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
 	}

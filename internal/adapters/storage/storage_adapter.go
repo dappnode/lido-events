@@ -3,14 +3,17 @@ package storage
 import (
 	"encoding/json"
 	"lido-events/internal/application/domain"
+	"math/big"
 	"os"
 	"sync"
 )
 
 // Storage handles file-based storage for configuration and operator data
 type Storage struct {
-	DBFile string
-	mu     sync.Mutex // Mutex for concurrent access
+	DBFile                  string
+	mu                      sync.RWMutex // RWMutex for concurrent access
+	operatorIdListeners     []chan []*big.Int
+	telegramConfigListeners []chan domain.TelegramConfig
 }
 
 func NewStorageAdapter() *Storage {
