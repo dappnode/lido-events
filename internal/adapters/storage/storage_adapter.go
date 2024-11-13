@@ -58,7 +58,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	file, err := os.ReadFile(fs.DBFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// If the file does not exist, return the initialized db with default values
 			return db, nil
 		}
 		return Database{}, err

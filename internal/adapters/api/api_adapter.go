@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"lido-events/internal/application/domain"
-	"lido-events/internal/application/services"
+	"lido-events/internal/application/ports"
 
 	"github.com/gorilla/mux"
 )
@@ -15,15 +15,15 @@ import (
 // TODO: add cors middleware
 
 type APIHandler struct {
-	StorageService *services.StorageService
-	Router         *mux.Router
+	StoragePort ports.StoragePort
+	Router      *mux.Router
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up the routes
-func NewAPIAdapter(storageService *services.StorageService) *APIHandler {
+func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
 	h := &APIHandler{
-		StorageService: storageService,
-		Router:         mux.NewRouter(),
+		StoragePort: storagePort,
+		Router:      mux.NewRouter(),
 	}
 
 	h.SetupRoutes()
@@ -42,7 +42,7 @@ func (h *APIHandler) SetupRoutes() {
 func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Token  string `json:"token"`
-		ChatID int64  `json:"chatId"`
+		UserID int64  `json:"userId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -50,12 +50,12 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if req.Token == "" && req.ChatID == 0 {
-		writeErrorResponse(w, "At least one of token or chatId must be provided", http.StatusBadRequest)
+	if req.Token == "" && req.UserID == 0 {
+		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest)
 		return
 	}
 
-	err := h.StorageService.SetTelegramConfig(domain.TelegramConfig(req))
+	err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
 		return
@@ -88,7 +88,7 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the operator ID in the storage service
-	err := h.StorageService.SetOperatorId(req.OperatorID)
+	err := h.StoragePort.SaveOperatorId(req.OperatorID)
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
 		return
@@ -122,7 +122,7 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	report, err := h.StorageService.GetOperatorPerformance(operatorIdNum, strconv.Itoa(startEpoch), strconv.Itoa(endEpoch))
+	report, err := h.StoragePort.GetOperatorPerformance(operatorIdNum, strconv.Itoa(startEpoch), strconv.Itoa(endEpoch))
 	if err != nil {
 		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError)
 		return
@@ -151,7 +151,7 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exitRequests, err := h.StorageService.GetExitRequests(operatorId)
+	exitRequests, err := h.StoragePort.GetExitRequests(operatorId)
 	if err != nil {
 		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError)
 		return

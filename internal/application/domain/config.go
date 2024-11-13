@@ -2,7 +2,7 @@ package domain
 
 type TelegramConfig struct {
 	Token  string `json:"token"`
-	ChatID int64  `json:"chatId"`
+	UserID int64  `json:"userId"`
 }
 
 type Config struct {

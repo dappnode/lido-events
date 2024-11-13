@@ -11,7 +11,7 @@ import (
 
 type TelegramBot struct {
 	Bot    *tgbotapi.BotAPI
-	ChatID int64
+	UserID int64
 	mu     sync.RWMutex
 }
 
@@ -19,8 +19,11 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 	// Load the initial configuration for Telegram
 	initialConfig, err := storageAdapter.GetTelegramConfig()
 	if err != nil {
+		log.Printf("NotifierAdapter: Failed to load Telegram configuration: %v", err)
 		return nil, err
 	}
+
+	log.Printf("NotifierAdapter: Initial Telegram configuration: %v", initialConfig)
 
 	// Initialize the bot with the initial token
 	bot, err := tgbotapi.NewBotAPI(initialConfig.Token)
@@ -30,7 +33,7 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 
 	adapter := &TelegramBot{
 		Bot:    bot,
-		ChatID: initialConfig.ChatID,
+		UserID: initialConfig.UserID,
 	}
 
 	// Listen for configuration updates in a separate goroutine
@@ -38,7 +41,7 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 	go func() {
 		for newConfig := range telegramConfigUpdates {
 			adapter.mu.Lock()
-			adapter.ChatID = newConfig.ChatID
+			adapter.UserID = newConfig.UserID
 			// Update the bot API instance with the new token
 			updatedBot, err := tgbotapi.NewBotAPI(newConfig.Token)
 			if err == nil {
@@ -58,7 +61,7 @@ func (tb *TelegramBot) SendNotification(message string) error {
 	tb.mu.RLock()
 	defer tb.mu.RUnlock()
 
-	msg := tgbotapi.NewMessage(tb.ChatID, message)
+	msg := tgbotapi.NewMessage(tb.UserID, message)
 	_, err := tb.Bot.Send(msg)
 	return err
 }

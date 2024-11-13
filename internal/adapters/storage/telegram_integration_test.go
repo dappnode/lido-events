@@ -20,7 +20,7 @@ func TestSaveTelegramConfig(t *testing.T) {
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
 	telegramConfig := domain.TelegramConfig{
 		Token:  "test-token",
-		ChatID: 123456789,
+		UserID: 123456789,
 	}
 
 	// Save the new Telegram configuration
@@ -39,7 +39,7 @@ func TestGetTelegramConfig(t *testing.T) {
 	initialData := &storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "initial-token",
-			ChatID: 987654321,
+			UserID: 987654321,
 		},
 	}
 
@@ -75,7 +75,7 @@ func TestSaveAndGetTelegramConfig(t *testing.T) {
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
 	telegramConfig := domain.TelegramConfig{
 		Token:  "final-token",
-		ChatID: 111222333,
+		UserID: 111222333,
 	}
 
 	// Save the configuration

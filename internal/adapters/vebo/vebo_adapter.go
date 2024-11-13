@@ -49,11 +49,6 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 		return err
 	}
 
-	// print operator ids
-	for _, operatorId := range operatorIds {
-		log.Printf("Operator ID: %v", operatorId)
-	}
-
 	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, operatorIds, []*big.Int{})
 	if err != nil {
 		return err

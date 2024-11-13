@@ -39,7 +39,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	existingData := &storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "test-token",
-			ChatID: 12345,
+			UserID: 12345,
 		},
 		Operators: storage.OperatorsData{
 			LastProcessedEpoch: 100,
@@ -87,7 +87,7 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 	missingFieldsData := &storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "test-token",
-			ChatID: 12345,
+			UserID: 12345,
 		},
 		Operators: storage.OperatorsData{}, // Empty OperatorsData
 	}
@@ -114,7 +114,7 @@ func TestSaveDatabase(t *testing.T) {
 	db := storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "new-token",
-			ChatID: 98765,
+			UserID: 98765,
 		},
 		Operators: storage.OperatorsData{
 			LastProcessedEpoch: 200,
