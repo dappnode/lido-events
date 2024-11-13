@@ -7,6 +7,11 @@ import (
 
 type StoragePort interface {
 	// operators
+	//   - crons
+	GetLastProcessedEpoch() (uint64, error)
+	SaveLastProcessedEpoch(epoch uint64) error
+	AddPendingHash(hash string) error
+	DeletePendingHash(hash string) error
 	//   - operator IDs
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error
@@ -14,8 +19,6 @@ type StoragePort interface {
 	//   - performance
 	GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (domain.Reports, error)
 	SaveOperatorPerformance(operatorID *big.Int, epoch string, report domain.Report) error
-	GetLastProcessedEpoch() (uint64, error)
-	SaveLastProcessedEpoch(epoch uint64) error
 	//   - exit requests
 	GetExitRequests(string) (map[string]domain.ExitRequest, error)
 	SaveExitRequests(operatorID *big.Int, requests map[string]domain.ExitRequest) error

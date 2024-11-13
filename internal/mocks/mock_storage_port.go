@@ -95,3 +95,15 @@ func (m *MockStoragePort) RegisterTelegramConfigListener() chan domain.TelegramC
 	args := m.Called()
 	return args.Get(0).(chan domain.TelegramConfig)
 }
+
+// AddPendingHash simulates adding a pending hash
+func (m *MockStoragePort) AddPendingHash(hash string) error {
+	args := m.Called(hash)
+	return args.Error(0)
+}
+
+// DeletePendingHash simulates deleting a pending hash
+func (m *MockStoragePort) DeletePendingHash(hash string) error {
+	args := m.Called(hash)
+	return args.Error(0)
+}

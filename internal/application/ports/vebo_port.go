@@ -7,6 +7,6 @@ import (
 )
 
 type VeboPort interface {
-	WatchReportSubmittedEvents(context.Context, func(*domain.VeboReportSubmitted) error) error
-	ScanVeboValidatorExitRequestEvent(context.Context, uint64, *uint64, func(*domain.VeboValidatorExitRequest) error) error
+	ScanReportSubmittedEvents(ctx context.Context, start uint64, end *uint64, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error
+	ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error
 }

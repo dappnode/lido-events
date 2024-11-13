@@ -6,7 +6,6 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
-	"math/big"
 	"time"
 )
 
@@ -30,49 +29,50 @@ func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort p
 	}
 }
 
-// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
-// It passes to the csModule port a function that processes the log data.
-func (vs *VeboEventsProcessor) WatchReportSubmittedEvents(ctx context.Context) error {
-	return vs.veboPort.WatchReportSubmittedEvents(ctx, vs.HandleReportSubmittedEvent)
-}
-
-// ScanVeboValidatorExitRequestEventCron starts a periodic scan for ValidatorExitRequest events.
-func (vs *VeboEventsProcessor) ScanVeboValidatorExitRequestEventCron(ctx context.Context, interval time.Duration) {
+// ScanEventsCron starts a unified periodic scan for both ValidatorExitRequest and ReportSubmitted events.
+func (vs *VeboEventsProcessor) ScanEventsCron(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			// Get start from last processed epoch finalized from storage
+			// Retrieve the start epoch from the last processed epoch, defaulting to the deployment block
 			start, err := vs.storagePort.GetLastProcessedEpoch()
 			if err != nil {
 				log.Printf("Failed to get last processed epoch: %v", err)
+				continue
 			}
-			// 0 is the default value for the first run
 			if start == 0 {
 				start = vs.veboBlockDeployment
 			}
 
-			// Get end from latest finalized epoch from the chain
+			// Retrieve the end epoch as the latest finalized epoch from the beacon chain
 			end, err := vs.beaconchainPort.GetEpochHeader("finalized")
 			if err != nil {
 				log.Printf("Failed to get latest finalized epoch: %v", err)
+				continue
 			}
 
-			// Scan the events
+			// Scan for ValidatorExitRequest events
 			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
-				break
+				continue
 			}
 
-			// update last processed epoch finalized if no error
+			// Scan for ReportSubmitted events
+			if err := vs.veboPort.ScanReportSubmittedEvents(ctx, start, &end, vs.HandleReportSubmittedEvent); err != nil {
+				log.Printf("Error scanning ReportSubmitted events: %v", err)
+				continue
+			}
+
+			// Update the last processed epoch if both scans were successful
 			if err := vs.storagePort.SaveLastProcessedEpoch(end); err != nil {
 				log.Printf("Failed to save last processed epoch: %v", err)
 			}
 		case <-ctx.Done():
 			// Stop the periodic scan if the context is canceled
-			log.Println("Stopping periodic scan for ValidatorExitRequest events")
+			log.Println("Stopping unified periodic scan for events")
 			return
 		}
 	}
@@ -125,24 +125,17 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 }
 
 func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
-	// send the notification message
+	// Send the notification message
 	message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
 	if err := vs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
 		return err
 	}
 
-	// TODO: use reportSubmitted.Hash to fetch the report from IPFS
-
-	// save the report
-	lidoReport := domain.Report{
-		Threshold:  "some-threshold",
-		Validators: map[string]domain.ValidatorPerformance{},
-	}
-	epoch := "123456"
-	operatorId := big.NewInt(0)
-	if err := vs.storagePort.SaveOperatorPerformance(operatorId, epoch, lidoReport); err != nil {
-		log.Printf("Failed to save Lido report: %v", err)
+	// Store the pending hash
+	stringHash := fmt.Sprintf("0x%x", reportSubmitted.Hash)
+	if err := vs.storagePort.AddPendingHash(stringHash); err != nil {
+		log.Printf("Failed to store pending hash: %v", err)
 		return err
 	}
 

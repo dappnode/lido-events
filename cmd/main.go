@@ -107,12 +107,9 @@ func main() {
 	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(notifierAdapter, csFeeDistributorAdapter)
 
 	// Start periodic scan for ValidatorExitRequest events
-	go veboService.ScanVeboValidatorExitRequestEventCron(ctx, 1*time.Minute) // TODO: determine interval
+	go veboService.ScanEventsCron(ctx, 1*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC event
-	if err := veboService.WatchReportSubmittedEvents(ctx); err != nil {
-		log.Fatalf("Failed to subscribe to VEBO events: %v", err)
-	}
 	if err := csModuleService.WatchCsModuleEvents(ctx); err != nil {
 		log.Fatalf("Failed to subscribe to CSModule events: %v", err)
 	}

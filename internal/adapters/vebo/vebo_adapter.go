@@ -55,11 +55,12 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 	}
 
 	for validatorExitRequestEvents.Next() {
-		if err := handleValidatorExitRequestEvent(&domain.VeboValidatorExitRequest{
-			ValidatorIndex:  validatorExitRequestEvents.Event.ValidatorIndex,
-			ValidatorPubkey: validatorExitRequestEvents.Event.ValidatorPubkey,
-			Raw:             validatorExitRequestEvents.Event.Raw,
-		}); err != nil {
+		if validatorExitRequestEvents.Error() != nil {
+			log.Printf("Error fetching ValidatorExitRequest event: %v", validatorExitRequestEvents.Error())
+			continue
+		}
+
+		if err := handleValidatorExitRequestEvent(validatorExitRequestEvents.Event); err != nil {
 			log.Printf("Error handling ValidatorExitRequest: %v", err)
 		}
 	}
@@ -67,36 +68,29 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 	return nil
 }
 
-// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
-func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
+// ScanReportSubmittedEvents scans the Vebo contract for ReportSubmitted events.
+func (va *VeboAdapter) ScanReportSubmittedEvents(ctx context.Context, start uint64, end *uint64, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
 		return err
 	}
 
-	// Watch for ReportSubmitted
-	reportSubmittedChan := make(chan *domain.VeboReportSubmitted)
-	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, []*big.Int{})
+	// Retrieve ReportSubmitted events from the specified block range
+	reportSubmittedEvents, err := veboContract.FilterReportSubmitted(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{})
 	if err != nil {
 		return err
 	}
 
-	go func() {
-		defer subReport.Unsubscribe()
-		for {
-			select {
-			case event := <-reportSubmittedChan:
-				if err := handleReportSubmittedEvent(event); err != nil {
-					log.Printf("Error handling ReportSubmitted: %v", err)
-				}
-			case err := <-subReport.Err():
-				log.Printf("Subscription error (ReportSubmitted): %v", err)
-				return
-			case <-ctx.Done():
-				return
-			}
+	for reportSubmittedEvents.Next() {
+		if reportSubmittedEvents.Error() != nil {
+			log.Printf("Error fetching ReportSubmitted event: %v", reportSubmittedEvents.Error())
+			continue
 		}
-	}()
+
+		if err := handleReportSubmittedEvent(reportSubmittedEvents.Event); err != nil {
+			log.Printf("Error handling ReportSubmitted event: %v", err)
+		}
+	}
 
 	return nil
 }
