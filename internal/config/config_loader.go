@@ -8,6 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// TODO: consider reading ENV OPERATOR_IDS as a string comma separated list and converting it to a slice of big.Int
+// this enva could be either used to overwrite the default operator ids or to add new ones
+
 type Config struct {
 	SignerUrl          string
 	IpfsUrl            string
