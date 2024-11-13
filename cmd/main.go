@@ -10,15 +10,12 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
-	"math/big"
 	"time"
 
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
 	"log"
 	"net/http"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Hexagonal architecrtures principles:
@@ -56,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
 	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, []*big.Int{}, []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
 	}
