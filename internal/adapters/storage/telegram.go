@@ -8,9 +8,6 @@ import (
 
 // SaveTelegramConfig saves the Telegram configuration to storage and notifies listeners of the update.
 func (fs *Storage) SaveTelegramConfig(config domain.TelegramConfig) error {
-	fs.mu.Lock()
-	defer fs.mu.Unlock()
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
@@ -27,9 +24,6 @@ func (fs *Storage) SaveTelegramConfig(config domain.TelegramConfig) error {
 
 // GetTelegramConfig retrieves the Telegram configuration from storage.
 func (fs *Storage) GetTelegramConfig() (domain.TelegramConfig, error) {
-	fs.mu.RLock()
-	defer fs.mu.RUnlock()
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return domain.TelegramConfig{}, err
@@ -39,9 +33,6 @@ func (fs *Storage) GetTelegramConfig() (domain.TelegramConfig, error) {
 
 // RegisterTelegramConfigListener registers a channel to receive updates when the Telegram config changes.
 func (fs *Storage) RegisterTelegramConfigListener() chan domain.TelegramConfig {
-	fs.mu.Lock()
-	defer fs.mu.Unlock()
-
 	updateChan := make(chan domain.TelegramConfig, 1)
 	fs.telegramConfigListeners = append(fs.telegramConfigListeners, updateChan)
 	return updateChan

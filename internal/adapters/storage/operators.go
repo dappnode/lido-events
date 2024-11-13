@@ -8,9 +8,6 @@ import (
 
 // SaveOperatorId adds a new operator ID to the storage if it doesn’t already exist.
 func (fs *Storage) SaveOperatorId(operatorID string) error {
-	fs.mu.Lock()
-	defer fs.mu.Unlock()
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
@@ -38,9 +35,6 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 
 // GetOperatorIds retrieves a list of all operator IDs in storage.
 func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
-	fs.mu.RLock()
-	defer fs.mu.RUnlock()
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return nil, err
@@ -61,9 +55,6 @@ func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 
 // RegisterOperatorIdListener registers a channel to receive updates when operator IDs change.
 func (fs *Storage) RegisterOperatorIdListener() chan []*big.Int {
-	fs.mu.Lock()
-	defer fs.mu.Unlock()
-
 	updateChan := make(chan []*big.Int, 1)
 	fs.operatorIdListeners = append(fs.operatorIdListeners, updateChan)
 	return updateChan
