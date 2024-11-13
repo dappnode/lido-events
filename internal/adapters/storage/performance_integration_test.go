@@ -117,6 +117,49 @@ func TestGetOperatorPerformance_Range(t *testing.T) {
 	assert.Equal(t, expectedReports, reports)
 }
 
+// TestAddPendingHash tests adding a pending hash to the global pendingHashes array.
+func TestAddPendingHash(t *testing.T) {
+	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data
+	defer os.Remove(tmpFile.Name())           // Clean up
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	hash := "newPendingHash"
+
+	// Add the pending hash
+	err := storageAdapter.AddPendingHash(hash)
+	assert.NoError(t, err)
+
+	// Load database and verify the pending hash was added
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+	assert.Contains(t, db.Operators.PendingHashes, hash)
+}
+
+// TestDeletePendingHash tests removing a pending hash from the global pendingHashes array.
+func TestDeletePendingHash(t *testing.T) {
+	// Initialize database with a pending hash
+	initialData := &storage.Database{
+		Operators: storage.OperatorsData{
+			PendingHashes: []string{"hashToDelete"},
+		},
+	}
+
+	tmpFile := CreateTempDatabaseFile(t, initialData)
+	defer os.Remove(tmpFile.Name()) // Clean up
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	hash := "hashToDelete"
+
+	// Delete the pending hash
+	err := storageAdapter.DeletePendingHash(hash)
+	assert.NoError(t, err)
+
+	// Load database and verify the pending hash was removed
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+	assert.NotContains(t, db.Operators.PendingHashes, hash)
+}
+
 // TestGetOperatorPerformance_NoData tests retrieving performance data when no data exists for the specified operator.
 func TestGetOperatorPerformance_NoData(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data

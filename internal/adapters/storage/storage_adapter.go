@@ -29,9 +29,10 @@ type Database struct {
 }
 
 // OperatorsData represents the top-level structure for all operators,
-// with a global last processed epoch and individual operator entries.
+// with a global last processed epoch, pending hashes, and individual operator entries.
 type OperatorsData struct {
 	LastProcessedEpoch uint64                     `json:"lastProcessedEpoch"`
+	PendingHashes      []string                   `json:"pendingHashes"`
 	OperatorDetails    map[string]OperatorDetails `json:"operatorDetails"` // indexed by operator ID
 }
 
@@ -50,8 +51,9 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	db := Database{
 		Telegram: domain.TelegramConfig{},
 		Operators: OperatorsData{
-			LastProcessedEpoch: 0,
-			OperatorDetails:    make(map[string]OperatorDetails),
+			LastProcessedEpoch: 0,                                // Initialize LastProcessedEpoch as 0
+			PendingHashes:      []string{},                       // Initialize PendingHashes as an empty slice
+			OperatorDetails:    make(map[string]OperatorDetails), // Initialize OperatorDetails as an empty map
 		},
 	}
 
@@ -77,6 +79,9 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Ensure nested fields are properly initialized
 	if db.Operators.OperatorDetails == nil {
 		db.Operators.OperatorDetails = make(map[string]OperatorDetails)
+	}
+	if db.Operators.PendingHashes == nil {
+		db.Operators.PendingHashes = []string{} // Initialize if nil after unmarshalling
 	}
 
 	return db, nil

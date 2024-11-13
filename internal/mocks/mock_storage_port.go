@@ -31,7 +31,7 @@ func (m *MockStoragePort) RegisterOperatorIdListener() chan []*big.Int {
 }
 
 // GetOperatorPerformance returns a map of performance reports for an operator ID
-func (m *MockStoragePort) GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (map[string]domain.Report, error) {
+func (m *MockStoragePort) GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (domain.Reports, error) {
 	args := m.Called(operatorID, startEpoch, endEpoch)
 	return args.Get(0).(map[string]domain.Report), args.Error(1)
 }

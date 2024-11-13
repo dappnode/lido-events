@@ -31,6 +31,8 @@ func TestLoadDatabase_MissingFile(t *testing.T) {
 	assert.Equal(t, uint64(0), db.Operators.LastProcessedEpoch)
 	assert.NotNil(t, db.Operators.OperatorDetails)
 	assert.Empty(t, db.Operators.OperatorDetails)
+	assert.NotNil(t, db.Operators.PendingHashes)
+	assert.Empty(t, db.Operators.PendingHashes)
 }
 
 // Test for LoadDatabase when the database file has existing data
@@ -79,6 +81,8 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Contains(t, db.Operators.OperatorDetails, "1")
 	assert.Contains(t, db.Operators.OperatorDetails["1"].Performance, "100")
 	assert.Contains(t, db.Operators.OperatorDetails["1"].ExitRequests, "validator1")
+	assert.NotNil(t, db.Operators.PendingHashes)
+	assert.Empty(t, db.Operators.PendingHashes)
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
@@ -104,6 +108,8 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 	assert.Equal(t, uint64(0), db.Operators.LastProcessedEpoch)
 	assert.NotNil(t, db.Operators.OperatorDetails)
 	assert.Empty(t, db.Operators.OperatorDetails)
+	assert.NotNil(t, db.Operators.PendingHashes)
+	assert.Empty(t, db.Operators.PendingHashes)
 }
 
 func TestSaveDatabase(t *testing.T) {

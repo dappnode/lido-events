@@ -12,7 +12,7 @@ type StoragePort interface {
 	SaveOperatorId(operatorID string) error
 	RegisterOperatorIdListener() chan []*big.Int
 	//   - performance
-	GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (map[string]domain.Report, error)
+	GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (domain.Reports, error)
 	SaveOperatorPerformance(operatorID *big.Int, epoch string, report domain.Report) error
 	GetLastProcessedEpoch() (uint64, error)
 	SaveLastProcessedEpoch(epoch uint64) error
