@@ -7,6 +7,9 @@ import (
 	"lido-events/internal/application/ports"
 	"log"
 	"time"
+
+	"github.com/ipfs/go-cid"
+	"github.com/multiformats/go-multihash"
 )
 
 type VeboEventsProcessor struct {
@@ -133,12 +136,42 @@ func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domai
 	// 	return err
 	// }
 
-	// Store the pending hash
-	stringHash := fmt.Sprintf("0x%x", reportSubmitted.Hash)
-	if err := vs.storagePort.AddPendingHash(stringHash); err != nil {
-		log.Printf("Failed to store pending hash: %v", err)
+	// Convert the [32]byte hash to CID format
+	cidStr, err := ConvertKeccak256HashToCIDv1(reportSubmitted.Hash)
+	if err != nil {
+		log.Printf("Failed to convert hash to CID: %v", err)
+		return err
+	}
+
+	// Validate the CID format
+	parsedCID, err := cid.Decode(cidStr)
+	if err != nil {
+		log.Printf("Invalid CID format: %v", err)
+		return fmt.Errorf("invalid CID format: %w", err)
+	}
+
+	log.Printf("Valid CID: %s", parsedCID)
+
+	// Store the CID
+	if err := vs.storagePort.AddPendingHash(cidStr); err != nil {
+		log.Printf("Failed to store pending CID: %v", err)
 		return err
 	}
 
 	return nil
+}
+
+// ConvertKeccak256HashToCIDv1 converts a Keccak-256 [32]byte hash to an IPFS CID v1
+func ConvertKeccak256HashToCIDv1(hash [32]byte) (string, error) {
+	// Create a multihash from the Keccak-256 hash
+	mh, err := multihash.Encode(hash[:], multihash.KECCAK_256)
+	if err != nil {
+		return "", fmt.Errorf("failed to create multihash: %w", err)
+	}
+
+	// Generate a CIDv1 with the "raw" codec (or another codec if needed)
+	c := cid.NewCidV1(cid.Raw, mh)
+
+	// Return the CID as a Base32-encoded string
+	return c.String(), nil
 }

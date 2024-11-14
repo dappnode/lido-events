@@ -5,7 +5,7 @@ Repository for indexing Lido events and notifying subscribers.
 ## Configuration
 
 - `WS_URL`: Websocket URL to listen for events.
-- `IPFS_URL`: IPFS URL to fetch the event data.
+- `IPFS_URL`: IPFS URL to fetch the event data. i.e https://ipfs.io
 - `NETWORK`: Network to listen for events.
 
 ## Start 
