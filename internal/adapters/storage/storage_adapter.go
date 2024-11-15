@@ -22,57 +22,26 @@ func NewStorageAdapter() *Storage {
 	}
 }
 
-// Database structure for unified storage
+// Database structure for the new storage format
 type Database struct {
-	Telegram  domain.TelegramConfig `json:"telegram"`
-	Operators OperatorsData         `json:"operators"`
+	Telegram  domain.TelegramConfig   `json:"telegram"`
+	Operators map[string]OperatorData `json:"operators"` // indexed by operator ID
+	Events    Events                  `json:"events"`
 }
 
-// TODO: consider having the following db format instead:
-// - It will allow having different last processed epoch for exit requests and performance reports crons
-// ```json
-// {
-// 	  "telegram": {
-// 		"token": ,
-// 		"userID":
-// 	  },
-// 	  "operators": {
-// 	  	"performance":{
-// 			"lastProcessedBlock": 0,
-// 			"pendingHashes": [],
-// 			"reports":{
-// 				"<epoch>": {
-// 					"treshold": ,
-// 					"<valIndex1>": {
-// 						"included": ,
-// 						"assigned: ,
-// 			}
-// 		},
-// 		"exitRequests": {
-// 			"lastProcessedBlock": 0,
-// 			"exits": {
-// 				"<valIndex1>": {
-// 					"event": ,
-// 					"status": ,
-// 				}
-// 			}
-// 		},
-// }
-// ```
-
-// OperatorsData represents the top-level structure for all operators,
-// with a global last processed epoch, pending hashes, and individual operator entries.
-type OperatorsData struct {
-	LastProcessedBlock uint64                     `json:"lastProcessedBlock"`
-	PendingHashes      []string                   `json:"pendingHashes"`
-	OperatorDetails    map[string]OperatorDetails `json:"operatorDetails"` // indexed by operator ID
+type Events struct {
+	DistributionLogUpdated struct {
+		LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+		PendingHashes      []string `json:"pendingHashes"`
+	} `json:"distributionLogUpdated"`
+	ValidatorExitRequest struct {
+		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+	} `json:"validatorExitRequest"`
 }
 
-// OperatorDetails holds the data specific to each operator, including
-// performance reports and exit requests.
-type OperatorDetails struct {
-	Performance  map[string]domain.Report      `json:"performance"`  // indexed by epoch
-	ExitRequests map[string]domain.ExitRequest `json:"exitRequests"` // indexed by validator pubkey
+type OperatorData struct {
+	Performance  domain.Reports      `json:"performance"`
+	ExitRequests domain.ExitRequests `json:"exitRequests"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -81,11 +50,21 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 
 	// Initialize an empty Database with default values
 	db := Database{
-		Telegram: domain.TelegramConfig{},
-		Operators: OperatorsData{
-			LastProcessedBlock: 0,                                // Initialize LastProcessedBlock as 0
-			PendingHashes:      []string{},                       // Initialize PendingHashes as an empty slice
-			OperatorDetails:    make(map[string]OperatorDetails), // Initialize OperatorDetails as an empty map
+		Telegram:  domain.TelegramConfig{},
+		Operators: make(map[string]OperatorData), // Initialize Operators as an empty map
+		Events: Events{
+			DistributionLogUpdated: struct {
+				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+				PendingHashes      []string `json:"pendingHashes"`
+			}{
+				LastProcessedBlock: 0,
+				PendingHashes:      []string{}, // Initialize as empty slice
+			},
+			ValidatorExitRequest: struct {
+				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+			}{
+				LastProcessedBlock: 0,
+			},
 		},
 	}
 
@@ -109,11 +88,11 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	}
 
 	// Ensure nested fields are properly initialized
-	if db.Operators.OperatorDetails == nil {
-		db.Operators.OperatorDetails = make(map[string]OperatorDetails)
+	if db.Operators == nil {
+		db.Operators = make(map[string]OperatorData)
 	}
-	if db.Operators.PendingHashes == nil {
-		db.Operators.PendingHashes = []string{} // Initialize if nil after unmarshalling
+	if db.Events.DistributionLogUpdated.PendingHashes == nil {
+		db.Events.DistributionLogUpdated.PendingHashes = []string{}
 	}
 
 	return db, nil

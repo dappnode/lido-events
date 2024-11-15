@@ -35,7 +35,7 @@ func TestSaveOperatorPerformance_NewOperator(t *testing.T) {
 	// Load database and verify the data was saved
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	savedReport, exists := db.Operators.OperatorDetails[operatorID.String()].Performance[epoch]
+	savedReport, exists := db.Operators[operatorID.String()].Performance[epoch]
 	assert.True(t, exists)
 	assert.Equal(t, report, savedReport)
 }
@@ -44,13 +44,11 @@ func TestSaveOperatorPerformance_NewOperator(t *testing.T) {
 func TestSaveOperatorPerformance_ExistingOperator(t *testing.T) {
 	// Initialize database with existing performance data for an operator
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": {
-					Performance: map[string]domain.Report{
-						"100": {
-							Threshold: "0.80",
-						},
+		Operators: map[string]storage.OperatorData{
+			"1": {
+				Performance: map[string]domain.Report{
+					"100": {
+						Threshold: "0.80",
 					},
 				},
 			},
@@ -77,21 +75,19 @@ func TestSaveOperatorPerformance_ExistingOperator(t *testing.T) {
 	// Verify that the performance data was updated
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, updatedReport, db.Operators.OperatorDetails[operatorID.String()].Performance[epoch])
+	assert.Equal(t, updatedReport, db.Operators[operatorID.String()].Performance[epoch])
 }
 
 // TestGetOperatorPerformance_Range tests retrieving performance data within a specified epoch range.
 func TestGetOperatorPerformance_Range(t *testing.T) {
 	// Initialize database with multiple epochs for an operator
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"2": {
-					Performance: map[string]domain.Report{
-						"100": {Threshold: "0.80"},
-						"101": {Threshold: "0.85"},
-						"102": {Threshold: "0.90"},
-					},
+		Operators: map[string]storage.OperatorData{
+			"2": {
+				Performance: map[string]domain.Report{
+					"100": {Threshold: "0.80"},
+					"101": {Threshold: "0.85"},
+					"102": {Threshold: "0.90"},
 				},
 			},
 		},
@@ -117,49 +113,6 @@ func TestGetOperatorPerformance_Range(t *testing.T) {
 	assert.Equal(t, expectedReports, reports)
 }
 
-// TestAddPendingHash tests adding a pending hash to the global pendingHashes array.
-func TestAddPendingHash(t *testing.T) {
-	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data
-	defer os.Remove(tmpFile.Name())           // Clean up
-
-	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	hash := "newPendingHash"
-
-	// Add the pending hash
-	err := storageAdapter.AddPendingHash(hash)
-	assert.NoError(t, err)
-
-	// Load database and verify the pending hash was added
-	db, err := storageAdapter.LoadDatabase()
-	assert.NoError(t, err)
-	assert.Contains(t, db.Operators.PendingHashes, hash)
-}
-
-// TestDeletePendingHash tests removing a pending hash from the global pendingHashes array.
-func TestDeletePendingHash(t *testing.T) {
-	// Initialize database with a pending hash
-	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			PendingHashes: []string{"hashToDelete"},
-		},
-	}
-
-	tmpFile := CreateTempDatabaseFile(t, initialData)
-	defer os.Remove(tmpFile.Name()) // Clean up
-
-	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	hash := "hashToDelete"
-
-	// Delete the pending hash
-	err := storageAdapter.DeletePendingHash(hash)
-	assert.NoError(t, err)
-
-	// Load database and verify the pending hash was removed
-	db, err := storageAdapter.LoadDatabase()
-	assert.NoError(t, err)
-	assert.NotContains(t, db.Operators.PendingHashes, hash)
-}
-
 // TestGetOperatorPerformance_NoData tests retrieving performance data when no data exists for the specified operator.
 func TestGetOperatorPerformance_NoData(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data
@@ -181,12 +134,10 @@ func TestGetOperatorPerformance_NoData(t *testing.T) {
 func TestGetOperatorPerformance_EmptyRange(t *testing.T) {
 	// Initialize database with operator data but no epochs within the specified range
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"4": {
-					Performance: map[string]domain.Report{
-						"150": {Threshold: "0.75"},
-					},
+		Operators: map[string]storage.OperatorData{
+			"4": {
+				Performance: map[string]domain.Report{
+					"150": {Threshold: "0.75"},
 				},
 			},
 		},

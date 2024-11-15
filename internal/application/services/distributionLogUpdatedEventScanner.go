@@ -34,7 +34,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 		select {
 		case <-ticker.C:
 			// Retrieve start and end blocks for scanning
-			start, err := ds.storagePort.GetLastProcessedBlock()
+			start, err := ds.storagePort.GetDistributionLogLastProcessedBlock()
 			if err != nil {
 				log.Printf("Failed to get last processed block: %v", err)
 				continue
@@ -53,7 +53,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 			}
 
 			// Save the last processed epoch if successful
-			if err := ds.storagePort.SaveLastProcessedBlock(end); err != nil {
+			if err := ds.storagePort.SaveDistributionLogLastProcessedBlock(end); err != nil {
 				log.Printf("Failed to save last processed epoch: %v", err)
 			}
 		case <-ctx.Done():

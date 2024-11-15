@@ -38,7 +38,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 		select {
 		case <-ticker.C:
 			// Retrieve start and end blocks for scanning
-			start, err := vs.storagePort.GetLastProcessedBlock()
+			start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock()
 			if err != nil {
 				log.Printf("Failed to get last processed block: %v", err)
 				continue
@@ -57,7 +57,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 			}
 
 			// Save the last processed epoch if successful
-			if err := vs.storagePort.SaveLastProcessedBlock(end); err != nil {
+			if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(end); err != nil {
 				log.Printf("Failed to save last processed epoch: %v", err)
 			}
 		case <-ctx.Done():
@@ -83,13 +83,6 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 		}
 	}
 
-	blockHash := fmt.Sprintf("0x%x", validatorExitEvent.Raw.BlockHash)
-	epoch, err := vs.beaconchainPort.GetEpochHeader(blockHash)
-	if err != nil {
-		log.Printf("Failed to get epoch header: %v", err)
-		return err
-	}
-
 	exitRequest := domain.ExitRequest{
 		Event:  *validatorExitEvent,
 		Status: validatorStatus,
@@ -97,11 +90,6 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 
 	if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {
 		log.Printf("Failed to save exit requests: %v", err)
-		return err
-	}
-
-	if err := vs.storagePort.SaveLastProcessedBlock(epoch); err != nil {
-		log.Printf("Failed to save last processed epoch: %v", err)
 		return err
 	}
 

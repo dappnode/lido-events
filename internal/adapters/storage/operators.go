@@ -13,14 +13,14 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 		return err
 	}
 
-	if db.Operators.OperatorDetails == nil {
-		db.Operators.OperatorDetails = make(map[string]OperatorDetails)
+	if db.Operators == nil {
+		db.Operators = make(map[string]OperatorData)
 	}
 
 	// Check if the operator ID already exists
-	if _, exists := db.Operators.OperatorDetails[operatorID]; !exists {
-		// Initialize an empty OperatorDetails if this is a new operator ID
-		db.Operators.OperatorDetails[operatorID] = OperatorDetails{
+	if _, exists := db.Operators[operatorID]; !exists {
+		// Initialize an empty OperatorData if this is a new operator ID
+		db.Operators[operatorID] = OperatorData{
 			Performance:  make(map[string]domain.Report),
 			ExitRequests: make(map[string]domain.ExitRequest),
 		}
@@ -41,7 +41,7 @@ func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 	}
 
 	var operatorIDs []*big.Int
-	for opID := range db.Operators.OperatorDetails {
+	for opID := range db.Operators {
 		operatorID := new(big.Int)
 		operatorID, success := operatorID.SetString(opID, 10)
 		if !success {

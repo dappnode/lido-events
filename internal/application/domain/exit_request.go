@@ -1,5 +1,7 @@
 package domain
 
+type ExitRequests map[string]ExitRequest // indexed by validator index
+
 type ExitRequest struct {
 	Event  VeboValidatorExitRequest `json:"event"`
 	Status ValidatorStatus          `json:"status"`

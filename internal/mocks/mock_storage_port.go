@@ -42,15 +42,27 @@ func (m *MockStoragePort) SaveOperatorPerformance(operatorID *big.Int, epoch str
 	return args.Error(0)
 }
 
-// GetLastProcessedBlock returns the last processed epoch
-func (m *MockStoragePort) GetLastProcessedBlock() (uint64, error) {
+// GetDistributionLogLastProcessedBlock returns the last processed block for the DistributionLogUpdated event
+func (m *MockStoragePort) GetDistributionLogLastProcessedBlock() (uint64, error) {
 	args := m.Called()
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// SaveLastProcessedBlock simulates saving the last processed epoch
-func (m *MockStoragePort) SaveLastProcessedBlock(epoch uint64) error {
-	args := m.Called(epoch)
+// SaveDistributionLogLastProcessedBlock simulates saving the last processed block for the DistributionLogUpdated event
+func (m *MockStoragePort) SaveDistributionLogLastProcessedBlock(block uint64) error {
+	args := m.Called(block)
+	return args.Error(0)
+}
+
+// GetValidatorExitRequestLastProcessedBlock returns the last processed block for the ValidatorExitRequest event
+func (m *MockStoragePort) GetValidatorExitRequestLastProcessedBlock() (uint64, error) {
+	args := m.Called()
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+// SaveValidatorExitRequestLastProcessedBlock simulates saving the last processed block for the ValidatorExitRequest event
+func (m *MockStoragePort) SaveValidatorExitRequestLastProcessedBlock(block uint64) error {
+	args := m.Called(block)
 	return args.Error(0)
 }
 
@@ -96,14 +108,20 @@ func (m *MockStoragePort) RegisterTelegramConfigListener() chan domain.TelegramC
 	return args.Get(0).(chan domain.TelegramConfig)
 }
 
-// AddPendingHash simulates adding a pending hash
+// AddPendingHash simulates adding a pending hash to DistributionLogUpdated.PendingHashes
 func (m *MockStoragePort) AddPendingHash(hash string) error {
 	args := m.Called(hash)
 	return args.Error(0)
 }
 
-// DeletePendingHash simulates deleting a pending hash
+// DeletePendingHash simulates deleting a pending hash from DistributionLogUpdated.PendingHashes
 func (m *MockStoragePort) DeletePendingHash(hash string) error {
 	args := m.Called(hash)
 	return args.Error(0)
+}
+
+// GetPendingHashes returns the list of pending hashes from DistributionLogUpdated
+func (m *MockStoragePort) GetPendingHashes() ([]string, error) {
+	args := m.Called()
+	return args.Get(0).([]string), args.Error(1)
 }

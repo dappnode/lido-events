@@ -53,7 +53,7 @@ func TestSaveExitRequests_NewOperator(t *testing.T) {
 	// Verify that exit requests were saved
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, exitRequests, db.Operators.OperatorDetails[operatorID.String()].ExitRequests)
+	assert.Equal(t, exitRequests, db.Operators[operatorID.String()].ExitRequests)
 }
 
 // TestSaveExitRequest tests saving an individual exit request for a specific operator ID and pubkey.
@@ -82,35 +82,33 @@ func TestSaveExitRequest(t *testing.T) {
 	// Verify that the exit request was saved
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, exitRequest, db.Operators.OperatorDetails[operatorID.String()].ExitRequests[pubkey])
+	assert.Equal(t, exitRequest, db.Operators[operatorID.String()].ExitRequests[pubkey])
 }
 
 // TestGetExitRequests tests retrieving all exit requests for a specific operator ID.
 func TestGetExitRequests(t *testing.T) {
 	// Initialize the database with exit requests for an operator
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": {
-					ExitRequests: map[string]domain.ExitRequest{
-						"validator1": {
-							Status: domain.StatusActiveOngoing,
-							Event: domain.VeboValidatorExitRequest{
-								Raw: types.Log{
-									Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
-									Topics:  []common.Hash{}, // Explicitly initialize topics
-									Data:    []byte{},
-								},
+		Operators: map[string]storage.OperatorData{
+			"1": {
+				ExitRequests: map[string]domain.ExitRequest{
+					"validator1": {
+						Status: domain.StatusActiveOngoing,
+						Event: domain.VeboValidatorExitRequest{
+							Raw: types.Log{
+								Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+								Topics:  []common.Hash{}, // Explicitly initialize topics
+								Data:    []byte{},
 							},
 						},
-						"validator2": {
-							Status: domain.StatusExitedUnslashed,
-							Event: domain.VeboValidatorExitRequest{
-								Raw: types.Log{
-									Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
-									Topics:  []common.Hash{}, // Explicitly initialize topics
-									Data:    []byte{},
-								},
+					},
+					"validator2": {
+						Status: domain.StatusExitedUnslashed,
+						Event: domain.VeboValidatorExitRequest{
+							Raw: types.Log{
+								Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+								Topics:  []common.Hash{}, // Explicitly initialize topics
+								Data:    []byte{},
 							},
 						},
 					},
@@ -130,7 +128,7 @@ func TestGetExitRequests(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the retrieved data matches the initial data
-	expectedExitRequests := initialData.Operators.OperatorDetails[operatorID].ExitRequests
+	expectedExitRequests := initialData.Operators[operatorID].ExitRequests
 	assert.Equal(t, expectedExitRequests, exitRequests)
 }
 
@@ -138,18 +136,16 @@ func TestGetExitRequests(t *testing.T) {
 func TestUpdateExitRequestStatus(t *testing.T) {
 	// Initialize the database with an existing exit request
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": {
-					ExitRequests: map[string]domain.ExitRequest{
-						"validator1": {
-							Status: domain.StatusActiveOngoing,
-							Event: domain.VeboValidatorExitRequest{
-								Raw: types.Log{
-									Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
-									Topics:  []common.Hash{}, // Explicitly initialize topics
-									Data:    []byte{},
-								},
+		Operators: map[string]storage.OperatorData{
+			"1": {
+				ExitRequests: map[string]domain.ExitRequest{
+					"validator1": {
+						Status: domain.StatusActiveOngoing,
+						Event: domain.VeboValidatorExitRequest{
+							Raw: types.Log{
+								Address: common.HexToAddress("0x0000000000000000000000000000000000000000"),
+								Topics:  []common.Hash{}, // Explicitly initialize topics
+								Data:    []byte{},
 							},
 						},
 					},
@@ -173,7 +169,7 @@ func TestUpdateExitRequestStatus(t *testing.T) {
 	// Verify that the status was updated
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, newStatus, db.Operators.OperatorDetails[operatorID].ExitRequests[pubkey].Status)
+	assert.Equal(t, newStatus, db.Operators[operatorID].ExitRequests[pubkey].Status)
 }
 
 // TestUpdateExitRequestStatus_NonExistent tests updating the status of a non-existent exit request.
@@ -191,42 +187,4 @@ func TestUpdateExitRequestStatus_NonExistent(t *testing.T) {
 
 	// Adjust the error message expectation based on the missing operator ID
 	assert.EqualError(t, err, fmt.Sprintf("operator ID %s not found", operatorID))
-}
-
-// TestSaveLastProcessedBlock tests saving the last processed epoch.
-func TestSaveLastProcessedBlock(t *testing.T) {
-	tmpFile := CreateTempDatabaseFile(t, nil)
-	defer os.Remove(tmpFile.Name())
-
-	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	epoch := uint64(42)
-
-	// Save the last processed epoch
-	err := storageAdapter.SaveLastProcessedBlock(epoch)
-	assert.NoError(t, err)
-
-	// Verify that the epoch was saved
-	db, err := storageAdapter.LoadDatabase()
-	assert.NoError(t, err)
-	assert.Equal(t, epoch, db.Operators.LastProcessedBlock)
-}
-
-// TestGetLastProcessedBlock tests retrieving the last processed epoch.
-func TestGetLastProcessedBlock(t *testing.T) {
-	// Initialize the database with a last processed epoch
-	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			LastProcessedBlock: 42,
-		},
-	}
-
-	tmpFile := CreateTempDatabaseFile(t, initialData)
-	defer os.Remove(tmpFile.Name())
-
-	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-
-	// Retrieve the last processed epoch
-	epoch, err := storageAdapter.GetLastProcessedBlock()
-	assert.NoError(t, err)
-	assert.Equal(t, initialData.Operators.LastProcessedBlock, epoch)
 }

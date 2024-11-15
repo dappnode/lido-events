@@ -28,42 +28,51 @@ func TestLoadDatabase_MissingFile(t *testing.T) {
 
 	// Check if the database has been initialized with the correct defaults
 	assert.Equal(t, domain.TelegramConfig{}, db.Telegram)
-	assert.Equal(t, uint64(0), db.Operators.LastProcessedBlock)
-	assert.NotNil(t, db.Operators.OperatorDetails)
-	assert.Empty(t, db.Operators.OperatorDetails)
-	assert.NotNil(t, db.Operators.PendingHashes)
-	assert.Empty(t, db.Operators.PendingHashes)
+	assert.NotNil(t, db.Operators)
+	assert.Empty(t, db.Operators)
+	assert.Equal(t, uint64(0), db.Events.DistributionLogUpdated.LastProcessedBlock)
+	assert.Empty(t, db.Events.DistributionLogUpdated.PendingHashes)
+	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
 }
 
 // Test for LoadDatabase when the database file has existing data
 func TestLoadDatabase_WithExistingData(t *testing.T) {
-	// Initialize the database with existing data, including necessary fields in types.Log
+	// Initialize the database with existing data
 	existingData := &storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "test-token",
 			UserID: 12345,
 		},
-		Operators: storage.OperatorsData{
-			LastProcessedBlock: 100,
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": {
-					Performance: map[string]domain.Report{
-						"100": {
-							Threshold: "0.85",
-						},
-					},
-					ExitRequests: map[string]domain.ExitRequest{
-						"validator1": {
-							Event: domain.VeboValidatorExitRequest{
-								ValidatorIndex: big.NewInt(1),
-								Raw: types.Log{
-									Topics: []common.Hash{common.HexToHash("0x0")},
-								},
+		Operators: map[string]storage.OperatorData{
+			"1": {
+				Performance: domain.Reports{
+					"100": domain.Report{Threshold: "0.85"},
+				},
+				ExitRequests: domain.ExitRequests{
+					"validator1": {
+						Event: domain.VeboValidatorExitRequest{
+							ValidatorIndex: big.NewInt(1),
+							Raw: types.Log{
+								Topics: []common.Hash{common.HexToHash("0x0")},
 							},
-							Status: domain.StatusActiveOngoing,
 						},
+						Status: domain.StatusActiveOngoing,
 					},
 				},
+			},
+		},
+		Events: storage.Events{
+			DistributionLogUpdated: struct {
+				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+				PendingHashes      []string `json:"pendingHashes"`
+			}{
+				LastProcessedBlock: 100,
+				PendingHashes:      []string{"hash1", "hash2"},
+			},
+			ValidatorExitRequest: struct {
+				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+			}{
+				LastProcessedBlock: 200,
 			},
 		},
 	}
@@ -77,23 +86,32 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 
 	// Validate loaded data matches the existing data
 	assert.Equal(t, "test-token", db.Telegram.Token)
-	assert.Equal(t, uint64(100), db.Operators.LastProcessedBlock)
-	assert.Contains(t, db.Operators.OperatorDetails, "1")
-	assert.Contains(t, db.Operators.OperatorDetails["1"].Performance, "100")
-	assert.Contains(t, db.Operators.OperatorDetails["1"].ExitRequests, "validator1")
-	assert.NotNil(t, db.Operators.PendingHashes)
-	assert.Empty(t, db.Operators.PendingHashes)
+	assert.Equal(t, uint64(100), db.Events.DistributionLogUpdated.LastProcessedBlock)
+	assert.Equal(t, []string{"hash1", "hash2"}, db.Events.DistributionLogUpdated.PendingHashes)
+	assert.Equal(t, uint64(200), db.Events.ValidatorExitRequest.LastProcessedBlock)
+	assert.Contains(t, db.Operators, "1")
+	assert.Contains(t, db.Operators["1"].Performance, "100")
+	assert.Contains(t, db.Operators["1"].ExitRequests, "validator1")
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
 func TestLoadDatabase_MissingFields(t *testing.T) {
-	// Create a database file with missing fields (no operators)
+	// Create a database file with missing fields (no operators and missing events fields)
 	missingFieldsData := &storage.Database{
 		Telegram: domain.TelegramConfig{
 			Token:  "test-token",
 			UserID: 12345,
 		},
-		Operators: storage.OperatorsData{}, // Empty OperatorsData
+		Operators: make(map[string]storage.OperatorData), // Empty Operators
+		Events: storage.Events{
+			DistributionLogUpdated: struct {
+				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+				PendingHashes      []string `json:"pendingHashes"`
+			}{},
+			ValidatorExitRequest: struct {
+				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+			}{},
+		},
 	}
 
 	tmpFile := CreateTempDatabaseFile(t, missingFieldsData)
@@ -105,11 +123,11 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 
 	// Ensure missing fields are initialized correctly
 	assert.Equal(t, "test-token", db.Telegram.Token)
-	assert.Equal(t, uint64(0), db.Operators.LastProcessedBlock)
-	assert.NotNil(t, db.Operators.OperatorDetails)
-	assert.Empty(t, db.Operators.OperatorDetails)
-	assert.NotNil(t, db.Operators.PendingHashes)
-	assert.Empty(t, db.Operators.PendingHashes)
+	assert.Equal(t, uint64(0), db.Events.DistributionLogUpdated.LastProcessedBlock)
+	assert.Empty(t, db.Events.DistributionLogUpdated.PendingHashes)
+	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
+	assert.NotNil(t, db.Operators)
+	assert.Empty(t, db.Operators)
 }
 
 func TestSaveDatabase(t *testing.T) {
@@ -122,34 +140,43 @@ func TestSaveDatabase(t *testing.T) {
 			Token:  "new-token",
 			UserID: 98765,
 		},
-		Operators: storage.OperatorsData{
-			LastProcessedBlock: 200,
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"2": {
-					Performance: map[string]domain.Report{
-						"200": {
-							Threshold: "0.90",
-						},
-					},
-					ExitRequests: map[string]domain.ExitRequest{
-						"validator2": {
-							Event: domain.VeboValidatorExitRequest{
-								ValidatorIndex: big.NewInt(2),
-								Raw: types.Log{
-									Topics:      []common.Hash{common.HexToHash("0x0")},
-									Data:        []uint8{}, // Updated to expect an empty slice instead of nil
-									BlockNumber: 0,
-									TxHash:      common.HexToHash("0x0"),
-									TxIndex:     0,
-									BlockHash:   common.HexToHash("0x0"),
-									Index:       0,
-									Removed:     false,
-								},
+		Operators: map[string]storage.OperatorData{
+			"2": {
+				Performance: domain.Reports{
+					"200": domain.Report{Threshold: "0.90"},
+				},
+				ExitRequests: domain.ExitRequests{
+					"validator2": {
+						Event: domain.VeboValidatorExitRequest{
+							ValidatorIndex: big.NewInt(2),
+							Raw: types.Log{
+								Topics:      []common.Hash{common.HexToHash("0x0")},
+								Data:        []uint8{},
+								BlockNumber: 0,
+								TxHash:      common.HexToHash("0x0"),
+								TxIndex:     0,
+								BlockHash:   common.HexToHash("0x0"),
+								Index:       0,
+								Removed:     false,
 							},
-							Status: domain.StatusExitedUnslashed,
 						},
+						Status: domain.StatusExitedUnslashed,
 					},
 				},
+			},
+		},
+		Events: storage.Events{
+			DistributionLogUpdated: struct {
+				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+				PendingHashes      []string `json:"pendingHashes"`
+			}{
+				LastProcessedBlock: 300,
+				PendingHashes:      []string{"hash3", "hash4"},
+			},
+			ValidatorExitRequest: struct {
+				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+			}{
+				LastProcessedBlock: 400,
 			},
 		},
 	}

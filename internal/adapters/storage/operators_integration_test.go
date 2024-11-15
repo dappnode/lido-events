@@ -28,19 +28,17 @@ func TestSaveOperatorId_NewOperator(t *testing.T) {
 	// Verify the operator ID was saved
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Contains(t, db.Operators.OperatorDetails, operatorID.String())
+	assert.Contains(t, db.Operators, operatorID.String())
 }
 
 // TestSaveOperatorId_ExistingOperator tests attempting to save an operator ID that already exists.
 func TestSaveOperatorId_ExistingOperator(t *testing.T) {
 	// Initialize the database with an existing operator ID
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": { // operatorID as string
-					Performance:  make(map[string]domain.Report),
-					ExitRequests: make(map[string]domain.ExitRequest),
-				},
+		Operators: map[string]storage.OperatorData{
+			"1": { // operatorID as string
+				Performance:  make(map[string]domain.Report),
+				ExitRequests: make(map[string]domain.ExitRequest),
 			},
 		},
 	}
@@ -58,19 +56,17 @@ func TestSaveOperatorId_ExistingOperator(t *testing.T) {
 	// Verify that no duplicate entries were created
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(db.Operators.OperatorDetails))
+	assert.Equal(t, 1, len(db.Operators))
 }
 
 // TestGetOperatorIds tests retrieving a list of all operator IDs.
 func TestGetOperatorIds(t *testing.T) {
 	// Initialize database with multiple operator IDs
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"1": {},
-				"2": {},
-				"3": {},
-			},
+		Operators: map[string]storage.OperatorData{
+			"1": {},
+			"2": {},
+			"3": {},
 		},
 	}
 
@@ -108,10 +104,8 @@ func TestGetOperatorIds_EmptyDatabase(t *testing.T) {
 func TestGetOperatorIds_InvalidOperatorId(t *testing.T) {
 	// Initialize database with an invalid operator ID string (non-numeric)
 	initialData := &storage.Database{
-		Operators: storage.OperatorsData{
-			OperatorDetails: map[string]storage.OperatorDetails{
-				"invalid": {}, // Non-numeric ID
-			},
+		Operators: map[string]storage.OperatorData{
+			"invalid": {}, // Non-numeric ID
 		},
 	}
 
