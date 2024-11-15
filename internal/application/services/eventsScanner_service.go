@@ -9,36 +9,28 @@ import (
 	"time"
 )
 
-type VeboEventsProcessor struct {
+type EventsScanner struct {
 	storagePort              ports.StoragePort
 	notifierPort             ports.NotifierPort
 	veboPort                 ports.VeboPort
 	csFeeDistributorImplPort ports.CsFeeDistributorImplPort
-	exitValidatorPort        ports.ExitValidator
 	beaconchainPort          ports.Beaconchain
 	veboBlockDeployment      uint64
 }
 
-func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, csFeeDistributorPort ports.CsFeeDistributorImplPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *VeboEventsProcessor {
-	return &VeboEventsProcessor{
+func NewEventsScannerService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, csFeeDistributorPort ports.CsFeeDistributorImplPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *EventsScanner {
+	return &EventsScanner{
 		storagePort,
 		notifierPort,
 		veboPort,
 		csFeeDistributorPort,
-		exitValidatorPort,
 		beaconchainPort,
 		veboBlockDeployment,
 	}
 }
 
-// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
-// It passes to the csModule port a function that processes the log data.
-func (vs *VeboEventsProcessor) WatchReportSubmittedEvents(ctx context.Context) error {
-	return vs.veboPort.WatchReportSubmittedEvents(ctx, vs.HandleReportSubmittedEvent)
-}
-
 // ScanEventsCron starts a unified periodic scan for both ValidatorExitRequest and DistributionLogUpdated events
-func (vs *VeboEventsProcessor) ScanEventsCron(ctx context.Context, interval time.Duration) {
+func (vs *EventsScanner) ScanEventsCron(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -87,7 +79,7 @@ func (vs *VeboEventsProcessor) ScanEventsCron(ctx context.Context, interval time
 }
 
 // Make VeboService implement the VeboHandlers interface by adding the methods
-func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
+func (vs *EventsScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
 	// get validator status
 	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))
 	if err != nil {
@@ -132,7 +124,7 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 	return nil
 }
 
-func (vs *VeboEventsProcessor) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
+func (vs *EventsScanner) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
 	// Store the CID
 	if err := vs.storagePort.AddPendingHash(distributionLogUpdated.LogCid); err != nil {
 		log.Printf("Failed to store pending CID: %v", err)
@@ -141,17 +133,6 @@ func (vs *VeboEventsProcessor) HandleDistributionLogUpdatedEvent(distributionLog
 
 	// Send notification
 	message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
-	if err := vs.notifierPort.SendNotification(message); err != nil {
-		log.Printf("Failed to send notification: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
-	// send the notification message
-	message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
 	if err := vs.notifierPort.SendNotification(message); err != nil {
 		log.Printf("Failed to send notification: %v", err)
 		return err

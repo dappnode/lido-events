@@ -108,18 +108,23 @@ func main() {
 	}
 
 	// Initialize services
-	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, csFeeDistributorImplAdapter, exitValidatorAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
-	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
-	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(notifierAdapter, csFeeDistributorAdapter)
+	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
+	eventsScannerService := services.NewEventsScannerService(storageAdapter, notifierAdapter, veboAdapter, csFeeDistributorImplAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
+	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 
 	// Start periodic scan for ValidatorExitRequest events
-	go veboService.ScanEventsCron(ctx, 1*time.Minute) // TODO: determine interval
+	go eventsScannerService.ScanEventsCron(ctx, 1*time.Minute) // TODO: determine interval
+	// start ejector
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC event
-	if err := csModuleService.WatchCsModuleEvents(ctx); err != nil {
+	if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
 		log.Fatalf("Failed to subscribe to CSModule events: %v", err)
 	}
-	if err := csFeeDistributorService.WatchCsFeeDistributorEvents(ctx); err != nil {
+	if err := eventsWatcherService.WatchReportSubmittedEvents(ctx); err != nil {
+		log.Fatalf("Failed to subscribe to CSFeeDistributor events: %v", err)
+	}
+	if err := eventsWatcherService.WatchCsFeeDistributorEvents(ctx); err != nil {
 		log.Fatalf("Failed to subscribe to CSFeeDistributor events: %v", err)
 	}
 
