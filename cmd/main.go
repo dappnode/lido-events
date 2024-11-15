@@ -82,7 +82,7 @@ func main() {
 	waitForInitialConfig(storageAdapter)
 
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
-	executionAdapter := execution.NewExecutionAdapter(networkConfig.BeaconchainURL)
+	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
