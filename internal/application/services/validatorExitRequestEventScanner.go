@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
+	"time"
 )
 
 type ValidatorExitRequestEventScanner struct {
@@ -28,8 +29,42 @@ func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifier
 	}
 }
 
-func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEvents(ctx context.Context, start, end uint64) error {
-	return vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent)
+// ScanValidatorExitRequestEventsCron runs a periodic scan for DistributionLogUpdated events
+func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Retrieve start and end blocks for scanning
+			start, err := vs.storagePort.GetLastProcessedBlock()
+			if err != nil {
+				log.Printf("Failed to get last processed block: %v", err)
+				continue
+			}
+
+			end, err := vs.executionPort.GetMostRecentBlockNumber()
+			if err != nil {
+				log.Printf("Failed to get latest finalized block: %v", err)
+				continue
+			}
+
+			// Perform the scan
+			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
+				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
+				continue
+			}
+
+			// Save the last processed epoch if successful
+			if err := vs.storagePort.SaveLastProcessedBlock(end); err != nil {
+				log.Printf("Failed to save last processed epoch: %v", err)
+			}
+		case <-ctx.Done():
+			log.Println("Stopping DistributionLogUpdated cron scan")
+			return
+		}
+	}
 }
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event

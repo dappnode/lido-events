@@ -112,11 +112,13 @@ func main() {
 
 	// Initialize services
 	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
-	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, beaconchainAdapter, executionAdapter, csFeeDistributorImplAdapter)
+	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter)
+	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 
 	// Start scanning for events
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute) // TODO: determine interval
+	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute)     // TODO: determine interval
 
 	// start ejector
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval

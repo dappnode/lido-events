@@ -12,16 +12,14 @@ import (
 type DistributionLogUpdatedEventScanner struct {
 	storagePort              ports.StoragePort
 	notifierPort             ports.NotifierPort
-	beaconchainPort          ports.Beaconchain
 	executionPort            ports.ExecutionPort
 	csFeeDistributorImplPort ports.CsFeeDistributorImplPort
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, beaconchainPort ports.Beaconchain, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,
-		beaconchainPort,
 		executionPort,
 		csFeeDistributorImplPort,
 	}
