@@ -15,6 +15,7 @@ type Config struct {
 	SignerUrl          string
 	IpfsUrl            string
 	WsURL              string
+	RpcUrl             string
 	CSMStakingModuleID *big.Int
 	EtherscanURL       string
 	BeaconchainURL     string
@@ -43,8 +44,10 @@ func LoadNetworkConfig() (Config, error) {
 		ipfsUrl = "http://ipfs.dappnode:5001"
 	}
 
-	// Retrieve the WS_URL from the environment variable
+	// Retrieve the WS_URL and RPC_URL from the environment variable
 	wsURL := os.Getenv("WS_URL")
+	rpcURL := os.Getenv("RPC_URL")
+
 	// Retrieve the BEACONCHAIN_URL from the environment variable
 	beaconchainURL := os.Getenv("BEACONCHAIN_URL")
 
@@ -55,6 +58,9 @@ func LoadNetworkConfig() (Config, error) {
 		if wsURL == "" {
 			wsURL = "ws://execution.holesky.dncore.dappnode:8546" // Default holesky WS URL
 		}
+		if rpcURL == "" {
+			rpcURL = "http://execution.holesky.dncore.dappnode:8545" // Default holesky RPC URL
+		}
 		if beaconchainURL == "" {
 			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500" // Default holesky beaconchain URL
 		}
@@ -62,6 +68,7 @@ func LoadNetworkConfig() (Config, error) {
 			SignerUrl:                   "http://signer.holesky.dncore.dappnode",
 			IpfsUrl:                     ipfsUrl,
 			WsURL:                       wsURL,
+			RpcUrl:                      rpcURL,
 			CSMStakingModuleID:          big.NewInt(4),
 			EtherscanURL:                "https://holesky.etherscan.io",
 			BeaconchainURL:              beaconchainURL,
@@ -77,6 +84,9 @@ func LoadNetworkConfig() (Config, error) {
 		if wsURL == "" {
 			wsURL = "ws://execution.mainnet.dncore.dappnode:8546" // Default mainnet WS URL
 		}
+		if rpcURL == "" {
+			rpcURL = "http://execution.mainnet.dncore.dappnode:8545" // Default mainnet RPC URL
+		}
 		if beaconchainURL == "" {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500" // Default mainnet beaconchain URL
 		}
@@ -84,6 +94,7 @@ func LoadNetworkConfig() (Config, error) {
 			SignerUrl:                   "http://signer.mainnet.dncore.dappnode",
 			IpfsUrl:                     ipfsUrl,
 			WsURL:                       wsURL,
+			RpcUrl:                      rpcURL,
 			CSMStakingModuleID:          big.NewInt(3),
 			EtherscanURL:                "https://etherscan.io",
 			BeaconchainURL:              "https://beaconcha.in",

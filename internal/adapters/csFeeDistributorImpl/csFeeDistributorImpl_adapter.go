@@ -35,6 +35,8 @@ func NewCsFeeDistributorImplAdapter(
 func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(ctx context.Context, start uint64, end *uint64, handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated) error) error {
 	// print something
 	log.Printf("Scanning DistributionLogUpdated events from block %d to %d", start, *end)
+	// print the address
+	log.Printf("CsFeeDistributorAddress: %s", cs.CsFeeDistributorAddress.String())
 	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.client)
 	if err != nil {
 		return err

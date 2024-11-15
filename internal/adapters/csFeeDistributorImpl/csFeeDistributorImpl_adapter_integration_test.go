@@ -36,10 +36,10 @@ func TestScanDistributionLogUpdatedEventsIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Set the start and end blocks for the scan
-	start := uint64(2733676)
+	start := uint64(30701)
 	end := uint64(2733678)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
 	// Array to store found logCids

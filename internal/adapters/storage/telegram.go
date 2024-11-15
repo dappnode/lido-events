@@ -4,6 +4,8 @@ import (
 	"lido-events/internal/application/domain"
 )
 
+// TODO: determine if token should be stored hashed
+
 // Telegram Configuration Methods
 
 // SaveTelegramConfig saves the Telegram configuration to storage and notifies listeners of the update.

@@ -7,7 +7,7 @@ import (
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
-	exitvalidator "lido-events/internal/adapters/exitValidator"
+	"lido-events/internal/adapters/execution"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
@@ -81,12 +81,14 @@ func main() {
 	waitForInitialConfig(storageAdapter)
 
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
-	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
+	executionAdapter := execution.NewExecutionAdapter(networkConfig.BeaconchainURL)
+	//exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
 
+	// This is a proxy adapter that wraps the CsFeeDistributorImpl contract
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
 		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
@@ -109,13 +111,14 @@ func main() {
 
 	// Initialize services
 	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
-	eventsScannerService := services.NewEventsScannerService(storageAdapter, notifierAdapter, veboAdapter, csFeeDistributorImplAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
-	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
+	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, beaconchainAdapter, executionAdapter, csFeeDistributorImplAdapter)
+	//validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 
-	// Start periodic scan for ValidatorExitRequest events
-	go eventsScannerService.ScanEventsCron(ctx, 1*time.Minute) // TODO: determine interval
+	// Start scanning for events
+	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute) // TODO: determine interval
+
 	// start ejector
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
+	//go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC event
 	if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {

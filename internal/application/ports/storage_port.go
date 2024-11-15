@@ -8,8 +8,8 @@ import (
 type StoragePort interface {
 	// operators
 	//   - crons
-	GetLastProcessedEpoch() (uint64, error)
-	SaveLastProcessedEpoch(epoch uint64) error
+	GetLastProcessedBlock() (uint64, error)
+	SaveLastProcessedBlock(epoch uint64) error
 	AddPendingHash(hash string) error
 	DeletePendingHash(hash string) error
 	//   - operator IDs

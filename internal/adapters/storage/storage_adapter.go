@@ -28,10 +28,42 @@ type Database struct {
 	Operators OperatorsData         `json:"operators"`
 }
 
+// TODO: consider having the following db format instead:
+// - It will allow having different last processed epoch for exit requests and performance reports crons
+// ```json
+// {
+// 	  "telegram": {
+// 		"token": ,
+// 		"userID":
+// 	  },
+// 	  "operators": {
+// 	  	"performance":{
+// 			"lastProcessedBlock": 0,
+// 			"pendingHashes": [],
+// 			"reports":{
+// 				"<epoch>": {
+// 					"treshold": ,
+// 					"<valIndex1>": {
+// 						"included": ,
+// 						"assigned: ,
+// 			}
+// 		},
+// 		"exitRequests": {
+// 			"lastProcessedBlock": 0,
+// 			"exits": {
+// 				"<valIndex1>": {
+// 					"event": ,
+// 					"status": ,
+// 				}
+// 			}
+// 		},
+// }
+// ```
+
 // OperatorsData represents the top-level structure for all operators,
 // with a global last processed epoch, pending hashes, and individual operator entries.
 type OperatorsData struct {
-	LastProcessedEpoch uint64                     `json:"lastProcessedEpoch"`
+	LastProcessedBlock uint64                     `json:"lastProcessedBlock"`
 	PendingHashes      []string                   `json:"pendingHashes"`
 	OperatorDetails    map[string]OperatorDetails `json:"operatorDetails"` // indexed by operator ID
 }
@@ -51,7 +83,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	db := Database{
 		Telegram: domain.TelegramConfig{},
 		Operators: OperatorsData{
-			LastProcessedEpoch: 0,                                // Initialize LastProcessedEpoch as 0
+			LastProcessedBlock: 0,                                // Initialize LastProcessedBlock as 0
 			PendingHashes:      []string{},                       // Initialize PendingHashes as an empty slice
 			OperatorDetails:    make(map[string]OperatorDetails), // Initialize OperatorDetails as an empty map
 		},

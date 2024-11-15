@@ -28,7 +28,7 @@ func TestLoadDatabase_MissingFile(t *testing.T) {
 
 	// Check if the database has been initialized with the correct defaults
 	assert.Equal(t, domain.TelegramConfig{}, db.Telegram)
-	assert.Equal(t, uint64(0), db.Operators.LastProcessedEpoch)
+	assert.Equal(t, uint64(0), db.Operators.LastProcessedBlock)
 	assert.NotNil(t, db.Operators.OperatorDetails)
 	assert.Empty(t, db.Operators.OperatorDetails)
 	assert.NotNil(t, db.Operators.PendingHashes)
@@ -44,7 +44,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 			UserID: 12345,
 		},
 		Operators: storage.OperatorsData{
-			LastProcessedEpoch: 100,
+			LastProcessedBlock: 100,
 			OperatorDetails: map[string]storage.OperatorDetails{
 				"1": {
 					Performance: map[string]domain.Report{
@@ -77,7 +77,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 
 	// Validate loaded data matches the existing data
 	assert.Equal(t, "test-token", db.Telegram.Token)
-	assert.Equal(t, uint64(100), db.Operators.LastProcessedEpoch)
+	assert.Equal(t, uint64(100), db.Operators.LastProcessedBlock)
 	assert.Contains(t, db.Operators.OperatorDetails, "1")
 	assert.Contains(t, db.Operators.OperatorDetails["1"].Performance, "100")
 	assert.Contains(t, db.Operators.OperatorDetails["1"].ExitRequests, "validator1")
@@ -105,7 +105,7 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 
 	// Ensure missing fields are initialized correctly
 	assert.Equal(t, "test-token", db.Telegram.Token)
-	assert.Equal(t, uint64(0), db.Operators.LastProcessedEpoch)
+	assert.Equal(t, uint64(0), db.Operators.LastProcessedBlock)
 	assert.NotNil(t, db.Operators.OperatorDetails)
 	assert.Empty(t, db.Operators.OperatorDetails)
 	assert.NotNil(t, db.Operators.PendingHashes)
@@ -123,7 +123,7 @@ func TestSaveDatabase(t *testing.T) {
 			UserID: 98765,
 		},
 		Operators: storage.OperatorsData{
-			LastProcessedEpoch: 200,
+			LastProcessedBlock: 200,
 			OperatorDetails: map[string]storage.OperatorDetails{
 				"2": {
 					Performance: map[string]domain.Report{

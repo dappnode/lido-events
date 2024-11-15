@@ -193,8 +193,8 @@ func TestUpdateExitRequestStatus_NonExistent(t *testing.T) {
 	assert.EqualError(t, err, fmt.Sprintf("operator ID %s not found", operatorID))
 }
 
-// TestSaveLastProcessedEpoch tests saving the last processed epoch.
-func TestSaveLastProcessedEpoch(t *testing.T) {
+// TestSaveLastProcessedBlock tests saving the last processed epoch.
+func TestSaveLastProcessedBlock(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil)
 	defer os.Remove(tmpFile.Name())
 
@@ -202,21 +202,21 @@ func TestSaveLastProcessedEpoch(t *testing.T) {
 	epoch := uint64(42)
 
 	// Save the last processed epoch
-	err := storageAdapter.SaveLastProcessedEpoch(epoch)
+	err := storageAdapter.SaveLastProcessedBlock(epoch)
 	assert.NoError(t, err)
 
 	// Verify that the epoch was saved
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
-	assert.Equal(t, epoch, db.Operators.LastProcessedEpoch)
+	assert.Equal(t, epoch, db.Operators.LastProcessedBlock)
 }
 
-// TestGetLastProcessedEpoch tests retrieving the last processed epoch.
-func TestGetLastProcessedEpoch(t *testing.T) {
+// TestGetLastProcessedBlock tests retrieving the last processed epoch.
+func TestGetLastProcessedBlock(t *testing.T) {
 	// Initialize the database with a last processed epoch
 	initialData := &storage.Database{
 		Operators: storage.OperatorsData{
-			LastProcessedEpoch: 42,
+			LastProcessedBlock: 42,
 		},
 	}
 
@@ -226,7 +226,7 @@ func TestGetLastProcessedEpoch(t *testing.T) {
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
 
 	// Retrieve the last processed epoch
-	epoch, err := storageAdapter.GetLastProcessedEpoch()
+	epoch, err := storageAdapter.GetLastProcessedBlock()
 	assert.NoError(t, err)
-	assert.Equal(t, initialData.Operators.LastProcessedEpoch, epoch)
+	assert.Equal(t, initialData.Operators.LastProcessedBlock, epoch)
 }

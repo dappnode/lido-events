@@ -42,14 +42,14 @@ func (m *MockStoragePort) SaveOperatorPerformance(operatorID *big.Int, epoch str
 	return args.Error(0)
 }
 
-// GetLastProcessedEpoch returns the last processed epoch
-func (m *MockStoragePort) GetLastProcessedEpoch() (uint64, error) {
+// GetLastProcessedBlock returns the last processed epoch
+func (m *MockStoragePort) GetLastProcessedBlock() (uint64, error) {
 	args := m.Called()
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// SaveLastProcessedEpoch simulates saving the last processed epoch
-func (m *MockStoragePort) SaveLastProcessedEpoch(epoch uint64) error {
+// SaveLastProcessedBlock simulates saving the last processed epoch
+func (m *MockStoragePort) SaveLastProcessedBlock(epoch uint64) error {
 	args := m.Called(epoch)
 	return args.Error(0)
 }

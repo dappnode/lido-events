@@ -104,24 +104,24 @@ func (fs *Storage) UpdateExitRequestStatus(operatorID string, validatorIndex str
 	return fs.SaveDatabase(db)
 }
 
-// SaveLastProcessedEpoch saves the global last processed epoch in operators data.
-func (fs *Storage) SaveLastProcessedEpoch(epoch uint64) error {
+// SaveLastProcessedBlock saves the global last processed epoch in operators data.
+func (fs *Storage) SaveLastProcessedBlock(epoch uint64) error {
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
 	}
 
 	// Update the global last processed epoch in operators data
-	db.Operators.LastProcessedEpoch = epoch
+	db.Operators.LastProcessedBlock = epoch
 	return fs.SaveDatabase(db)
 }
 
-// GetLastProcessedEpoch retrieves the global last processed epoch from operators data.
-func (fs *Storage) GetLastProcessedEpoch() (uint64, error) {
+// GetLastProcessedBlock retrieves the global last processed epoch from operators data.
+func (fs *Storage) GetLastProcessedBlock() (uint64, error) {
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return 0, err
 	}
 
-	return db.Operators.LastProcessedEpoch, nil
+	return db.Operators.LastProcessedBlock, nil
 }
