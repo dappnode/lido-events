@@ -21,10 +21,11 @@ type Config struct {
 	CSMUIURL           string
 
 	// Individual contract addresses
-	CSAccountingAddress     common.Address
-	CSFeeDistributorAddress common.Address
-	VEBOAddress             common.Address
-	CSModuleAddress         common.Address
+	CSAccountingAddress         common.Address
+	CSFeeDistributorAddress     common.Address
+	CSFeeDistributorImplAddress common.Address
+	VEBOAddress                 common.Address
+	CSModuleAddress             common.Address
 
 	// Block number of the deployment of the Vebo contract
 	VeboBlockDeployment uint64
@@ -58,18 +59,19 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500" // Default holesky beaconchain URL
 		}
 		config = Config{
-			SignerUrl:               "http://signer.holesky.dncore.dappnode",
-			IpfsUrl:                 ipfsUrl,
-			WsURL:                   wsURL,
-			CSMStakingModuleID:      big.NewInt(4),
-			EtherscanURL:            "https://holesky.etherscan.io",
-			BeaconchainURL:          beaconchainURL,
-			CSMUIURL:                "https://csm.testnet.fi",
-			CSAccountingAddress:     common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
-			CSFeeDistributorAddress: common.HexToAddress("0xc093e53e8F4b55A223c18A2Da6fA00e60DD5EFE1"),
-			VEBOAddress:             common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
-			VeboBlockDeployment:     uint64(30701),
-			CSModuleAddress:         common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
+			SignerUrl:                   "http://signer.holesky.dncore.dappnode",
+			IpfsUrl:                     ipfsUrl,
+			WsURL:                       wsURL,
+			CSMStakingModuleID:          big.NewInt(4),
+			EtherscanURL:                "https://holesky.etherscan.io",
+			BeaconchainURL:              beaconchainURL,
+			CSMUIURL:                    "https://csm.testnet.fi",
+			CSAccountingAddress:         common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
+			CSFeeDistributorAddress:     common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
+			CSFeeDistributorImplAddress: common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"), // https://holesky.etherscan.io/address/0xe1863c61d2af2899f06223152ebaaf993c29aea7#code
+			VEBOAddress:                 common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
+			VeboBlockDeployment:         uint64(30701),
+			CSModuleAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 		}
 	case "mainnet":
 		if wsURL == "" {
@@ -79,18 +81,19 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500" // Default mainnet beaconchain URL
 		}
 		config = Config{
-			SignerUrl:               "http://signer.mainnet.dncore.dappnode",
-			IpfsUrl:                 ipfsUrl,
-			WsURL:                   wsURL,
-			CSMStakingModuleID:      big.NewInt(3),
-			EtherscanURL:            "https://etherscan.io",
-			BeaconchainURL:          "https://beaconcha.in",
-			CSMUIURL:                "https://csm.lido.fi",
-			CSAccountingAddress:     common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
-			CSFeeDistributorAddress: common.HexToAddress("0x4d72BFF1BeaC69925F8Bd12526a39BAAb069e5Da"),
-			VEBOAddress:             common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
-			VeboBlockDeployment:     uint64(17172556),
-			CSModuleAddress:         common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
+			SignerUrl:                   "http://signer.mainnet.dncore.dappnode",
+			IpfsUrl:                     ipfsUrl,
+			WsURL:                       wsURL,
+			CSMStakingModuleID:          big.NewInt(3),
+			EtherscanURL:                "https://etherscan.io",
+			BeaconchainURL:              "https://beaconcha.in",
+			CSMUIURL:                    "https://csm.lido.fi",
+			CSAccountingAddress:         common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
+			CSFeeDistributorAddress:     common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
+			CSFeeDistributorImplAddress: common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0 "), // https://etherscan.io/address/0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0#code
+			VEBOAddress:                 common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
+			VeboBlockDeployment:         uint64(17172556),
+			CSModuleAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 		}
 	default:
 		log.Fatalf("Unknown network: %s", network)

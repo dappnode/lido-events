@@ -5,6 +5,7 @@ import (
 	"lido-events/internal/adapters/api"
 	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
+	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/notifier"
@@ -86,6 +87,11 @@ func main() {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
 
+	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	if err != nil {
+		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
+	}
+
 	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
@@ -102,7 +108,7 @@ func main() {
 	}
 
 	// Initialize services
-	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, exitValidatorAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
+	veboService := services.NewVeboEventsProcessorService(storageAdapter, notifierAdapter, veboAdapter, csFeeDistributorImplAdapter, exitValidatorAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	csModuleService := services.NewCsmEventsProcessorService(storageAdapter, notifierAdapter, csModuleAdapter)
 	csFeeDistributorService := services.NewCsFeeDistributorEventsProcessorService(notifierAdapter, csFeeDistributorAdapter)
 

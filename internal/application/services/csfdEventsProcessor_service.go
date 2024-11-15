@@ -23,7 +23,7 @@ func NewCsFeeDistributorEventsProcessorService(notifierPort ports.NotifierPort, 
 // WatchCsFeeDistributorEvents subscribes to Ethereum events and handles them.
 // It passes to the csFeeDistrubtor port a function that processes the log data.
 func (cfds *CsFeeDistributorEventsProcessorService) WatchCsFeeDistributorEvents(ctx context.Context) error {
-	return cfds.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, cfds)
+	return cfds.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, cfds.HandleDistributionDataUpdated)
 }
 
 func (vs *CsFeeDistributorEventsProcessorService) HandleDistributionDataUpdated(rewardsDistributed *domain.CsfeedistributorDistributionDataUpdated) error {

@@ -7,32 +7,37 @@ import (
 	"lido-events/internal/application/ports"
 	"log"
 	"time"
-
-	"github.com/ipfs/go-cid"
-	"github.com/multiformats/go-multihash"
 )
 
 type VeboEventsProcessor struct {
-	storagePort         ports.StoragePort
-	notifierPort        ports.NotifierPort
-	veboPort            ports.VeboPort
-	exitValidatorPort   ports.ExitValidator
-	beaconchainPort     ports.Beaconchain
-	veboBlockDeployment uint64
+	storagePort              ports.StoragePort
+	notifierPort             ports.NotifierPort
+	veboPort                 ports.VeboPort
+	csFeeDistributorImplPort ports.CsFeeDistributorImplPort
+	exitValidatorPort        ports.ExitValidator
+	beaconchainPort          ports.Beaconchain
+	veboBlockDeployment      uint64
 }
 
-func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *VeboEventsProcessor {
+func NewVeboEventsProcessorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, csFeeDistributorPort ports.CsFeeDistributorImplPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *VeboEventsProcessor {
 	return &VeboEventsProcessor{
 		storagePort,
 		notifierPort,
 		veboPort,
+		csFeeDistributorPort,
 		exitValidatorPort,
 		beaconchainPort,
 		veboBlockDeployment,
 	}
 }
 
-// ScanEventsCron starts a unified periodic scan for both ValidatorExitRequest and ReportSubmitted events.
+// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
+// It passes to the csModule port a function that processes the log data.
+func (vs *VeboEventsProcessor) WatchReportSubmittedEvents(ctx context.Context) error {
+	return vs.veboPort.WatchReportSubmittedEvents(ctx, vs.HandleReportSubmittedEvent)
+}
+
+// ScanEventsCron starts a unified periodic scan for both ValidatorExitRequest and DistributionLogUpdated events
 func (vs *VeboEventsProcessor) ScanEventsCron(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -63,9 +68,9 @@ func (vs *VeboEventsProcessor) ScanEventsCron(ctx context.Context, interval time
 				continue
 			}
 
-			// Scan for ReportSubmitted events
-			if err := vs.veboPort.ScanReportSubmittedEvents(ctx, start, &end, vs.HandleReportSubmittedEvent); err != nil {
-				log.Printf("Error scanning ReportSubmitted events: %v", err)
+			// Scan for DistributionLogUpdated events
+			if err := vs.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, vs.HandleDistributionLogUpdatedEvent); err != nil {
+				log.Printf("Error scanning DistributionLogUpdated events: %v", err)
 				continue
 			}
 
@@ -127,51 +132,30 @@ func (vs *VeboEventsProcessor) HandleValidatorExitRequestEvent(validatorExitEven
 	return nil
 }
 
-func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
-	// Send the notification message
-	// Its too spammy to send a notification for every report submitted
-	// message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
-	// if err := vs.notifierPort.SendNotification(message); err != nil {
-	// 	log.Printf("Failed to send notification: %v", err)
-	// 	return err
-	// }
-
-	// Convert the [32]byte hash to CID format
-	cidStr, err := ConvertKeccak256HashToCIDv1(reportSubmitted.Hash)
-	if err != nil {
-		log.Printf("Failed to convert hash to CID: %v", err)
+func (vs *VeboEventsProcessor) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
+	// Store the CID
+	if err := vs.storagePort.AddPendingHash(distributionLogUpdated.LogCid); err != nil {
+		log.Printf("Failed to store pending CID: %v", err)
 		return err
 	}
 
-	// Validate the CID format
-	parsedCID, err := cid.Decode(cidStr)
-	if err != nil {
-		log.Printf("Invalid CID format: %v", err)
-		return fmt.Errorf("invalid CID format: %w", err)
-	}
-
-	log.Printf("Valid CID: %s", parsedCID)
-
-	// Store the CID
-	if err := vs.storagePort.AddPendingHash(cidStr); err != nil {
-		log.Printf("Failed to store pending CID: %v", err)
+	// Send notification
+	message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
+	if err := vs.notifierPort.SendNotification(message); err != nil {
+		log.Printf("Failed to send notification: %v", err)
 		return err
 	}
 
 	return nil
 }
 
-// ConvertKeccak256HashToCIDv1 converts a Keccak-256 [32]byte hash to an IPFS CID v1
-func ConvertKeccak256HashToCIDv1(hash [32]byte) (string, error) {
-	// Create a multihash from the Keccak-256 hash
-	mh, err := multihash.Encode(hash[:], multihash.KECCAK_256)
-	if err != nil {
-		return "", fmt.Errorf("failed to create multihash: %w", err)
+func (vs *VeboEventsProcessor) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
+	// send the notification message
+	message := fmt.Sprintf("- 📈 New submitted report: %s", reportSubmitted.RefSlot)
+	if err := vs.notifierPort.SendNotification(message); err != nil {
+		log.Printf("Failed to send notification: %v", err)
+		return err
 	}
 
-	// Generate a CIDv1 with the "raw" codec (or another codec if needed)
-	c := cid.NewCidV1(cid.Raw, mh)
-
-	// Return the CID as a Base32-encoded string
-	return c.String(), nil
+	return nil
 }

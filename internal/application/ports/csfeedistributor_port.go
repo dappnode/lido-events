@@ -7,9 +7,5 @@ import (
 )
 
 type CsFeeDistributorPort interface {
-	WatchCsFeeDistributorEvents(ctx context.Context, handlers CsFeeDistributorHandlers) error
-}
-
-type CsFeeDistributorHandlers interface {
-	HandleDistributionDataUpdated(reportSubmitted *domain.CsfeedistributorDistributionDataUpdated) error
+	WatchCsFeeDistributorEvents(ctx context.Context, handleDistributionDataUpdated func(reportSubmitted *domain.CsfeedistributorDistributionDataUpdated) error) error
 }
