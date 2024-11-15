@@ -8,6 +8,7 @@ import (
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
 	"lido-events/internal/adapters/execution"
+	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
@@ -82,7 +83,7 @@ func main() {
 
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.BeaconchainURL)
-	//exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
+	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
@@ -112,13 +113,13 @@ func main() {
 	// Initialize services
 	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
 	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, beaconchainAdapter, executionAdapter, csFeeDistributorImplAdapter)
-	//validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
+	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 
 	// Start scanning for events
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute) // TODO: determine interval
 
 	// start ejector
-	//go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC event
 	if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
