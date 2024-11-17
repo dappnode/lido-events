@@ -31,11 +31,53 @@ func TestFetchAndParseIpfs(t *testing.T) {
 	// Print the fetched report for manual inspection (optional)
 	t.Logf("Fetched report: %+v", report)
 
-	// Add assertions here to validate fields, if you have known expected values
-	// Example (replace with actual expected values if known):
-	if report.Distributable == 0 {
-		t.Error("expected non-zero distributable amount")
+	// Assertions to validate fields based on expected structure
+
+	// Check if `Frame` has been populated
+	if len(report.Frame) != 2 || report.Frame[0] == 0 || report.Frame[1] == 0 {
+		t.Error("expected non-zero values in the frame array")
 	}
 
-	// Add more assertions as needed based on the expected data structure.
+	// Check if `Operators` map has been populated
+	if len(report.Operators) == 0 {
+		t.Error("expected non-empty operators map")
+	}
+
+	// Check one operator (assuming we know at least one operator key, e.g., "0")
+	if operator, exists := report.Operators["0"]; exists {
+		// Validate the Distributed field
+		if operator.Distributed == 0 {
+			t.Error("expected non-zero distributed amount for operator '0'")
+		}
+
+		// Check if the Validators map has been populated for this operator
+		if len(operator.Validators) == 0 {
+			t.Error("expected non-empty validators map for operator '0'")
+		}
+
+		// Check one validator within operator "0" (assuming a known validator ID, e.g., "1735661")
+		if validator, exists := operator.Validators["1735661"]; exists {
+			// Validate the Assigned and Included fields in `Perf`
+			if validator.Perf.Assigned == 0 {
+				t.Error("expected non-zero assigned value in validator '1735661' performance")
+			}
+			if validator.Perf.Included == 0 {
+				t.Error("expected non-zero included value in validator '1735661' performance")
+			}
+
+			// Validate the `Slashed` field
+			if validator.Slashed {
+				t.Error("expected slashed to be false for validator '1735661'")
+			}
+		} else {
+			t.Error("expected validator '1735661' to be present in operator '0'")
+		}
+	} else {
+		t.Error("expected operator '0' to be present in operators map")
+	}
+
+	// Validate the `Threshold` field
+	if report.Threshold == 0 {
+		t.Error("expected non-zero threshold value")
+	}
 }
