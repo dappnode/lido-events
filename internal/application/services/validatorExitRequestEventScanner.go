@@ -44,6 +44,10 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 				continue
 			}
 
+			if start == 0 {
+				start = vs.veboBlockDeployment
+			}
+
 			end, err := vs.executionPort.GetMostRecentBlockNumber()
 			if err != nil {
 				log.Printf("Failed to get latest finalized block: %v", err)

@@ -10,18 +10,20 @@ import (
 )
 
 type DistributionLogUpdatedEventScanner struct {
-	storagePort              ports.StoragePort
-	notifierPort             ports.NotifierPort
-	executionPort            ports.ExecutionPort
-	csFeeDistributorImplPort ports.CsFeeDistributorImplPort
+	storagePort                     ports.StoragePort
+	notifierPort                    ports.NotifierPort
+	executionPort                   ports.ExecutionPort
+	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
+	csFeeDistributorBlockDeployment uint64
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,
 		executionPort,
 		csFeeDistributorImplPort,
+		csFeeDistributorBlockDeployment,
 	}
 }
 
@@ -38,6 +40,10 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 			if err != nil {
 				log.Printf("Failed to get last processed block: %v", err)
 				continue
+			}
+
+			if start == 0 {
+				start = ds.csFeeDistributorBlockDeployment
 			}
 
 			end, err := ds.executionPort.GetMostRecentBlockNumber()
