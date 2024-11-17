@@ -45,8 +45,24 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 		},
 		Operators: map[string]storage.OperatorData{
 			"1": {
-				Performance: domain.Reports{
-					"100": domain.Report{Threshold: "0.85"},
+				Reports: domain.Reports{
+					"81055-81504": domain.Report{
+						Frame:     [2]int{81055, 81504},
+						Threshold: 0.85,
+						Data: domain.Data{
+							Distributed: int64(3465578901933468), // Updated to int64
+							Stuck:       false,
+							Validators: map[string]domain.Validator{
+								"1735661": {
+									Perf: domain.Performance{
+										Assigned: 450,
+										Included: 450,
+									},
+									Slashed: false,
+								},
+							},
+						},
+					},
 				},
 				ExitRequests: domain.ExitRequests{
 					"validator1": {
@@ -90,8 +106,11 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Equal(t, []string{"hash1", "hash2"}, db.Events.DistributionLogUpdated.PendingHashes)
 	assert.Equal(t, uint64(200), db.Events.ValidatorExitRequest.LastProcessedBlock)
 	assert.Contains(t, db.Operators, "1")
-	assert.Contains(t, db.Operators["1"].Performance, "100")
-	assert.Contains(t, db.Operators["1"].ExitRequests, "validator1")
+	assert.Contains(t, db.Operators["1"].Reports, "81055-81504")
+	assert.Equal(t, 0.85, db.Operators["1"].Reports["81055-81504"].Threshold)
+	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed) // Updated to int64
+	assert.Equal(t, 450, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Perf.Assigned)
+	assert.False(t, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Slashed)
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
@@ -142,8 +161,24 @@ func TestSaveDatabase(t *testing.T) {
 		},
 		Operators: map[string]storage.OperatorData{
 			"2": {
-				Performance: domain.Reports{
-					"200": domain.Report{Threshold: "0.90"},
+				Reports: domain.Reports{
+					"81055-81504": domain.Report{
+						Frame:     [2]int{81055, 81504},
+						Threshold: 0.90,
+						Data: domain.Data{
+							Distributed: 500000000,
+							Stuck:       false,
+							Validators: map[string]domain.Validator{
+								"1797927": {
+									Perf: domain.Performance{
+										Assigned: 450,
+										Included: 0,
+									},
+									Slashed: false,
+								},
+							},
+						},
+					},
 				},
 				ExitRequests: domain.ExitRequests{
 					"validator2": {

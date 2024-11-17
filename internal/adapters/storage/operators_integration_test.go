@@ -37,8 +37,8 @@ func TestSaveOperatorId_ExistingOperator(t *testing.T) {
 	initialData := &storage.Database{
 		Operators: map[string]storage.OperatorData{
 			"1": { // operatorID as string
-				Performance:  make(map[string]domain.Report),
-				ExitRequests: make(map[string]domain.ExitRequest),
+				Reports:      make(domain.Reports),
+				ExitRequests: make(domain.ExitRequests),
 			},
 		},
 	}

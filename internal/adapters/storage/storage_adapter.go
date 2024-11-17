@@ -29,6 +29,11 @@ type Database struct {
 	Events    Events                  `json:"events"`
 }
 
+type OperatorData struct {
+	Reports      domain.Reports      `json:"reports"`
+	ExitRequests domain.ExitRequests `json:"exitRequests"`
+}
+
 type Events struct {
 	DistributionLogUpdated struct {
 		LastProcessedBlock uint64   `json:"lastProcessedBlock"`
@@ -37,11 +42,6 @@ type Events struct {
 	ValidatorExitRequest struct {
 		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 	} `json:"validatorExitRequest"`
-}
-
-type OperatorData struct {
-	Performance  domain.Reports      `json:"performance"`
-	ExitRequests domain.ExitRequests `json:"exitRequests"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -93,6 +93,14 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	}
 	if db.Events.DistributionLogUpdated.PendingHashes == nil {
 		db.Events.DistributionLogUpdated.PendingHashes = []string{}
+	}
+
+	// Ensure each OperatorData's Reports map is initialized
+	for key, operatorData := range db.Operators {
+		if operatorData.Reports == nil {
+			operatorData.Reports = make(domain.Reports)
+			db.Operators[key] = operatorData // Update map with initialized Reports
+		}
 	}
 
 	return db, nil

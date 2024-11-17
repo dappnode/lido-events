@@ -21,8 +21,8 @@ func (fs *Storage) SaveExitRequests(operatorID *big.Int, requests map[string]dom
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			Performance:  make(map[string]domain.Report),
-			ExitRequests: make(map[string]domain.ExitRequest),
+			Reports:      make(domain.Reports),
+			ExitRequests: make(domain.ExitRequests),
 		}
 	}
 
@@ -51,8 +51,8 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			Performance:  make(map[string]domain.Report),
-			ExitRequests: make(map[string]domain.ExitRequest),
+			Reports:      make(domain.Reports),
+			ExitRequests: make(domain.ExitRequests),
 		}
 	}
 
@@ -64,7 +64,7 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 }
 
 // GetExitRequests retrieves all exit requests for a specific operator ID.
-func (fs *Storage) GetExitRequests(operatorID string) (map[string]domain.ExitRequest, error) {
+func (fs *Storage) GetExitRequests(operatorID string) (domain.ExitRequests, error) {
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return nil, err

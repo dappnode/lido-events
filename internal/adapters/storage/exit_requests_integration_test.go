@@ -23,7 +23,7 @@ func TestSaveExitRequests_NewOperator(t *testing.T) {
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
 	operatorID := big.NewInt(1)
-	exitRequests := map[string]domain.ExitRequest{
+	exitRequests := domain.ExitRequests{
 		"validator1": {
 			Status: domain.StatusActiveOngoing,
 			Event: domain.VeboValidatorExitRequest{

@@ -21,8 +21,8 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 	if _, exists := db.Operators[operatorID]; !exists {
 		// Initialize an empty OperatorData if this is a new operator ID
 		db.Operators[operatorID] = OperatorData{
-			Performance:  make(map[string]domain.Report),
-			ExitRequests: make(map[string]domain.ExitRequest),
+			Reports:      make(domain.Reports),
+			ExitRequests: make(domain.ExitRequests),
 		}
 		if err := fs.SaveDatabase(db); err != nil {
 			return err
