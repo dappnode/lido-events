@@ -30,15 +30,15 @@ func (m *MockStoragePort) RegisterOperatorIdListener() chan []*big.Int {
 	return args.Get(0).(chan []*big.Int)
 }
 
-// GetOperatorPerformance returns a map of performance reports for an operator ID
-func (m *MockStoragePort) GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (domain.Reports, error) {
-	args := m.Called(operatorID, startEpoch, endEpoch)
-	return args.Get(0).(map[string]domain.Report), args.Error(1)
+// GetReports returns a map of reports for an operator ID
+func (m *MockStoragePort) GetReports(operatorID *big.Int) (domain.Reports, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).(domain.Reports), args.Error(1)
 }
 
-// SaveOperatorPerformance simulates saving performance data for an operator
-func (m *MockStoragePort) SaveOperatorPerformance(operatorID *big.Int, epoch string, report domain.Report) error {
-	args := m.Called(operatorID, epoch, report)
+// SaveReport simulates saving report data for an operator
+func (m *MockStoragePort) SaveReport(operatorID *big.Int, report domain.Report) error {
+	args := m.Called(operatorID, report)
 	return args.Error(0)
 }
 
@@ -67,13 +67,13 @@ func (m *MockStoragePort) SaveValidatorExitRequestLastProcessedBlock(block uint6
 }
 
 // GetExitRequests returns exit requests for a given operator
-func (m *MockStoragePort) GetExitRequests(operatorID string) (map[string]domain.ExitRequest, error) {
+func (m *MockStoragePort) GetExitRequests(operatorID string) (domain.ExitRequests, error) {
 	args := m.Called(operatorID)
-	return args.Get(0).(map[string]domain.ExitRequest), args.Error(1)
+	return args.Get(0).(domain.ExitRequests), args.Error(1)
 }
 
 // SaveExitRequests simulates saving a map of exit requests
-func (m *MockStoragePort) SaveExitRequests(operatorID *big.Int, requests map[string]domain.ExitRequest) error {
+func (m *MockStoragePort) SaveExitRequests(operatorID *big.Int, requests domain.ExitRequests) error {
 	args := m.Called(operatorID, requests)
 	return args.Error(0)
 }

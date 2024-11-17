@@ -21,13 +21,13 @@ type StoragePort interface {
 	SaveOperatorId(operatorID string) error
 	RegisterOperatorIdListener() chan []*big.Int
 
-	// performance
-	GetOperatorPerformance(operatorID *big.Int, startEpoch, endEpoch string) (domain.Reports, error)
-	SaveOperatorPerformance(operatorID *big.Int, epoch string, report domain.Report) error
+	// reports
+	GetReports(operatorID *big.Int) (domain.Reports, error)
+	SaveReport(operatorID *big.Int, report domain.Report) error
 
 	// exit requests
-	GetExitRequests(string) (map[string]domain.ExitRequest, error)
-	SaveExitRequests(operatorID *big.Int, requests map[string]domain.ExitRequest) error
+	GetExitRequests(string) (domain.ExitRequests, error)
+	SaveExitRequests(operatorID *big.Int, requests domain.ExitRequests) error
 	SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error
 	UpdateExitRequestStatus(operatorId string, validatorIndex string, status domain.ValidatorStatus) error
 

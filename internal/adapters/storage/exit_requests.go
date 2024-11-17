@@ -7,7 +7,7 @@ import (
 )
 
 // SaveExitRequests saves multiple exit requests for a specific operator ID.
-func (fs *Storage) SaveExitRequests(operatorID *big.Int, requests map[string]domain.ExitRequest) error {
+func (fs *Storage) SaveExitRequests(operatorID *big.Int, requests domain.ExitRequests) error {
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
