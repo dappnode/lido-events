@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"math/big"
 	"net/http"
-	"strconv"
 
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
@@ -99,8 +98,6 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get Lido report within a range of epochs
 func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Request) {
-	start := r.URL.Query().Get("start")
-	end := r.URL.Query().Get("end")
 	operatorId := r.URL.Query().Get("operatorId")
 
 	operatorIdNum := new(big.Int)
@@ -110,19 +107,7 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	startEpoch, err := strconv.Atoi(start)
-	if err != nil {
-		writeErrorResponse(w, "Invalid start epoch", http.StatusBadRequest)
-		return
-	}
-
-	endEpoch, err := strconv.Atoi(end)
-	if err != nil {
-		writeErrorResponse(w, "Invalid end epoch", http.StatusBadRequest)
-		return
-	}
-
-	report, err := h.StoragePort.GetOperatorPerformance(operatorIdNum, strconv.Itoa(startEpoch), strconv.Itoa(endEpoch))
+	report, err := h.StoragePort.GetReports(operatorIdNum)
 	if err != nil {
 		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError)
 		return
