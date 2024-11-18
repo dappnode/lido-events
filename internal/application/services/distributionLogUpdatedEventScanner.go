@@ -54,21 +54,17 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 
 			end, err := ds.executionPort.GetMostRecentBlockNumber()
 			if err != nil {
-				ds.logger.Printf("Failed to get latest finalized block: %v", err)
 				continue
 			}
 
-			ds.logger.Printf("Scanning DistributionLogUpdated events from block %d to %d", start, end)
-
 			// Perform the scan
 			if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, ds.HandleDistributionLogUpdatedEvent); err != nil {
-				ds.logger.Printf("Error scanning DistributionLogUpdated events: %v", err)
 				continue
 			}
 
 			// Save the last processed epoch if successful
 			if err := ds.storagePort.SaveDistributionLogLastProcessedBlock(end); err != nil {
-				ds.logger.Printf("Failed to save last processed epoch: %v", err)
+				continue
 			}
 		case <-ctx.Done():
 			ds.logger.Println("Stopping DistributionLogUpdated cron scan")

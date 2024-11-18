@@ -36,10 +36,13 @@ func NewVeboAdapter(
 	}, nil
 }
 
-// ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events.
+// ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events. error logs must be printed since its not executed from main
 func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
+	log.Printf("Scanning ValidatorExitRequest events from block %d to %d", start, end)
+
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
+		log.Printf("Error creating Vebo contract: %v", err)
 		return err
 	}
 
@@ -51,6 +54,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 
 	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, operatorIds, []*big.Int{})
 	if err != nil {
+		log.Printf("Error filtering ValidatorExitRequest events: %v", err)
 		return err
 	}
 
@@ -68,7 +72,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 	return nil
 }
 
-// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
+// WatchReportSubmittedEvents subscribes to Ethereum events and handles them. not required to print error logs since will be printed when initializing in main
 func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {

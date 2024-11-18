@@ -2,9 +2,11 @@ package ipfs
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"lido-events/internal/application/domain"
+	"log"
 	"net/http"
 )
 
@@ -24,8 +26,8 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, err
 	url := fmt.Sprintf("%s/ipfs/%s", ia.GatewayURL, cid)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
-		return domain.OriginalReport{}, fmt.Errorf("failed to create request: %w", err)
+		log.Printf("Error creating request: %v", err)
+		return domain.OriginalReport{}, err
 	}
 
 	// Set the Accept header to explicitly request JSON
@@ -34,28 +36,30 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, err
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error fetching data from IPFS: %v\n", err)
-		return domain.OriginalReport{}, fmt.Errorf("failed to fetch data from IPFS: %w", err)
+		log.Printf("Failed to fetch data from IPFSt: %v", err)
+		return domain.OriginalReport{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return domain.OriginalReport{}, fmt.Errorf("unexpected response status: %s", resp.Status)
+		errorMessage := fmt.Sprintf("unexpected response status fetching IPFS gateway: %s", resp.Status)
+		log.Println(errorMessage)
+		return domain.OriginalReport{}, errors.New(errorMessage)
 	}
 
 	// Read the JSON data directly from the response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return domain.OriginalReport{}, fmt.Errorf("failed to read response body: %w", err)
+		log.Printf("Error reading response body: %v", err)
+		return domain.OriginalReport{}, err
 	}
 
 	// Parse the JSON data into the Report struct
 	var report domain.OriginalReport
 	err = json.Unmarshal(body, &report)
 	if err != nil {
-		fmt.Printf("Error unmarshalling JSON data to Report: %v\n", err)
-		return domain.OriginalReport{}, fmt.Errorf("failed to unmarshal JSON data: %w", err)
+		log.Printf("Error unmarshalling JSON data to Report: %v", err)
+		return domain.OriginalReport{}, err
 	}
 
 	return report, nil

@@ -3,8 +3,10 @@ package beaconchain
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"lido-events/internal/application/domain"
+	"log"
 	"net/http"
 )
 
@@ -24,12 +26,15 @@ func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.Validator
 	// Get the validator data
 	validatorData, err := b.PostStateValidators("finalized", []string{pubkey}, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to get validator data: %w", err)
+		log.Printf("failed to get validator data: %v", err)
+		return "", err
 	}
 
 	// Check if the validator exists
 	if len(validatorData.Data) == 0 {
-		return "", fmt.Errorf("validator not found")
+		errorMessage := fmt.Sprintln("validator not found")
+		log.Println(errorMessage)
+		return "", errors.New(errorMessage)
 	}
 
 	// Return the status of the validator
@@ -47,7 +52,8 @@ func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, s
 
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		log.Printf("failed to marshal request body: %v", err)
+		return nil, err
 	}
 
 	// Construct the URL with the stateID query parameter
@@ -55,24 +61,29 @@ func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, s
 
 	req, err := http.NewRequest("POST", reqUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		log.Printf("failed to create request: %v", err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request to beaconchain: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		errorMessage := fmt.Sprintf("unexpected status code fetching validator data: %d", resp.StatusCode)
+		log.Println(errorMessage)
+		return nil, errors.New(errorMessage)
 	}
 
 	var result ValidatorsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		log.Printf("failed to decode response: %v", err)
+		return nil, err
 	}
 
 	return &result, nil
@@ -93,26 +104,31 @@ func (b *BeaconchainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, sign
 	// Marshal the body to JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		log.Printf("failed to marshal request body: %v", err)
+		return err
 	}
 
 	// Make the HTTP request
 	url := fmt.Sprintf("%s/eth/v1/beacon/pool/voluntary_exits", b.beaconChainUrl)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		log.Printf("failed to create request: %v", err)
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request to beaconchain: %v", err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		errorMessage := fmt.Sprintf("unexpected status code submitting voluntary exit: %d", resp.StatusCode)
+		log.Println(errorMessage)
+		return errors.New(errorMessage)
 	}
 
 	return nil
@@ -124,13 +140,15 @@ func (b *BeaconchainAdapter) GetStateFork(stateID string) (*StateForkResponse, e
 	url := fmt.Sprintf("%s/eth/v1/beacon/states/%s/fork", b.beaconChainUrl, stateID)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request to beaconchain: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var result StateForkResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		log.Printf("failed to decode response: %v", err)
+		return nil, err
 	}
 	return &result, nil
 }
@@ -141,13 +159,15 @@ func (b *BeaconchainAdapter) GetGenesis() (*GenesisResponse, error) {
 	url := fmt.Sprintf("%s/eth/v1/beacon/genesis", b.beaconChainUrl)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request to beaconchain: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var result GenesisResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		log.Printf("failed to decode response: %v", err)
+		return nil, err
 	}
 	return &result, nil
 }
@@ -159,13 +179,15 @@ func (b *BeaconchainAdapter) GetBlockHeader(blockID string) (*BlockHeaderRespons
 	url := fmt.Sprintf("%s/eth/v1/beacon/headers/%s", b.beaconChainUrl, blockID)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request to beaconchain: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var result BlockHeaderResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		log.Printf("failed to decode response: %v", err)
+		return nil, err
 	}
 	return &result, nil
 }
@@ -174,7 +196,8 @@ func (b *BeaconchainAdapter) GetBlockHeader(blockID string) (*BlockHeaderRespons
 func (b *BeaconchainAdapter) GetEpochHeader(blockID string) (uint64, error) {
 	header, err := b.GetBlockHeader(blockID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get block header: %w", err)
+		log.Printf("failed to get block header: %v", err)
+		return 0, err
 	}
 	slot := header.Data.Header.Message.Slot
 	epoch := getEpochFromSlot(slot)

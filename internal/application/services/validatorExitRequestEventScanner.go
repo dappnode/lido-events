@@ -56,21 +56,17 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 
 			end, err := vs.executionPort.GetMostRecentBlockNumber()
 			if err != nil {
-				vs.logger.Printf("Failed to get latest finalized block: %v", err)
 				continue
 			}
 
-			vs.logger.Printf("Scanning ValidatorExitRequest events from block %d to %d", start, end)
-
 			// Perform the scan
 			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
-				vs.logger.Printf("Error scanning ValidatorExitRequest events: %v", err)
 				continue
 			}
 
 			// Save the last processed epoch if successful
 			if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(end); err != nil {
-				vs.logger.Printf("Failed to save last processed epoch: %v", err)
+				continue
 			}
 		case <-ctx.Done():
 			vs.logger.Println("Stopping DistributionLogUpdated cron scan")

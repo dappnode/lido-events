@@ -36,6 +36,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 			// Call the load method periodically
 			if err := phl.LoadPendingHashes(); err != nil {
 				phl.logger.Printf("Error loading pending hashes: %v", err)
+				continue
 			}
 		case <-ctx.Done():
 			// Stop the periodic load if the context is canceled

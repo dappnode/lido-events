@@ -31,6 +31,7 @@ func NewCsFeeDistributorAdapter(
 	}, nil
 }
 
+// WatchCsFeeDistributorEvents watches for CsFeeDistributor events and calls the handleDistributionDataUpdated function when an event is received. not required to print error logs since will be initizlied from main
 func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Context, handleDistributionDataUpdated func(reportSubmitted *domain.CsfeedistributorDistributionDataUpdated) error) error {
 	csFeeDistributorContract, err := bindings.NewCsfeedistributor(csfa.CsFeeDistributorAddress, csfa.client)
 	if err != nil {
@@ -40,6 +41,7 @@ func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Con
 	distributionDataUpdatedChan := make(chan *domain.CsfeedistributorDistributionDataUpdated)
 	sub, err := csFeeDistributorContract.WatchDistributionDataUpdated(&bind.WatchOpts{Context: ctx}, distributionDataUpdatedChan)
 	if err != nil {
+
 		return err
 	}
 

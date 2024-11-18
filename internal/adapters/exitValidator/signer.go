@@ -3,7 +3,9 @@ package exitvalidator
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -43,26 +45,31 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 	// Marshal the body to JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request body: %w", err)
+		log.Printf("failed to marshal request body: %v", err)
+		return "", err
 	}
 
 	// Make the HTTP request
 	url := fmt.Sprintf("%s/api/v1/eth2/sign/%s", signerUrl, identifier)
 	reqHttp, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		log.Printf("failed to create request: %v", err)
+		return "", err
 	}
 	reqHttp.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(reqHttp)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request: %v", err)
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		errorMessage := fmt.Sprintf("unexpected status code fetching signer: %d", resp.StatusCode)
+		log.Println(errorMessage)
+		return "", errors.New(errorMessage)
 	}
 
 	// Decode the response body to extract the signature
@@ -70,7 +77,8 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 		Signature string `json:"signature"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+		log.Printf("failed to decode response: %v", err)
+		return "", err
 	}
 
 	return result.Signature, nil

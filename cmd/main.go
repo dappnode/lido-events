@@ -141,6 +141,12 @@ func main() {
 		if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
 			log.Fatalf("Failed to subscribe to CSModule events: %v", err)
 		}
+		if err := eventsWatcherService.WatchCsFeeDistributorEvents(ctx); err != nil {
+			log.Fatalf("Failed to subscribe to CsFeeDistributor events: %v", err)
+		}
+		if err := eventsWatcherService.WatchReportSubmittedEvents(ctx); err != nil {
+			log.Fatalf("Failed to subscribe to Vebo events: %v", err)
+		}
 	}()
 
 	// Handle shutdown signals

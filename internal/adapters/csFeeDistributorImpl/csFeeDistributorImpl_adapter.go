@@ -31,20 +31,20 @@ func NewCsFeeDistributorImplAdapter(
 	}, nil
 }
 
-// ScanDistributionLogUpdatedEvents scans the Vebo contract for DistributionLogUpdated events.
+// ScanDistributionLogUpdatedEvents scans the Vebo contract for DistributionLogUpdated events. error logs must be printed since its not executed from main
 func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(ctx context.Context, start uint64, end *uint64, handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated) error) error {
-	// print something
-	log.Printf("Scanning DistributionLogUpdated events from block %d to %d", start, *end)
-	// print the address
-	log.Printf("CsFeeDistributorAddress: %s", cs.CsFeeDistributorAddress.String())
+	log.Printf("Scanning DistributionLogUpdated events from block %d to %d", start, end)
+
 	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.client)
 	if err != nil {
+		log.Printf("Error creating CsFeeDistributor contract: %v", err)
 		return err
 	}
 
 	// Retrieve DistributionLogUpdated events from the specified block range
 	distributionLogUpdated, err := csFeeDistributorContract.FilterDistributionLogUpdated(&bind.FilterOpts{Context: ctx, Start: start, End: end})
 	if err != nil {
+		log.Printf("Error filtering DistributionLogUpdated events: %v", err)
 		return err
 	}
 

@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"math/big"
 	"net/http"
+	"os"
 
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
@@ -11,18 +13,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// TODO: add cors middleware
-
+// APIHandler holds the necessary dependencies for API endpoints
 type APIHandler struct {
 	StoragePort ports.StoragePort
 	Router      *mux.Router
+	logger      *log.Logger
 }
 
-// NewAPIAdapter initializes the APIHandler and sets up the routes
+// NewAPIAdapter initializes the APIHandler with a logger and sets up routes
 func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
+	logger := log.New(os.Stdout, "[APIHandler] ", log.LstdFlags)
+
 	h := &APIHandler{
 		StoragePort: storagePort,
 		Router:      mux.NewRouter(),
+		logger:      logger,
 	}
 
 	h.SetupRoutes()
@@ -37,7 +42,7 @@ func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/event_indexer/exit_requests", h.GetExitRequests).Methods("GET")
 }
 
-// Handler to update the Telegram token
+// UpdateTelegramConfig handles updates to the Telegram configuration
 func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Token  string `json:"token"`
@@ -45,17 +50,18 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Invalid request body in UpdateTelegramConfig: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.Token == "" && req.UserID == 0 {
+		h.logger.Println("Missing token and userId in UpdateTelegramConfig request")
 		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest)
 		return
 	}
 
-	err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req))
-	if err != nil {
+	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
 		return
 	}
@@ -63,32 +69,31 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-// Handler to update the node operator ID
+// UpdateOperatorID handles updates to the operator ID
 func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		OperatorID string `json:"operatorId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Invalid request body in UpdateOperatorID: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.OperatorID == "" {
+		h.logger.Println("Missing operatorId in UpdateOperatorID request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
 		return
 	}
 
-	// Check if the operator ID is a valid number
-	_, ok := new(big.Int).SetString(req.OperatorID, 10)
-	if !ok {
+	if _, ok := new(big.Int).SetString(req.OperatorID, 10); !ok {
+		h.logger.Println("Invalid operatorId format in UpdateOperatorID")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
 
-	// Update the operator ID in the storage service
-	err := h.StoragePort.SaveOperatorId(req.OperatorID)
-	if err != nil {
+	if err := h.StoragePort.SaveOperatorId(req.OperatorID); err != nil {
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
 		return
 	}
@@ -96,13 +101,13 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Handler to get Lido report within a range of epochs
+// GetOperatorPerformance retrieves operator performance data
 func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operatorId")
 
 	operatorIdNum := new(big.Int)
-	_, ok := operatorIdNum.SetString(operatorId, 10)
-	if !ok {
+	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
+		h.logger.Println("Invalid operatorId in GetOperatorPerformance request")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
@@ -114,12 +119,14 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 	}
 
 	if len(report) == 0 {
+		h.logger.Printf("No report found for operator ID %s", operatorId)
 		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(report)
 	if err != nil {
+		h.logger.Printf("Error generating JSON response in GetOperatorPerformance: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
 		return
 	}
@@ -128,10 +135,11 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 	w.Write(jsonResponse)
 }
 
-// Handler to get validator exit requests
+// GetExitRequests retrieves exit requests for a given operator ID
 func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operatorId")
 	if operatorId == "" {
+		h.logger.Println("Missing operatorId in GetExitRequests request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
 		return
 	}
@@ -142,14 +150,15 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// not found
 	if exitRequests == nil {
+		h.logger.Printf("No exit requests found for operator ID %s", operatorId)
 		writeErrorResponse(w, "No exit requests found for the given operator ID", http.StatusNotFound)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(exitRequests)
 	if err != nil {
+		h.logger.Printf("Error generating JSON response in GetExitRequests: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
 		return
 	}

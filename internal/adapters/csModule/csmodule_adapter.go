@@ -57,6 +57,7 @@ func NewCsModuleAdapter(
 	return adapter, nil
 }
 
+// WatchCsModuleEvents watches for events emitted by the CsModule contract and calls the appropriate handler functions. Not required to log errors since it will be initialized from main
 func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers ports.CsModuleHandlers) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.client)
 	if err != nil {
