@@ -18,7 +18,7 @@ type APIHandler struct {
 	Router      *mux.Router
 }
 
-// NewAPIAdapter initializes the APIHandler with a logger and sets up routes
+// NewAPIAdapter initializes the APIHandler and sets up routes
 func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
 
 	h := &APIHandler{
