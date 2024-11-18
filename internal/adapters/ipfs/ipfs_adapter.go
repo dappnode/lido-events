@@ -2,11 +2,9 @@ package ipfs
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"lido-events/internal/application/domain"
-	"log"
 	"net/http"
 )
 
@@ -26,8 +24,7 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, err
 	url := fmt.Sprintf("%s/ipfs/%s", ia.GatewayURL, cid)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("Error creating request: %v", err)
-		return domain.OriginalReport{}, err
+		return domain.OriginalReport{}, fmt.Errorf("failed to create request for URL %s: %w", url, err)
 	}
 
 	// Set the Accept header to explicitly request JSON
@@ -36,30 +33,24 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, err
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed to fetch data from IPFSt: %v", err)
-		return domain.OriginalReport{}, err
+		return domain.OriginalReport{}, fmt.Errorf("failed to fetch data from IPFS at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		errorMessage := fmt.Sprintf("unexpected response status fetching IPFS gateway: %s", resp.Status)
-		log.Println(errorMessage)
-		return domain.OriginalReport{}, errors.New(errorMessage)
+		return domain.OriginalReport{}, fmt.Errorf("unexpected response status %s fetching from IPFS gateway", resp.Status)
 	}
 
 	// Read the JSON data directly from the response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading response body: %v", err)
-		return domain.OriginalReport{}, err
+		return domain.OriginalReport{}, fmt.Errorf("failed to read response body from IPFS gateway: %w", err)
 	}
 
 	// Parse the JSON data into the Report struct
 	var report domain.OriginalReport
-	err = json.Unmarshal(body, &report)
-	if err != nil {
-		log.Printf("Error unmarshalling JSON data to Report: %v", err)
-		return domain.OriginalReport{}, err
+	if err := json.Unmarshal(body, &report); err != nil {
+		return domain.OriginalReport{}, fmt.Errorf("failed to unmarshal JSON data from IPFS response: %w", err)
 	}
 
 	return report, nil

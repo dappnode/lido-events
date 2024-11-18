@@ -6,45 +6,37 @@ import (
 	"errors"
 	"fmt"
 	"lido-events/internal/application/domain"
-	"log"
 	"net/http"
 )
 
-// BeaconchainAdapter orchestrates the exit validator process using Signer and BeaconChain adapters
+// BeaconchainAdapter orchestrates the exit validator process using Signer and BeaconChain adapters.
 type BeaconchainAdapter struct {
 	beaconChainUrl string
 }
 
-// NewBeaconchainAdapter creates a new instance of ExitValidatorAdapter with provided beaconChain and signer adapters
+// NewBeaconchainAdapter creates a new instance of ExitValidatorAdapter with provided beaconChain and signer adapters.
 func NewBeaconchainAdapter(beaconChainUrl string) *BeaconchainAdapter {
 	return &BeaconchainAdapter{
-		beaconChainUrl,
+		beaconChainUrl: beaconChainUrl,
 	}
 }
 
 func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error) {
-	// Get the validator data
 	validatorData, err := b.PostStateValidators("finalized", []string{pubkey}, nil)
 	if err != nil {
-		log.Printf("failed to get validator data: %v", err)
-		return "", err
+		return "", fmt.Errorf("failed to get validator data for pubkey %s: %w", pubkey, err)
 	}
 
-	// Check if the validator exists
 	if len(validatorData.Data) == 0 {
-		errorMessage := fmt.Sprintln("validator not found")
-		log.Println(errorMessage)
-		return "", errors.New(errorMessage)
+		return "", errors.New("validator not found")
 	}
 
-	// Return the status of the validator
 	return domain.ValidatorStatus(validatorData.Data[0].Status), nil
 }
 
 // PostStateValidators sends a POST request to fetch validator data based on provided ids and statuses.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/postStateValidators
 func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, statuses []domain.ValidatorStatus) (*ValidatorsResponse, error) {
-	// Prepare the request body
 	body := map[string]interface{}{
 		"ids":      ids,
 		"statuses": statuses,
@@ -52,38 +44,30 @@ func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, s
 
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("failed to marshal request body: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body for PostStateValidators: %w", err)
 	}
 
-	// Construct the URL with the stateID query parameter
 	reqUrl := fmt.Sprintf("%s/eth/v1/beacon/states/%s/validators", b.beaconChainUrl, stateID)
-
 	req, err := http.NewRequest("POST", reqUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Printf("failed to create request: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create POST request for URL %s: %w", reqUrl, err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("failed to send request to beaconchain: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to send request to Beaconchain at %s: %w", reqUrl, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		errorMessage := fmt.Sprintf("unexpected status code fetching validator data: %d", resp.StatusCode)
-		log.Println(errorMessage)
-		return nil, errors.New(errorMessage)
+		return nil, fmt.Errorf("unexpected status code %d fetching validator data", resp.StatusCode)
 	}
 
 	var result ValidatorsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("failed to decode response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response from Beaconchain: %w", err)
 	}
 
 	return &result, nil
@@ -92,7 +76,6 @@ func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, s
 // SubmitPoolVoluntaryExit submits a voluntary exit message to the Beacon chain pool.
 // It takes epoch, validatorIndex, and signature as arguments.
 func (b *BeaconchainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature string) error {
-	// Define the request body structure
 	body := map[string]interface{}{
 		"message": map[string]string{
 			"epoch":           epoch,
@@ -101,34 +84,27 @@ func (b *BeaconchainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, sign
 		"signature": signature,
 	}
 
-	// Marshal the body to JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		log.Printf("failed to marshal request body: %v", err)
-		return err
+		return fmt.Errorf("failed to marshal request body for SubmitPoolVoluntaryExit: %w", err)
 	}
 
-	// Make the HTTP request
 	url := fmt.Sprintf("%s/eth/v1/beacon/pool/voluntary_exits", b.beaconChainUrl)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Printf("failed to create request: %v", err)
-		return err
+		return fmt.Errorf("failed to create POST request for URL %s: %w", url, err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("failed to send request to beaconchain: %v", err)
-		return err
+		return fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		errorMessage := fmt.Sprintf("unexpected status code submitting voluntary exit: %d", resp.StatusCode)
-		log.Println(errorMessage)
-		return errors.New(errorMessage)
+		return fmt.Errorf("unexpected status code %d submitting voluntary exit", resp.StatusCode)
 	}
 
 	return nil
@@ -140,16 +116,15 @@ func (b *BeaconchainAdapter) GetStateFork(stateID string) (*StateForkResponse, e
 	url := fmt.Sprintf("%s/eth/v1/beacon/states/%s/fork", b.beaconChainUrl, stateID)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("failed to send request to beaconchain: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	var result StateForkResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("failed to decode response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response for GetStateFork: %w", err)
 	}
+
 	return &result, nil
 }
 
@@ -159,16 +134,15 @@ func (b *BeaconchainAdapter) GetGenesis() (*GenesisResponse, error) {
 	url := fmt.Sprintf("%s/eth/v1/beacon/genesis", b.beaconChainUrl)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("failed to send request to beaconchain: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	var result GenesisResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("failed to decode response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response for GetGenesis: %w", err)
 	}
+
 	return &result, nil
 }
 
@@ -179,41 +153,35 @@ func (b *BeaconchainAdapter) GetBlockHeader(blockID string) (*BlockHeaderRespons
 	url := fmt.Sprintf("%s/eth/v1/beacon/headers/%s", b.beaconChainUrl, blockID)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("failed to send request to beaconchain: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	var result BlockHeaderResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("failed to decode response: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response for GetBlockHeader: %w", err)
 	}
+
 	return &result, nil
 }
 
-// GetEpochHeader retrieves the epoch header for a specified block ID.
 func (b *BeaconchainAdapter) GetEpochHeader(blockID string) (uint64, error) {
 	header, err := b.GetBlockHeader(blockID)
 	if err != nil {
-		log.Printf("failed to get block header: %v", err)
-		return 0, err
+		return 0, fmt.Errorf("failed to get block header for blockID %s: %w", blockID, err)
 	}
+
 	slot := header.Data.Header.Message.Slot
 	epoch := getEpochFromSlot(slot)
 	return epoch, nil
 }
 
-// Helper function to convert slot to epoch.
 func getEpochFromSlot(slot string) uint64 {
-	// Convert slot to int and calculate epoch
-	// Assume slot 0 is epoch 0, with slots per epoch set to 32
 	const slotsPerEpoch = 32
 	slotInt := parseInt(slot)
 	return slotInt / slotsPerEpoch
 }
 
-// parseInt converts a string slot to an integer.
 func parseInt(slot string) uint64 {
 	var result uint64
 	fmt.Sscanf(slot, "%d", &result)

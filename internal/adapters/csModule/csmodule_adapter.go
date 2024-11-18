@@ -5,7 +5,6 @@ import (
 	"lido-events/internal/adapters/csModule/bindings"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
-	"log"
 	"math/big"
 	"sync"
 
@@ -50,7 +49,6 @@ func NewCsModuleAdapter(
 			adapter.mu.Lock()
 			adapter.nodeOperatorIds = newOperatorIds
 			adapter.mu.Unlock()
-			log.Printf("CsModuleAdapter: Updated nodeOperatorIdss to %v", newOperatorIds)
 		}
 	}()
 
@@ -189,109 +187,49 @@ func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers p
 		for {
 			select {
 			case event := <-depositedSigningKeysChangedChan:
-				if err := handlers.HandleDepositedSigningKeysCountChanged(event); err != nil {
-					log.Printf("Error handling DepositedSigningKeysCountChanged: %v", err)
-				}
+				handlers.HandleDepositedSigningKeysCountChanged(event)
+				return
 			case event := <-elRewardsStealingPenaltyReportedChan:
-				if err := handlers.HandleElRewardsStealingPenaltyReported(event); err != nil {
-					log.Printf("Error handling ELRewardsStealingPenaltyReported: %v", err)
-				}
+				handlers.HandleElRewardsStealingPenaltyReported(event)
+				return
 			case event := <-elRewardsStealingPenaltySettledChan:
-				if err := handlers.HandleElRewardsStealingPenaltySettled(event); err != nil {
-					log.Printf("Error handling ELRewardsStealingPenaltySettled: %v", err)
-				}
+				handlers.HandleElRewardsStealingPenaltySettled(event)
+				return
 			case event := <-elRewardsStealingPenaltyCancelledChan:
-				if err := handlers.HandleElRewardsStealingPenaltyCancelled(event); err != nil {
-					log.Printf("Error handling ELRewardsStealingPenaltyCancelled: %v", err)
-				}
+				handlers.HandleElRewardsStealingPenaltyCancelled(event)
+				return
 			case event := <-initialSlashingSubmittedChan:
-				if err := handlers.HandleInitialSlashingSubmitted(event); err != nil {
-					log.Printf("Error handling InitialSlashingSubmitted: %v", err)
-				}
+				handlers.HandleInitialSlashingSubmitted(event)
+				return
 			case event := <-keyRemovalChargeAppliedChan:
-				if err := handlers.HandleKeyRemovalChargeApplied(event); err != nil {
-					log.Printf("Error handling KeyRemovalChargeApplied: %v", err)
-				}
+				handlers.HandleKeyRemovalChargeApplied(event)
+				return
 			case event := <-nodeOperatorManagerAddressChangeProposedChan:
-				if err := handlers.HandleNodeOperatorManagerAddressChangeProposed(event); err != nil {
-					log.Printf("Error handling NodeOperatorManagerAddressChangeProposed: %v", err)
-				}
+				handlers.HandleNodeOperatorManagerAddressChangeProposed(event)
+				return
 			case event := <-nodeOperatorManagerAddressChangedChan:
-				if err := handlers.HandleNodeOperatorManagerAddressChanged(event); err != nil {
-					log.Printf("Error handling NodeOperatorManagerAddressChanged: %v", err)
-				}
+				handlers.HandleNodeOperatorManagerAddressChanged(event)
+				return
 			case event := <-nodeOperatorRewardAddressChangeProposedChan:
-				if err := handlers.HandleNodeOperatorRewardAddressChangeProposed(event); err != nil {
-					log.Printf("Error handling NodeOperatorRewardAddressChangeProposed: %v", err)
-				}
+				handlers.HandleNodeOperatorRewardAddressChangeProposed(event)
+				return
 			case event := <-nodeOperatorRewardAddressChangedChan:
-				if err := handlers.HandleNodeOperatorRewardAddressChanged(event); err != nil {
-					log.Printf("Error handling NodeOperatorRewardAddressChanged: %v", err)
-				}
+				handlers.HandleNodeOperatorRewardAddressChanged(event)
+				return
 			case event := <-stuckSigningKeysCountChangedChan:
-				if err := handlers.HandleStuckSigningKeysCountChanged(event); err != nil {
-					log.Printf("Error handling StuckSigningKeysCountChanged: %v", err)
-				}
+				handlers.HandleStuckSigningKeysCountChanged(event)
+				return
 			case event := <-vettedSigningKeysCountDecreasedChan:
-				if err := handlers.HandleVettedSigningKeysCountDecreased(event); err != nil {
-					log.Printf("Error handling VettedSigningKeysCountDecreased: %v", err)
-				}
+				handlers.HandleVettedSigningKeysCountDecreased(event)
+				return
 			case event := <-withdrawalSubmittedChan:
-				if err := handlers.HandleWithdrawalSubmitted(event); err != nil {
-					log.Printf("Error handling WithdrawalSubmitted: %v", err)
-				}
+				handlers.HandleWithdrawalSubmitted(event)
+				return
 			case event := <-totalSigningKeysCountChangedChan:
-				if err := handlers.HandleTotalSigningKeysCountChanged(event); err != nil {
-					log.Printf("Error handling TotalSigningKeysCountChanged: %v", err)
-				}
+				handlers.HandleTotalSigningKeysCountChanged(event)
+				return
 			case event := <-publicReleaseChan:
-				if err := handlers.HandlePublicRelease(event); err != nil {
-					log.Printf("Error handling PublicRelease: %v", err)
-				}
-			case err := <-subDepositedSigningKeys.Err():
-				log.Printf("DepositedSigningKeysCountChanged subscription error: %v", err)
-				return
-			case err := <-subELRewardsStealingPenaltyReported.Err():
-				log.Printf("ELRewardsStealingPenaltyReported subscription error: %v", err)
-				return
-			case err := <-subELRewardsStealingPenaltySettled.Err():
-				log.Printf("ELRewardsStealingPenaltySettled subscription error: %v", err)
-				return
-			case err := <-subELRewardsStealingPenaltyCancelled.Err():
-				log.Printf("ELRewardsStealingPenaltyCancelled subscription error: %v", err)
-				return
-			case err := <-subInitialSlashingSubmitted.Err():
-				log.Printf("InitialSlashingSubmitted subscription error: %v", err)
-				return
-			case err := <-subKeyRemovalChargeApplied.Err():
-				log.Printf("KeyRemovalChargeApplied subscription error: %v", err)
-				return
-			case err := <-subNodeOperatorManagerAddressChangeProposed.Err():
-				log.Printf("NodeOperatorManagerAddressChangeProposed subscription error: %v", err)
-				return
-			case err := <-subNodeOperatorManagerAddressChanged.Err():
-				log.Printf("NodeOperatorManagerAddressChanged subscription error: %v", err)
-				return
-			case err := <-subNodeOperatorRewardAddressChangeProposed.Err():
-				log.Printf("NodeOperatorRewardAddressChangeProposed subscription error: %v", err)
-				return
-			case err := <-subNodeOperatorRewardAddressChanged.Err():
-				log.Printf("NodeOperatorRewardAddressChanged subscription error: %v", err)
-				return
-			case err := <-subStuckSigningKeysCountChanged.Err():
-				log.Printf("StuckSigningKeysCountChanged subscription error: %v", err)
-				return
-			case err := <-subVettedSigningKeysCountDecreased.Err():
-				log.Printf("VettedSigningKeysCountDecreased subscription error: %v", err)
-				return
-			case err := <-subWithdrawalSubmitted.Err():
-				log.Printf("WithdrawalSubmitted subscription error: %v", err)
-				return
-			case err := <-subTotalSigningKeysCountChanged.Err():
-				log.Printf("TotalSigningKeysCountChanged subscription error: %v", err)
-				return
-			case err := <-subPublicRelease.Err():
-				log.Printf("PublicRelease subscription error: %v", err)
+				handlers.HandlePublicRelease(event)
 				return
 
 			case <-ctx.Done():

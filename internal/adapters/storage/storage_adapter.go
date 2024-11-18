@@ -2,8 +2,8 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 	"lido-events/internal/application/domain"
-	"log"
 	"math/big"
 	"os"
 	"sync"
@@ -72,11 +72,9 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	file, err := os.ReadFile(fs.DBFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("Database file not found; initializing new database")
 			return db, nil
 		}
-		log.Printf("Error reading database file: %v", err)
-		return Database{}, err
+		return Database{}, fmt.Errorf("error reading database file: %v", err)
 	}
 
 	// Check if file is empty before attempting to unmarshal
@@ -87,8 +85,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Unmarshal the file content into db
 	err = json.Unmarshal(file, &db)
 	if err != nil {
-		log.Printf("Error unmarshalling database file: %v", err)
-		return Database{}, err
+		return Database{}, fmt.Errorf("error unmarshalling database file: %v", err)
 	}
 
 	// Ensure nested fields are properly initialized
@@ -116,13 +113,11 @@ func (fs *Storage) SaveDatabase(db Database) error {
 
 	file, err := json.MarshalIndent(db, "", "  ")
 	if err != nil {
-		log.Printf("Error marshalling database: %v", err)
-		return err
+		return fmt.Errorf("error marshalling database: %v", err)
 	}
 	err = os.WriteFile(fs.DBFile, file, 0644)
 	if err != nil {
-		log.Printf("Error writing database file: %v", err)
-		return err
+		return fmt.Errorf("error writing database file: %v", err)
 	}
 
 	return nil

@@ -2,9 +2,9 @@ package csfeedistributor
 
 import (
 	"context"
+	"fmt"
 	"lido-events/internal/adapters/csFeeDistributor/bindings"
 	"lido-events/internal/application/domain"
-	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,7 +22,7 @@ func NewCsFeeDistributorAdapter(
 ) (*CsFeeDistributorAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
 	}
 
 	return &CsFeeDistributorAdapter{
@@ -31,18 +31,17 @@ func NewCsFeeDistributorAdapter(
 	}, nil
 }
 
-// WatchCsFeeDistributorEvents watches for CsFeeDistributor events and calls the handleDistributionDataUpdated function when an event is received. not required to print error logs since will be initizlied from main
+// WatchCsFeeDistributorEvents watches for CsFeeDistributor events and calls the handleDistributionDataUpdated function when an event is received.
 func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Context, handleDistributionDataUpdated func(reportSubmitted *domain.CsfeedistributorDistributionDataUpdated) error) error {
 	csFeeDistributorContract, err := bindings.NewCsfeedistributor(csfa.CsFeeDistributorAddress, csfa.client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create CsFeeDistributor contract instance: %w", err)
 	}
 
 	distributionDataUpdatedChan := make(chan *domain.CsfeedistributorDistributionDataUpdated)
 	sub, err := csFeeDistributorContract.WatchDistributionDataUpdated(&bind.WatchOpts{Context: ctx}, distributionDataUpdatedChan)
 	if err != nil {
-
-		return err
+		return fmt.Errorf("failed to watch DistributionDataUpdated event: %w", err)
 	}
 
 	go func() {
@@ -50,12 +49,11 @@ func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Con
 		for {
 			select {
 			case event := <-distributionDataUpdatedChan:
-				if err := handleDistributionDataUpdated(event); err != nil {
-					log.Printf("Error handling log: %v", err)
-				}
-			case err := <-sub.Err():
-				log.Printf("Subscription error: %v", err)
+				handleDistributionDataUpdated(event)
 				return
+			// case err := <-sub.Err():
+			// 	// Subscription error should be handled by returning it to the service layer.
+			// 	return
 			case <-ctx.Done():
 				return
 			}
