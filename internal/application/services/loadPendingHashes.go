@@ -5,23 +5,18 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
-	"os"
 	"time"
 )
 
 type PendingHashesLoader struct {
 	storagePort ports.StoragePort
 	ipfsPort    ports.IpfsPort
-	logger      *log.Logger
 }
 
 func NewPendingHashesLoader(storagePort ports.StoragePort, ipfsPort ports.IpfsPort) *PendingHashesLoader {
-	logger := log.New(os.Stdout, "[PendingHashesLoader] ", log.LstdFlags)
-
 	return &PendingHashesLoader{
 		storagePort,
 		ipfsPort,
-		logger,
 	}
 }
 
@@ -35,12 +30,12 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 		case <-ticker.C:
 			// Call the load method periodically
 			if err := phl.LoadPendingHashes(); err != nil {
-				phl.logger.Printf("Error loading pending hashes: %v", err)
+				log.Printf("Error loading pending hashes: %v", err)
 				continue
 			}
 		case <-ctx.Done():
 			// Stop the periodic load if the context is canceled
-			phl.logger.Println("Stopping periodic cron for loading pending CIDs")
+			log.Println("Stopping periodic cron for loading pending CIDs")
 			return
 		}
 	}
@@ -55,7 +50,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 	}
 	// Skip if there are no operator IDs
 	if len(operatorIDs) == 0 {
-		phl.logger.Println("No operator IDs found; skipping loading pending hashes")
+		log.Println("No operator IDs found; skipping loading pending hashes")
 		return nil
 	}
 
@@ -66,13 +61,13 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 	}
 	// Skip if there are no pending hashes
 	if len(pendingHashes) == 0 {
-		phl.logger.Println("No pending hashes found; skipping loading pending hashes")
+		log.Println("No pending hashes found; skipping loading pending hashes")
 		return nil
 	}
 
 	// Fetch and parse IPFS data for each pending hash
 	for _, pendingHash := range pendingHashes {
-		phl.logger.Printf("Fetching and parsing IPFS data for pending hash %s", pendingHash)
+		log.Printf("Fetching and parsing IPFS data for pending hash %s", pendingHash)
 
 		originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 		if err != nil {
@@ -81,13 +76,13 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 		// Process each operator ID in the original report
 		for _, operatorID := range operatorIDs {
-			phl.logger.Printf("Saving report data for operator ID %s", operatorID.String())
+			log.Printf("Saving report data for operator ID %s", operatorID.String())
 
 			// Get the data for the operator ID
 			data, exists := originalReport.Operators[operatorID.String()]
 			if !exists {
 				// Skip if the operator ID is not found in the report
-				phl.logger.Printf("Operator ID %s not found in the original report", operatorID.String())
+				log.Printf("Operator ID %s not found in the original report", operatorID.String())
 				continue
 			}
 
@@ -105,7 +100,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 		// Remove the pending hash from storage
 		if err := phl.storagePort.DeletePendingHash(pendingHash); err != nil {
-			phl.logger.Printf("Failed to remove pending hash %s: %v", pendingHash, err)
+			log.Printf("Failed to remove pending hash %s: %v", pendingHash, err)
 			continue
 		}
 	}

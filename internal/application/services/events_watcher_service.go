@@ -6,7 +6,6 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
-	"os"
 )
 
 type EventsWatcher struct {
@@ -14,35 +13,31 @@ type EventsWatcher struct {
 	csModulePort         ports.CsModulePort
 	csFeeDistributorPort ports.CsFeeDistributorPort
 	notifierPort         ports.NotifierPort
-	logger               *log.Logger
 }
 
 func NewEventsWatcherService(veboPort ports.VeboPort, csModulePort ports.CsModulePort, csFeeDistributorPort ports.CsFeeDistributorPort, notifierPort ports.NotifierPort) *EventsWatcher {
-	logger := log.New(os.Stdout, "[EventsWatcher] ", log.LstdFlags)
-
 	return &EventsWatcher{
 		veboPort,
 		csModulePort,
 		csFeeDistributorPort,
 		notifierPort,
-		logger,
 	}
 }
 
 // Scanners
 
 func (ew *EventsWatcher) WatchReportSubmittedEvents(ctx context.Context) error {
-	ew.logger.Println("Watching for Vebo ReportSubmitted events")
+	log.Println("Watching for Vebo ReportSubmitted events")
 	return ew.veboPort.WatchReportSubmittedEvents(ctx, ew.HandleReportSubmittedEvent)
 }
 
 func (ew *EventsWatcher) WatchCsModuleEvents(ctx context.Context) error {
-	ew.logger.Println("Watching for CsModule events")
+	log.Println("Watching for CsModule events")
 	return ew.csModulePort.WatchCsModuleEvents(ctx, ew)
 }
 
 func (ew *EventsWatcher) WatchCsFeeDistributorEvents(ctx context.Context) error {
-	ew.logger.Println("Watching for CsFeeDistributor events")
+	log.Println("Watching for CsFeeDistributor events")
 	return ew.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, ew.HandleDistributionDataUpdated)
 }
 
