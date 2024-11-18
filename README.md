@@ -1,20 +1,111 @@
 # Lido events
 
-Repository for indexing Lido events and notifying subscribers.
+## Overview
 
-## Configuration
+**Description**: This application is a Go-based service designed with hexagonal architecture to manage and interact with Ethereum validators. It includes the following features:
 
-- `WS_URL`: Websocket URL to listen for events.
-- `IPFS_URL`: IPFS URL to fetch the event data. i.e https://ipfs.io
-- `NETWORK`: Network to listen for events.
+- Subscribing to the Ethereum events:
+- Scanning Ethereum events:
+- Executing validator exits in background when there is a exit request event requested for a validator of the operator ID loaded in the app
+- Fetching and parsing IPFS log CIDs in background to get the validator performance data
+- Sending notifications to user (e.g., via Telegram)
+- Exposing an API to update configurations and retrieve validator performance data
 
-## Start 
+## Architecture
 
-- Run the service
+**Hexagonal Architecture**: The app follows hexagonal architecture principles, decoupling core business logic from external dependencies, enhancing modularity and maintainability. This design enables easy replacement or modification of adapters (e.g., Ethereum clients, IPFS, notification systems).
+
+## Features
+
+- **Event Subscriptions**: The app subscribes to a list of Ethereum events.
+- **Event Scanning**: It regularly scans specific Ethereum events.
+- **Validator Exits**: Allows for executing validator exits.
+- **IPFS Data Parsing**: Fetches and parses IPFS log CIDs.
+- **Notifications**: Sends notifications (e.g., via Telegram).
+- **API Endpoints**:
+  - **Exit requests**:
+    - `GET /api/v0/event_indexer/exit_requests`
+  - **Operator ID (/)**: Allows for updating the Lido operator ID.
+    - `POST api/v0/events_indexer/operatorId`: Updates the operator ID.
+  - **Telegram**: Configures Telegram for notifications:
+    - `POST /api/v0/events_indexer/telegramConfig`: Configures Telegram.
+    - `GET /api/v0/events_indexer/telegramConfig`: Retrieves Telegram configuration.
+  - **Validator Performance**: Retrieves validator performance data by operator ID.
+    - `GET /api/v0/event_indexer/operator_performance`: Retrieves the operator performance.
+
+## Environment Variables
+
+To configure the app, set the following environment variables:
+
+| Variable         | Description                                                                                          |
+|------------------|------------------------------------------------------------------------------------------------------|
+| `NETWORK`        | Ethereum network (e.g., `mainnet`, `holesky`). Default holesky                                       |
+| `API_PORT`       | Port on which the API will be exposed. Default 8080                                                  |
+| `BEACONCHAIN_URL`| URL of the Ethereum beacon chain client. Default http://beacon-chain.<network>,dncore.dappnode:3500  |
+| `WS_URL`         | URL of the Ethereum WebSocket client. Default ws://execution.<network>.dncore.dappnode:8546          |
+| `RPC_URL`        | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |
+| `IPFS_URL`       | URL of the IPFS gateway used to fetch logs. Default http://ipfs.dappnode:5001                        |
+| `LOG_LEVEL`      | Logging level (e.g., `DEBUG`, `INFO`, `WARN`, `ERROR`). Default INFO                                 |
+
+Example `.env` file:
+
+```plaintext
+# .env
+API_PORT=8080
+BEACONCHAIN_URL=https://beaconchain.example.com
+IPFS_GATEWAY_URL=https://ipfs.example.com
+LOG_LEVEL=INFO
+```
+
+## Installation
+
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/dappnode/lido-events.git
+   cd lido-events
+    ```
+
+2. **Set Up Environment Variables**: Create a .env file or set environment variables directly.
+
+3. **Install Dependencies**:
 
     ```bash
-    WS_URL="" go run main.go
+    go mod tidy
     ```
+
+4. **Build the Project**:
+
+    ```bash
+    go build -o bin/lido-events ./cmd/main.go
+    ```
+
+## Running the Application
+
+- Start the App:
+
+    ```bash
+    go run ./cmd/main.go
+    ```
+
+- Docker Option:
+
+    ```bash
+    docker compose up
+    ```
+
+## Development
+
+- Project Structure:
+  - `/internal`: Core business logic
+    - `/adapters`: Interfaces with external dependencies
+    - `/application`: Application services, ports, and domain models
+    - `/config`: Configuration management
+    - `/logger`: Logging setup
+  - `/cmd`: Main application entry point
+
+- Adding New Features: Follow hexagonal architecture principles.
+- Logging: logging is always done in the service layer, not in the adapter layer.
 
 ## Test
 
