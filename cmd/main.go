@@ -13,6 +13,10 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"lido-events/internal/application/services"
@@ -20,19 +24,6 @@ import (
 	"log"
 	"net/http"
 )
-
-// Hexagonal architecrtures principles:
-// - domain: cannot import ✅
-// - aplication:
-//   - ports: can only import domain ✅
-//   - services: can only import domain ✅
-// - adapters: can import domain and services ✅
-// - config: can only import domain ✅
-//     - The config layer is responsible for loading certain configurations from the environment and files that adapters might need.
-
-// Key points:
-// - All the communications to the services are done through the ports.
-// - It is okey that 1 service uses another service in ordert to be initiated.
 
 // Helper function to check if operator IDs and Telegram config are available
 func waitForInitialConfig(storageAdapter *storage.Storage) {
@@ -57,16 +48,20 @@ func waitForInitialConfig(storageAdapter *storage.Storage) {
 }
 
 func main() {
-	// Set up context to control the lifetime of the services
+	// Set up context with cancellation and a WaitGroup for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Ensures cancel is called when main exits
+	defer cancel()
+	var wg sync.WaitGroup
+
+	// Set up signal channel to handle OS interrupts
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// Load configurations
 	networkConfig, err := config.LoadNetworkConfig()
 	if err != nil {
 		log.Fatalf("Failed to load network configuration: %v", err)
 	}
-	// print all the networkConfig
 	log.Printf("Network config: %+v", networkConfig)
 
 	// Initialize adapters
@@ -74,9 +69,14 @@ func main() {
 	apiAdapter := api.NewAPIAdapter(storageAdapter)
 
 	// Start HTTP server
+	server := &http.Server{Addr: ":8080", Handler: apiAdapter.Router}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		log.Println("Server started on :8080")
-		log.Fatal(http.ListenAndServe(":8080", apiAdapter.Router))
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		}
 	}()
 
 	// Wait for initial configuration to be set
@@ -91,7 +91,6 @@ func main() {
 		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
 	}
 
-	// This is a proxy adapter that wraps the CsFeeDistributorImpl contract
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
 		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
@@ -119,27 +118,46 @@ func main() {
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 
-	// Start scanning for events
-	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute) // TODO: determine interval
-	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute)     // TODO: determine interval
+	// Start background services
+	wg.Add(5)
+	go func() {
+		defer wg.Done()
+		distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute)
+	}()
+	go func() {
+		defer wg.Done()
+		validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute)
+	}()
+	go func() {
+		defer wg.Done()
+		validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute)
+	}()
+	go func() {
+		defer wg.Done()
+		pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute)
+	}()
+	go func() {
+		defer wg.Done()
+		if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
+			log.Fatalf("Failed to subscribe to CSModule events: %v", err)
+		}
+	}()
 
-	// start ejector
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
-	// start ipfs loader
-	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute) // TODO: determine interval
+	// Handle shutdown signals
+	go func() {
+		<-signalChan
+		log.Println("Received shutdown signal. Initiating graceful shutdown...")
+		cancel() // Cancel context to signal all services to stop
 
-	// Start subscribing to each SC event
-	if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
-		log.Fatalf("Failed to subscribe to CSModule events: %v", err)
-	}
-	if err := eventsWatcherService.WatchReportSubmittedEvents(ctx); err != nil {
-		log.Fatalf("Failed to subscribe to CSFeeDistributor events: %v", err)
-	}
-	if err := eventsWatcherService.WatchCsFeeDistributorEvents(ctx); err != nil {
-		log.Fatalf("Failed to subscribe to CSFeeDistributor events: %v", err)
-	}
+		// Give the HTTP server time to finish ongoing requests
+		serverCtx, serverCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer serverCancel()
+		if err := server.Shutdown(serverCtx); err != nil {
+			log.Printf("HTTP server Shutdown: %v", err)
+		}
+	}()
 
-	// Block until context is canceled
-	<-ctx.Done()
-	log.Println("Shutting down services gracefully.")
+	// Wait for all goroutines to finish
+	wg.Wait()
+	log.Println("All services stopped. Shutting down application.")
 }
