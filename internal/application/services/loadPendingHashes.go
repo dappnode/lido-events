@@ -71,7 +71,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 	// Fetch and parse IPFS data for each pending hash
 	for _, pendingHash := range pendingHashes {
-		logger.DebugWithPrefix("Fetching and parsing IPFS data for pending hash %s", pendingHash)
+		logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
 
 		originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 		if err != nil {
