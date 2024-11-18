@@ -2,7 +2,6 @@ package config
 
 import (
 	"lido-events/internal/logger"
-	"log"
 	"math/big"
 	"os"
 	"strconv"
@@ -127,7 +126,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 		}
 	default:
-		log.Fatalf("Unknown network: %s", network)
+		logger.Fatal("Unknown network: %s", network)
 	}
 
 	return config, nil
