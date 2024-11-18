@@ -9,15 +9,13 @@ import (
 
 // VoluntaryExitRequest holds parameters needed to sign a voluntary exit
 type VoluntaryExitRequest struct {
-	PubKey string
-	// SigningRoot           string
+	PubKey                string
 	GenesisValidatorsRoot string
 	ForkInfo              ForkInfo
 	VoluntaryExit         VoluntaryExit
 }
 
-// Eth2SignVoluntaryExit sends a request to the Web3Signer URL to sign a voluntary exit message
-// and returns the signature as a string.
+// Eth2SignVoluntaryExit sends a request to the Web3Signer URL to sign a voluntary exit message and returns the signature as a string.
 // API docs: https://consensys.github.io/web3signer/web3signer-eth2.html#tag/Signing/operation/ETH2_SIGN
 func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, error) {
 	identifier := req.PubKey // Identifier is the BLS public key in hex format.
@@ -25,7 +23,6 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 	// Define the request body structure
 	body := map[string]interface{}{
 		"type": "VOLUNTARY_EXIT",
-		//"signingRoot": req.SigningRoot,
 		"fork_info": map[string]interface{}{
 			"fork": map[string]interface{}{
 				"previous_version": req.ForkInfo.PreviousVersion,
@@ -46,23 +43,23 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 		return "", fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	// Make the HTTP request
+	// Construct the request URL and make the HTTP request
 	url := fmt.Sprintf("%s/api/v1/eth2/sign/%s", signerUrl, identifier)
 	reqHttp, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return "", fmt.Errorf("failed to create HTTP request for URL %s: %w", url, err)
 	}
 	reqHttp.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(reqHttp)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
+		return "", fmt.Errorf("failed to send request to signer at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return "", fmt.Errorf("unexpected status code %d from signer", resp.StatusCode)
 	}
 
 	// Decode the response body to extract the signature
@@ -70,7 +67,7 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 		Signature string `json:"signature"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+		return "", fmt.Errorf("failed to decode response body from signer: %w", err)
 	}
 
 	return result.Signature, nil

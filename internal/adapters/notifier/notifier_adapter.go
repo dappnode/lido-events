@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"fmt"
 	"lido-events/internal/application/ports"
 	"log"
 	"sync"
@@ -22,8 +23,6 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 		log.Printf("NotifierAdapter: Failed to load Telegram configuration: %v", err)
 		return nil, err
 	}
-
-	log.Printf("NotifierAdapter: Initial Telegram configuration: %v", initialConfig)
 
 	// Initialize the bot with the initial token
 	bot, err := tgbotapi.NewBotAPI(initialConfig.Token)
@@ -63,5 +62,8 @@ func (tb *TelegramBot) SendNotification(message string) error {
 
 	msg := tgbotapi.NewMessage(tb.UserID, message)
 	_, err := tb.Bot.Send(msg)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to send Telegram message: %w", err)
+	}
+	return nil
 }

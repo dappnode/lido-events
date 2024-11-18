@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
-	"log"
+	"lido-events/internal/logger"
 	"time"
 )
 
@@ -15,6 +15,7 @@ type DistributionLogUpdatedEventScanner struct {
 	executionPort                   ports.ExecutionPort
 	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
 	csFeeDistributorBlockDeployment uint64
+	servicePrefix                   string
 }
 
 func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64) *DistributionLogUpdatedEventScanner {
@@ -24,6 +25,7 @@ func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifi
 		executionPort,
 		csFeeDistributorImplPort,
 		csFeeDistributorBlockDeployment,
+		"DistributionLogUpdatedEventScanner",
 	}
 }
 
@@ -38,32 +40,34 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 			// Retrieve start and end blocks for scanning
 			start, err := ds.storagePort.GetDistributionLogLastProcessedBlock()
 			if err != nil {
-				log.Printf("Failed to get last processed block: %v", err)
-				continue
+				logger.WarnWithPrefix(ds.servicePrefix, "Failed to get last processed block, using deployment block %d: %v", ds.csFeeDistributorBlockDeployment, err)
+				start = ds.csFeeDistributorBlockDeployment
 			}
 
 			if start == 0 {
+				logger.InfoWithPrefix(ds.servicePrefix, "No last processed block found, using deployment block %d", ds.csFeeDistributorBlockDeployment)
 				start = ds.csFeeDistributorBlockDeployment
 			}
 
 			end, err := ds.executionPort.GetMostRecentBlockNumber()
 			if err != nil {
-				log.Printf("Failed to get latest finalized block: %v", err)
+				logger.ErrorWithPrefix(ds.servicePrefix, "Failed to get most recent block number, cannot continue wit cron execution, waiting for next iteration: %v", err)
 				continue
 			}
 
 			// Perform the scan
 			if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, ds.HandleDistributionLogUpdatedEvent); err != nil {
-				log.Printf("Error scanning DistributionLogUpdated events: %v", err)
+				logger.ErrorWithPrefix(ds.servicePrefix, "Error scanning DistributionLogUpdated events: %v", err)
 				continue
 			}
 
 			// Save the last processed epoch if successful
 			if err := ds.storagePort.SaveDistributionLogLastProcessedBlock(end); err != nil {
-				log.Printf("Failed to save last processed epoch: %v", err)
+				logger.ErrorWithPrefix(ds.servicePrefix, "Error saving last processed block, next cron execution will run from previous processed: %v", err)
+				continue
 			}
 		case <-ctx.Done():
-			log.Println("Stopping DistributionLogUpdated cron scan")
+			logger.InfoWithPrefix(ds.servicePrefix, "Stopping DistributionLogUpdated cron scan")
 			return
 		}
 	}
@@ -72,16 +76,16 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 // HandleDistributionLogUpdatedEvent processes a DistributionLogUpdated event
 func (ds *DistributionLogUpdatedEventScanner) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
 	// TODO add message saying go to this dashboard to see the validator performance
-	log.Printf("Found DistributionLogUpdated event with log cid: %s", distributionLogUpdated.LogCid)
+	logger.DebugWithPrefix(ds.servicePrefix, "Found DistributionLogUpdated event with log cid: %s", distributionLogUpdated.LogCid)
 
 	if err := ds.storagePort.AddPendingHash(distributionLogUpdated.LogCid); err != nil {
-		log.Printf("Failed to store pending CID: %v", err)
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error adding pending hash %s: %v", distributionLogUpdated.LogCid, err)
 		return err
 	}
 
 	message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
 	if err := ds.notifierPort.SendNotification(message); err != nil {
-		log.Printf("Failed to send notification: %v", err)
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error sending distributionLogUpdated notification: %v", err)
 		return err
 	}
 

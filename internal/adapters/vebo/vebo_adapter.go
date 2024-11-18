@@ -2,10 +2,10 @@ package vebo
 
 import (
 	"context"
+	"fmt"
 	"lido-events/internal/adapters/vebo/bindings"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
-	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,7 +26,7 @@ func NewVeboAdapter(
 ) (*VeboAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
 	}
 
 	return &VeboAdapter{
@@ -40,28 +40,30 @@ func NewVeboAdapter(
 func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
 	}
 
 	// Get operator ids
 	operatorIds, err := va.StorageAdapter.GetOperatorIds()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve operator IDs from storage: %w", err)
 	}
 
+	// Filter for ValidatorExitRequest events
 	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, operatorIds, []*big.Int{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to filter ValidatorExitRequest events: %w", err)
 	}
 
 	for validatorExitRequestEvents.Next() {
-		if validatorExitRequestEvents.Error() != nil {
-			log.Printf("Error fetching ValidatorExitRequest event: %v", validatorExitRequestEvents.Error())
+		if err := validatorExitRequestEvents.Error(); err != nil {
+			// Skip this event if there is an error retrieving it
 			continue
 		}
 
 		if err := handleValidatorExitRequestEvent(validatorExitRequestEvents.Event); err != nil {
-			log.Printf("Error handling ValidatorExitRequest: %v", err)
+			// Continue to the next event if handling fails
+			continue
 		}
 	}
 
@@ -72,14 +74,14 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
 	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
 	}
 
-	// Watch for ReportSubmitted
+	// Watch for ReportSubmitted events
 	reportSubmittedChan := make(chan *domain.VeboReportSubmitted)
 	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, []*big.Int{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to subscribe to ReportSubmitted events: %w", err)
 	}
 
 	go func() {
@@ -87,12 +89,11 @@ func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleRep
 		for {
 			select {
 			case event := <-reportSubmittedChan:
-				if err := handleReportSubmittedEvent(event); err != nil {
-					log.Printf("Error handling ReportSubmitted: %v", err)
-				}
-			case err := <-subReport.Err():
-				log.Printf("Subscription error (ReportSubmitted): %v", err)
+				handleReportSubmittedEvent(event)
 				return
+			// case err := <-subReport.Err():
+			// 	// Exit on subscription error
+			// 	return
 			case <-ctx.Done():
 				return
 			}
