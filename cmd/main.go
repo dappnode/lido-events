@@ -13,15 +13,16 @@ import (
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
+	"lido-events/internal/logger"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
-	"log"
 	"net/http"
 )
 
@@ -31,15 +32,15 @@ func waitForInitialConfig(storageAdapter *storage.Storage) {
 		// Check for operator IDs
 		operatorIds, err := storageAdapter.GetOperatorIds()
 		if err != nil || len(operatorIds) == 0 {
-			log.Println("Waiting for operator IDs to be set...")
+			logger.Info("Waiting for operator IDs to be set...")
 		} else {
 			// Check for Telegram config
 			telegramConfig, err := storageAdapter.GetTelegramConfig()
 			if err != nil || telegramConfig.Token == "" || telegramConfig.UserID == 0 {
-				log.Println("Waiting for Telegram config to be set...")
+				logger.Info("Waiting for Telegram config to be set...")
 			} else {
 				// Both operator IDs and Telegram config are set
-				log.Println("Operator IDs and Telegram config are set. Proceeding with initialization.")
+				logger.Info("Operator IDs and Telegram config are set. Proceeding with initialization.")
 				return
 			}
 		}
@@ -60,22 +61,25 @@ func main() {
 	// Load configurations
 	networkConfig, err := config.LoadNetworkConfig()
 	if err != nil {
-		log.Fatalf("Failed to load network configuration: %v", err)
+		logger.Fatal("Failed to load network configuration: %v", err)
 	}
-	log.Printf("Network config: %+v", networkConfig)
+	logger.Debug("Network config: %+v", networkConfig)
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
 	apiAdapter := api.NewAPIAdapter(storageAdapter)
 
 	// Start HTTP server
-	server := &http.Server{Addr: ":8080", Handler: apiAdapter.Router}
+	server := &http.Server{
+		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
+		Handler: apiAdapter.Router,
+	}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Println("Server started on :8080")
+		logger.Info("Server started on :%d", networkConfig.ApiPort)
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalf("HTTP server ListenAndServe: %v", err)
+			logger.Fatal("HTTP server ListenAndServe: %v", err)
 		}
 	}()
 
@@ -88,27 +92,23 @@ func main() {
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
-		log.Fatalf("Failed to initialize Telegram notifier: %v", err)
+		logger.Fatal("Failed to initialize Telegram notifier: %v", err)
 	}
-
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
-		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
+		logger.Fatal("Failed to initialize CsFeeDistributorImpl adapter: %v", err)
 	}
-
 	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter)
 	if err != nil {
-		log.Fatalf("Failed to initialize Vebo adapter: %v", err)
+		logger.Fatal("Failed to initialize Vebo adapter: %v", err)
 	}
-
 	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, storageAdapter)
 	if err != nil {
-		log.Fatalf("Failed to initialize CsModule adapter: %v", err)
+		logger.Fatal("Failed to initialize CsModule adapter: %v", err)
 	}
-
 	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
-		log.Fatalf("Failed to initialize CsFeeDistributor adapter: %v", err)
+		logger.Fatal("Failed to initialize CsFeeDistributor adapter: %v", err)
 	}
 
 	// Initialize services
@@ -139,31 +139,31 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
-			log.Fatalf("Failed to subscribe to CSModule events: %v", err)
+			logger.Fatal("Failed to subscribe to CSModule events: %v", err)
 		}
 		if err := eventsWatcherService.WatchCsFeeDistributorEvents(ctx); err != nil {
-			log.Fatalf("Failed to subscribe to CsFeeDistributor events: %v", err)
+			logger.Fatal("Failed to subscribe to CsFeeDistributor events: %v", err)
 		}
 		if err := eventsWatcherService.WatchReportSubmittedEvents(ctx); err != nil {
-			log.Fatalf("Failed to subscribe to Vebo events: %v", err)
+			logger.Fatal("Failed to subscribe to Vebo events: %v", err)
 		}
 	}()
 
 	// Handle shutdown signals
 	go func() {
 		<-signalChan
-		log.Println("Received shutdown signal. Initiating graceful shutdown...")
+		logger.Info("Received shutdown signal. Initiating graceful shutdown...")
 		cancel() // Cancel context to signal all services to stop
 
 		// Give the HTTP server time to finish ongoing requests
 		serverCtx, serverCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer serverCancel()
 		if err := server.Shutdown(serverCtx); err != nil {
-			log.Printf("HTTP server Shutdown: %v", err)
+			logger.Info("HTTP server Shutdown: %v", err)
 		}
 	}()
 
 	// Wait for all goroutines to finish
 	wg.Wait()
-	log.Println("All services stopped. Shutting down application.")
+	logger.Info("All services stopped. Shutting down application.")
 }

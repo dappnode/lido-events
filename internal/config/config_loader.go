@@ -1,9 +1,11 @@
 package config
 
 import (
+	"lido-events/internal/logger"
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -17,6 +19,7 @@ type Config struct {
 	EtherscanURL       string
 	BeaconchainURL     string
 	CSMUIURL           string
+	ApiPort            uint64
 
 	// Individual contract addresses
 	CSAccountingAddress         common.Address
@@ -31,6 +34,16 @@ type Config struct {
 }
 
 func LoadNetworkConfig() (Config, error) {
+	apiPortStr := os.Getenv("API_PORT")
+	apiPort := uint64(8080)
+	if apiPortStr != "" {
+		// Try to parse the port as uint64
+		if port, err := strconv.ParseUint(apiPortStr, 10, 64); err == nil {
+			apiPort = port
+		} else {
+			logger.Fatal("Invalid API_PORT value: %s", apiPortStr)
+		}
+	}
 	network := os.Getenv("NETWORK")
 	// Default to holesky
 	if network == "" {
@@ -75,6 +88,7 @@ func LoadNetworkConfig() (Config, error) {
 			EtherscanURL:                    "https://holesky.etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
 			CSMUIURL:                        "https://csm.testnet.fi",
+			ApiPort:                         apiPort,
 			CSAccountingAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
@@ -103,6 +117,7 @@ func LoadNetworkConfig() (Config, error) {
 			EtherscanURL:                    "https://etherscan.io",
 			BeaconchainURL:                  "https://beaconcha.in",
 			CSMUIURL:                        "https://csm.lido.fi",
+			ApiPort:                         apiPort,
 			CSAccountingAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),

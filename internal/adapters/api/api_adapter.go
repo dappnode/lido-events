@@ -20,7 +20,6 @@ type APIHandler struct {
 
 // NewAPIAdapter initializes the APIHandler and sets up routes
 func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
-
 	h := &APIHandler{
 		StoragePort: storagePort,
 		Router:      mux.NewRouter(),
