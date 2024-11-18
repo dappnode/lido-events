@@ -25,3 +25,9 @@ type Report struct {
 	Data      Data    `json:"data"`
 	Threshold float64 `json:"threshold"`
 }
+
+type OriginalReport struct {
+	Frame     [2]int          `json:"frame"`
+	Operators map[string]Data `json:"operators"` // indexed by operator ID
+	Threshold float64         `json:"threshold"`
+}

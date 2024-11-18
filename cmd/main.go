@@ -9,6 +9,7 @@ import (
 	csmodule "lido-events/internal/adapters/csModule"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
+	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
@@ -81,6 +82,7 @@ func main() {
 	// Wait for initial configuration to be set
 	waitForInitialConfig(storageAdapter)
 
+	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
@@ -115,6 +117,7 @@ func main() {
 	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment)
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
+	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 
 	// Start scanning for events
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute) // TODO: determine interval
@@ -122,6 +125,8 @@ func main() {
 
 	// start ejector
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute) // TODO: determine interval
+	// start ipfs loader
+	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute) // TODO: determine interval
 
 	// Start subscribing to each SC event
 	if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {

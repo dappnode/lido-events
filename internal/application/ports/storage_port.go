@@ -14,6 +14,7 @@ type StoragePort interface {
 	GetDistributionLogLastProcessedBlock() (uint64, error)
 	SaveDistributionLogLastProcessedBlock(block uint64) error
 	AddPendingHash(hash string) error
+	GetPendingHashes() ([]string, error)
 	DeletePendingHash(hash string) error
 
 	// operator IDs
