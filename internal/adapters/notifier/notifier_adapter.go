@@ -1,33 +1,67 @@
 package notifier
 
 import (
+	"context"
+	"lido-events/internal/application/ports"
 	"log"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// TelegramBot implements the Notifier interface
 type TelegramBot struct {
 	Bot    *tgbotapi.BotAPI
-	ChatID int64
+	UserID int64
+	mu     sync.RWMutex
 }
 
-// NewNotifierAdapter creates a new TelegramBot instance
-func NewNotifierAdapter(token string, chatID int64) (*TelegramBot, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
+func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (*TelegramBot, error) {
+	// Load the initial configuration for Telegram
+	initialConfig, err := storageAdapter.GetTelegramConfig()
+	if err != nil {
+		log.Printf("NotifierAdapter: Failed to load Telegram configuration: %v", err)
+		return nil, err
+	}
+
+	log.Printf("NotifierAdapter: Initial Telegram configuration: %v", initialConfig)
+
+	// Initialize the bot with the initial token
+	bot, err := tgbotapi.NewBotAPI(initialConfig.Token)
 	if err != nil {
 		return nil, err
 	}
-	return &TelegramBot{Bot: bot, ChatID: chatID}, nil
+
+	adapter := &TelegramBot{
+		Bot:    bot,
+		UserID: initialConfig.UserID,
+	}
+
+	// Listen for configuration updates in a separate goroutine
+	telegramConfigUpdates := storageAdapter.RegisterTelegramConfigListener()
+	go func() {
+		for newConfig := range telegramConfigUpdates {
+			adapter.mu.Lock()
+			adapter.UserID = newConfig.UserID
+			// Update the bot API instance with the new token
+			updatedBot, err := tgbotapi.NewBotAPI(newConfig.Token)
+			if err == nil {
+				adapter.Bot = updatedBot
+			} else {
+				log.Printf("NotifierAdapter: Failed to update bot API with new token: %v", err)
+			}
+			adapter.mu.Unlock()
+		}
+	}()
+
+	return adapter, nil
 }
 
-// Notify sends a notification message via Telegram
+// SendNotification sends a message via Telegram
 func (tb *TelegramBot) SendNotification(message string) error {
-	msg := tgbotapi.NewMessage(tb.ChatID, message)
+	tb.mu.RLock()
+	defer tb.mu.RUnlock()
+
+	msg := tgbotapi.NewMessage(tb.UserID, message)
 	_, err := tb.Bot.Send(msg)
-	if err != nil {
-		log.Printf("Error sending message via Telegram: %s", err)
-		return err
-	}
-	return nil
+	return err
 }

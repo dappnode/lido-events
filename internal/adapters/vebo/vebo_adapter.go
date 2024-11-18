@@ -14,21 +14,15 @@ import (
 )
 
 type VeboAdapter struct {
-	client          *ethclient.Client
-	VeboAddress     common.Address
-	StakingModuleId []*big.Int
-	NodeOperatorId  []*big.Int
-	ValidatorIndex  []*big.Int // TODO: where to get it?
-	RefSlot         []*big.Int // TODO: where to get it?
+	Client         *ethclient.Client
+	VeboAddress    common.Address
+	StorageAdapter ports.StoragePort
 }
 
 func NewVeboAdapter(
 	wsURL string,
 	veboAddress common.Address,
-	stakingModuleId []*big.Int,
-	nodeOperatorId []*big.Int,
-	validatorIndex []*big.Int,
-	refSlot []*big.Int,
+	storageAdapter ports.StoragePort,
 ) (*VeboAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
@@ -36,51 +30,66 @@ func NewVeboAdapter(
 	}
 
 	return &VeboAdapter{
-		client:          client,
-		VeboAddress:     veboAddress,
-		StakingModuleId: stakingModuleId,
-		NodeOperatorId:  nodeOperatorId,
-		ValidatorIndex:  validatorIndex,
-		RefSlot:         refSlot,
+		client,
+		veboAddress,
+		storageAdapter,
 	}, nil
 }
 
-func (va *VeboAdapter) WatchVeboEvents(ctx context.Context, handlers ports.VeboHandlers) error {
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.client)
+// ScanVeboValidatorExitRequestEvent scans the Vebo contract for ValidatorExitRequest events.
+func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, start uint64, end *uint64, handleValidatorExitRequestEvent func(*domain.VeboValidatorExitRequest) error) error {
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
 		return err
 	}
 
-	// Watch for ValidatorExitRequest
-	validatorExitRequestChan := make(chan *domain.VeboValidatorExitRequest)
-	subExit, err := veboContract.WatchValidatorExitRequest(&bind.WatchOpts{Context: ctx}, validatorExitRequestChan, va.StakingModuleId, va.NodeOperatorId, va.ValidatorIndex)
+	// Get operator ids
+	operatorIds, err := va.StorageAdapter.GetOperatorIds()
+	if err != nil {
+		return err
+	}
+
+	validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, operatorIds, []*big.Int{})
+	if err != nil {
+		return err
+	}
+
+	for validatorExitRequestEvents.Next() {
+		if validatorExitRequestEvents.Error() != nil {
+			log.Printf("Error fetching ValidatorExitRequest event: %v", validatorExitRequestEvents.Error())
+			continue
+		}
+
+		if err := handleValidatorExitRequestEvent(validatorExitRequestEvents.Event); err != nil {
+			log.Printf("Error handling ValidatorExitRequest: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
+func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
 	if err != nil {
 		return err
 	}
 
 	// Watch for ReportSubmitted
 	reportSubmittedChan := make(chan *domain.VeboReportSubmitted)
-	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, va.RefSlot)
+	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, []*big.Int{})
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		defer subExit.Unsubscribe()
 		defer subReport.Unsubscribe()
 		for {
 			select {
-			case event := <-validatorExitRequestChan:
-				if err := handlers.HandleValidatorExitRequestEvent(event); err != nil {
-					log.Printf("Error handling ValidatorExitRequest: %v", err)
-				}
 			case event := <-reportSubmittedChan:
-				if err := handlers.HandleReportSubmittedEvent(event); err != nil {
+				if err := handleReportSubmittedEvent(event); err != nil {
 					log.Printf("Error handling ReportSubmitted: %v", err)
 				}
-			case err := <-subExit.Err():
-				log.Printf("Subscription error (ValidatorExitRequest): %v", err)
-				return
 			case err := <-subReport.Err():
 				log.Printf("Subscription error (ReportSubmitted): %v", err)
 				return

@@ -4,7 +4,6 @@ import (
 	"context"
 	"lido-events/internal/adapters/csFeeDistributor/bindings"
 	"lido-events/internal/application/domain"
-	"lido-events/internal/application/ports"
 	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -32,7 +31,7 @@ func NewCsFeeDistributorAdapter(
 	}, nil
 }
 
-func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Context, handlers ports.CsFeeDistributorHandlers) error {
+func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Context, handleDistributionDataUpdated func(reportSubmitted *domain.CsfeedistributorDistributionDataUpdated) error) error {
 	csFeeDistributorContract, err := bindings.NewCsfeedistributor(csfa.CsFeeDistributorAddress, csfa.client)
 	if err != nil {
 		return err
@@ -49,7 +48,7 @@ func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Con
 		for {
 			select {
 			case event := <-distributionDataUpdatedChan:
-				if err := handlers.HandleDistributionDataUpdated(event); err != nil {
+				if err := handleDistributionDataUpdated(event); err != nil {
 					log.Printf("Error handling log: %v", err)
 				}
 			case err := <-sub.Err():
