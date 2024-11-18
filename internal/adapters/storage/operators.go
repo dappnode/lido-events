@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"lido-events/internal/application/domain"
+	"log"
 	"math/big"
 )
 
@@ -45,6 +46,7 @@ func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 		operatorID := new(big.Int)
 		operatorID, success := operatorID.SetString(opID, 10)
 		if !success {
+			log.Printf("Failed to convert operator ID %s to big.Int", opID)
 			return nil, errors.New("failed to convert operator ID to big.Int")
 		}
 		operatorIDs = append(operatorIDs, operatorID)

@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"lido-events/internal/application/domain"
+	"log"
 	"math/big"
 	"os"
 	"sync"
@@ -71,8 +72,10 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	file, err := os.ReadFile(fs.DBFile)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Println("Database file not found; initializing new database")
 			return db, nil
 		}
+		log.Printf("Error reading database file: %v", err)
 		return Database{}, err
 	}
 
@@ -84,6 +87,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Unmarshal the file content into db
 	err = json.Unmarshal(file, &db)
 	if err != nil {
+		log.Printf("Error unmarshalling database file: %v", err)
 		return Database{}, err
 	}
 
@@ -112,7 +116,14 @@ func (fs *Storage) SaveDatabase(db Database) error {
 
 	file, err := json.MarshalIndent(db, "", "  ")
 	if err != nil {
+		log.Printf("Error marshalling database: %v", err)
 		return err
 	}
-	return os.WriteFile(fs.DBFile, file, 0644)
+	err = os.WriteFile(fs.DBFile, file, 0644)
+	if err != nil {
+		log.Printf("Error writing database file: %v", err)
+		return err
+	}
+
+	return nil
 }

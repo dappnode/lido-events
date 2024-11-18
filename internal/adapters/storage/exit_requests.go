@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"lido-events/internal/application/domain"
+	"log"
 	"math/big"
 )
 
@@ -87,13 +88,17 @@ func (fs *Storage) UpdateExitRequestStatus(operatorID string, validatorIndex str
 
 	operatorData, exists := db.Operators[operatorID]
 	if !exists {
-		return fmt.Errorf("operator ID %s not found", operatorID)
+		errorMessage := fmt.Errorf("operator ID %s not found", operatorID)
+		log.Println(errorMessage)
+		return errorMessage
 	}
 
 	// Check if the exit request exists for the given validatorIndex
 	exitRequest, exists := operatorData.ExitRequests[validatorIndex]
 	if !exists {
-		return fmt.Errorf("exit request not found for validator index %s", validatorIndex)
+		errorMessage := fmt.Errorf("exit request not found for validator index %s", validatorIndex)
+		log.Println(errorMessage)
+		return errorMessage
 	}
 
 	// Update the status and save back the modified exit request
