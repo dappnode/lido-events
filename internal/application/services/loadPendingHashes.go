@@ -58,6 +58,8 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 	// Fetch and parse IPFS data for each pending hash
 	for _, pendingHash := range pendingHashes {
+		log.Printf("Fetching and parsing IPFS data for pending hash %s", pendingHash)
+
 		originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 		if err != nil {
 			return err
@@ -65,6 +67,8 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 		// find the operator IDs in the original report
 		for _, operatorID := range operatorIDs {
+			log.Printf("Saving report data for operator ID %s", operatorID.String())
+
 			// get the data for the operator ID
 			data, exists := originalReport.Operators[operatorID.String()]
 			if !exists {
@@ -85,6 +89,13 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 			if err != nil {
 				return err
 			}
+		}
+
+		// remove the pending hash from the storage
+		err = phl.storagePort.DeletePendingHash(pendingHash)
+		if err != nil {
+			log.Printf("Failed to remove pending hash %s: %v", pendingHash, err)
+			continue
 		}
 	}
 
