@@ -32,9 +32,35 @@ func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
 // SetupRoutes sets up all the routes for the API
 func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST")
+	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.GetTelegramConfig).Methods("GET")
 	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.UpdateOperatorID).Methods("POST")
 	h.Router.HandleFunc("/api/v0/event_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
 	h.Router.HandleFunc("/api/v0/event_indexer/exit_requests", h.GetExitRequests).Methods("GET")
+}
+
+// GetTelegramConfig retrieves the Telegram configuration
+func (h *APIHandler) GetTelegramConfig(w http.ResponseWriter, r *http.Request) {
+	config, err := h.StoragePort.GetTelegramConfig()
+	if err != nil {
+		writeErrorResponse(w, "Error fetching Telegram configuration", http.StatusInternalServerError)
+		return
+	}
+
+	if config.Token == "" && config.UserID == 0 {
+		log.Println("No Telegram configuration found")
+		writeErrorResponse(w, "No Telegram configuration found", http.StatusNotFound)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(config)
+	if err != nil {
+		log.Printf("Error generating JSON response in GetTelegramConfig: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 // UpdateTelegramConfig handles updates to the Telegram configuration
