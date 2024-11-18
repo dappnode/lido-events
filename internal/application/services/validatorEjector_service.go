@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
+	"os"
 	"time"
 )
 
@@ -14,14 +15,18 @@ type ValidatorEjector struct {
 	notifierPort      ports.NotifierPort
 	exitValidatorPort ports.ExitValidator
 	beaconchainPort   ports.Beaconchain
+	logger            *log.Logger
 }
 
 func NewValidatorEjectorService(storagePort ports.StoragePort, notifierPort ports.NotifierPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *ValidatorEjector {
+	logger := log.New(os.Stdout, "[ValidatorEjector] ", log.LstdFlags)
+
 	return &ValidatorEjector{
 		storagePort,
 		notifierPort,
 		exitValidatorPort,
 		beaconchainPort,
+		logger,
 	}
 }
 
@@ -34,10 +39,12 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 		select {
 		case <-ticker.C:
 			// Call the scan method periodically
-			ve.ejectValidator()
+			if err := ve.ejectValidator(); err != nil {
+				ve.logger.Printf("Error ejecting validators: %v", err)
+			}
 		case <-ctx.Done():
 			// Stop the periodic scan if the context is canceled
-			log.Println("Stopping periodic ejector for ValidatorExitRequest events")
+			ve.logger.Println("Stopping periodic ejector for ValidatorExitRequest events")
 			return
 		}
 	}
@@ -56,32 +63,29 @@ func (ve *ValidatorEjector) ejectValidator() error {
 		//  get exit requests
 		exitRequests, err := ve.storagePort.GetExitRequests(operatorID.String())
 		if err != nil {
-			return err
+			continue
 		}
 
 		for _, exitRequest := range exitRequests {
 			// if the validator is not active_ongoing, skip
 			if exitRequest.Status != domain.StatusActiveOngoing {
-				log.Printf("Validator %s is %s, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+				ve.logger.Printf("Validator %s is %s and no exit is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 				continue
 			}
-			// send notification
-			log.Printf("Validator %s is %s, starting exit", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+
+			ve.logger.Printf("Validator %s is %s, executing exit", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+
+			// send notification and skip on error
 			message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s", exitRequest.Event.ValidatorIndex)
-			if err := ve.notifierPort.SendNotification(message); err != nil {
-				log.Printf("Failed to send notification: %v", err)
-				// continue on error
-			}
+			ve.notifierPort.SendNotification(message)
 
 			// exit the validator
 			if err := ve.exitValidatorPort.ExitValidator(string(exitRequest.Event.ValidatorPubkey), exitRequest.Event.ValidatorIndex.String()); err != nil {
-				log.Printf("Failed to exit validator %s: %v", exitRequest.Event.ValidatorIndex, err)
-				// send manual exit link
+				ve.logger.Printf("ATTENTION!: Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
+				// send notification with manual exit link and skip on errror
 				// TODO: wait for PR in docs to add the proper link
 				message = fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to learn how to do the exit manually %s", exitRequest.Event.ValidatorIndex, "https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui")
-				if err := ve.notifierPort.SendNotification(message); err != nil {
-					log.Printf("Failed to send notification: %v", err)
-				}
+				ve.notifierPort.SendNotification(message)
 				continue
 			}
 
@@ -91,24 +95,19 @@ func (ve *ValidatorEjector) ejectValidator() error {
 			for i := 0; i < 40; i++ {
 				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(string(exitRequest.Event.ValidatorPubkey))
 				if err != nil {
-					log.Printf("Failed to get validator status: %v", err)
-					// continue on error
+					continue
 				}
 
 				if validatorStatus == domain.StatusActiveExiting {
-					log.Printf("Validator %s has been exited", exitRequest.Event.ValidatorIndex)
+					ve.logger.Printf("Validator %s has been exited", exitRequest.Event.ValidatorIndex)
 
-					// update the status on the db using UpdateExitRequest
-					if err := ve.storagePort.UpdateExitRequestStatus(operatorID.String(), string(exitRequest.Event.ValidatorPubkey), domain.StatusActiveExiting); err != nil {
-						log.Printf("Failed to update exit request: %v", err)
-						// continue on error
-					}
+					// update the status on the db using UpdateExitRequest and skip on error
+					ve.storagePort.UpdateExitRequestStatus(operatorID.String(), string(exitRequest.Event.ValidatorPubkey), domain.StatusActiveExiting)
 
-					// send notification
+					// send notification and skip on error
 					message = fmt.Sprintf("- 🚪 Validator %s has been exited automatically, no manual action required", exitRequest.Event.ValidatorIndex)
-					if err := ve.notifierPort.SendNotification(message); err != nil {
-						log.Printf("Failed to send notification: %v", err)
-					}
+					ve.notifierPort.SendNotification(message)
+
 					break
 				}
 

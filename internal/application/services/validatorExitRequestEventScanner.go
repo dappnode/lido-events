@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"log"
+	"os"
 	"time"
 )
 
@@ -16,9 +17,12 @@ type ValidatorExitRequestEventScanner struct {
 	executionPort       ports.ExecutionPort
 	beaconchainPort     ports.Beaconchain
 	veboBlockDeployment uint64
+	logger              *log.Logger
 }
 
 func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64) *ValidatorExitRequestEventScanner {
+	logger := log.New(os.Stdout, "[ValidatorExitRequestEventScanner] ", log.LstdFlags)
+
 	return &ValidatorExitRequestEventScanner{
 		storagePort,
 		notifierPort,
@@ -26,6 +30,7 @@ func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifier
 		executionPort,
 		beaconchainPort,
 		veboBlockDeployment,
+		logger,
 	}
 }
 
@@ -40,32 +45,35 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 			// Retrieve start and end blocks for scanning
 			start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock()
 			if err != nil {
-				log.Printf("Failed to get last processed block: %v", err)
-				continue
+				vs.logger.Printf("Failed to get last processed block, using block deployment: %v", err)
+				start = vs.veboBlockDeployment
 			}
 
 			if start == 0 {
+				vs.logger.Printf("No last processed block found, using deployment block %d", vs.veboBlockDeployment)
 				start = vs.veboBlockDeployment
 			}
 
 			end, err := vs.executionPort.GetMostRecentBlockNumber()
 			if err != nil {
-				log.Printf("Failed to get latest finalized block: %v", err)
+				vs.logger.Printf("Failed to get latest finalized block: %v", err)
 				continue
 			}
 
+			vs.logger.Printf("Scanning ValidatorExitRequest events from block %d to %d", start, end)
+
 			// Perform the scan
 			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
-				log.Printf("Error scanning ValidatorExitRequest events: %v", err)
+				vs.logger.Printf("Error scanning ValidatorExitRequest events: %v", err)
 				continue
 			}
 
 			// Save the last processed epoch if successful
 			if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(end); err != nil {
-				log.Printf("Failed to save last processed epoch: %v", err)
+				vs.logger.Printf("Failed to save last processed epoch: %v", err)
 			}
 		case <-ctx.Done():
-			log.Println("Stopping DistributionLogUpdated cron scan")
+			vs.logger.Println("Stopping DistributionLogUpdated cron scan")
 			return
 		}
 	}
@@ -73,17 +81,18 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
 func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
+	vs.logger.Printf("Processing ValidatorExitRequest event: %v", validatorExitEvent)
+
 	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))
 	if err != nil {
-		log.Printf("Failed to get validator status: %v", err)
 		return err
 	}
 
 	if validatorStatus == domain.StatusActiveOngoing {
+		vs.logger.Printf("Validator %s is still active and requires to exit, it will be automatically exited by the ejector", validatorExitEvent.ValidatorIndex)
 		message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
 		if err := vs.notifierPort.SendNotification(message); err != nil {
-			log.Printf("Failed to send notification: %v", err)
-			return err
+			// dont return error here, continue with the process so the request is stored for later usage
 		}
 	}
 
@@ -93,7 +102,10 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 	}
 
 	if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {
-		log.Printf("Failed to save exit requests: %v", err)
+		// if validator is active print attention warning log that manual exit is required
+		if validatorStatus == domain.StatusActiveOngoing {
+			vs.logger.Printf("ATTENTION: Validator %s is still active and requires to exit, it could not be saved and will not be exited automatically, a manal exit is required", validatorExitEvent.ValidatorIndex)
+		}
 		return err
 	}
 
