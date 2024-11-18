@@ -2,27 +2,27 @@ package api
 
 import (
 	"encoding/json"
+	"math/big"
 	"net/http"
-	"strconv"
 
-	"lido-events/internal/aplication/domain"
-	"lido-events/internal/aplication/services"
+	"lido-events/internal/application/domain"
+	"lido-events/internal/application/ports"
 
 	"github.com/gorilla/mux"
 )
 
+// TODO: add cors middleware
+
 type APIHandler struct {
-	StorageService *services.StorageService
-	Notifier       *services.NotifierService
-	Router         *mux.Router
+	StoragePort ports.StoragePort
+	Router      *mux.Router
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up the routes
-func NewAPIAdapter(storageService *services.StorageService, notifier *services.NotifierService) *APIHandler {
+func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
 	h := &APIHandler{
-		StorageService: storageService,
-		Notifier:       notifier,
-		Router:         mux.NewRouter(),
+		StoragePort: storagePort,
+		Router:      mux.NewRouter(),
 	}
 
 	h.SetupRoutes()
@@ -33,7 +33,7 @@ func NewAPIAdapter(storageService *services.StorageService, notifier *services.N
 func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST")
 	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.UpdateOperatorID).Methods("POST")
-	h.Router.HandleFunc("/api/v0/event_indexer/lido_report", h.GetLidoReport).Methods("GET")
+	h.Router.HandleFunc("/api/v0/event_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
 	h.Router.HandleFunc("/api/v0/event_indexer/exit_requests", h.GetExitRequests).Methods("GET")
 }
 
@@ -41,7 +41,7 @@ func (h *APIHandler) SetupRoutes() {
 func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Token  string `json:"token"`
-		ChatID int64  `json:"chatId"`
+		UserID int64  `json:"userId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -49,20 +49,14 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if req.Token == "" && req.ChatID == 0 {
-		writeErrorResponse(w, "At least one of token or chatId must be provided", http.StatusBadRequest)
+	if req.Token == "" && req.UserID == 0 {
+		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest)
 		return
 	}
 
-	err := h.StorageService.SetTelegramConfig(domain.TelegramConfig(req))
+	err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req))
 	if err != nil {
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
-		return
-	}
-
-	err = h.Notifier.SendNotification("Telegram configuration updated")
-	if err != nil {
-		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
 		return
 	}
 
@@ -85,15 +79,17 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.StorageService.SetOperatorId(domain.OperatorId(req.OperatorID))
-	if err != nil {
-		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
+	// Check if the operator ID is a valid number
+	_, ok := new(big.Int).SetString(req.OperatorID, 10)
+	if !ok {
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
 
-	err = h.Notifier.SendNotification("Operator ID updated")
+	// Update the operator ID in the storage service
+	err := h.StoragePort.SaveOperatorId(req.OperatorID)
 	if err != nil {
-		writeErrorResponse(w, "Failed to send notification", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
 		return
 	}
 
@@ -101,23 +97,17 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler to get Lido report within a range of epochs
-func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
-	start := r.URL.Query().Get("start")
-	end := r.URL.Query().Get("end")
+func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Request) {
+	operatorId := r.URL.Query().Get("operatorId")
 
-	startEpoch, err := strconv.Atoi(start)
-	if err != nil {
-		writeErrorResponse(w, "Invalid start epoch", http.StatusBadRequest)
+	operatorIdNum := new(big.Int)
+	_, ok := operatorIdNum.SetString(operatorId, 10)
+	if !ok {
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
 
-	endEpoch, err := strconv.Atoi(end)
-	if err != nil {
-		writeErrorResponse(w, "Invalid end epoch", http.StatusBadRequest)
-		return
-	}
-
-	report, err := h.StorageService.GetLidoReport(strconv.Itoa(startEpoch), strconv.Itoa(endEpoch))
+	report, err := h.StoragePort.GetReports(operatorIdNum)
 	if err != nil {
 		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError)
 		return
@@ -140,9 +130,21 @@ func (h *APIHandler) GetLidoReport(w http.ResponseWriter, r *http.Request) {
 
 // Handler to get validator exit requests
 func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
-	exitRequests, err := h.StorageService.GetExitRequests()
+	operatorId := r.URL.Query().Get("operatorId")
+	if operatorId == "" {
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
+		return
+	}
+
+	exitRequests, err := h.StoragePort.GetExitRequests(operatorId)
 	if err != nil {
 		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError)
+		return
+	}
+
+	// not found
+	if exitRequests == nil {
+		writeErrorResponse(w, "No exit requests found for the given operator ID", http.StatusNotFound)
 		return
 	}
 
