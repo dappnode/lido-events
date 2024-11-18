@@ -65,59 +65,112 @@ func NewLogger(level LogLevel) *Logger {
 	}
 }
 
-// Debug logs debug messages if the level is set to DEBUG or lower
+// formatMessage formats the message with an optional prefix
+func formatMessage(prefix, msg string) string {
+	if prefix != "" {
+		return "[" + prefix + "] " + msg
+	}
+	return msg
+}
+
+// Debug logs debug messages with an optional prefix if the level is set to DEBUG or lower
 func (l *Logger) Debug(msg string, v ...interface{}) {
+	l.DebugWithPrefix("", msg, v...)
+}
+
+// DebugWithPrefix logs debug messages with a specific prefix
+func (l *Logger) DebugWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= DEBUG {
-		l.debug.Printf(msg, v...)
+		l.debug.Printf(formatMessage(prefix, msg), v...)
 	}
 }
 
-// Info logs informational messages if the level is set to INFO or lower
+// Info logs informational messages with an optional prefix if the level is set to INFO or lower
 func (l *Logger) Info(msg string, v ...interface{}) {
+	l.InfoWithPrefix("", msg, v...)
+}
+
+// InfoWithPrefix logs informational messages with a specific prefix
+func (l *Logger) InfoWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= INFO {
-		l.info.Printf(msg, v...)
+		l.info.Printf(formatMessage(prefix, msg), v...)
 	}
 }
 
-// Warn logs warning messages if the level is set to WARN or lower
+// Warn logs warning messages with an optional prefix if the level is set to WARN or lower
 func (l *Logger) Warn(msg string, v ...interface{}) {
+	l.WarnWithPrefix("", msg, v...)
+}
+
+// WarnWithPrefix logs warning messages with a specific prefix
+func (l *Logger) WarnWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= WARN {
-		l.warn.Printf(msg, v...)
+		l.warn.Printf(formatMessage(prefix, msg), v...)
 	}
 }
 
-// Error logs error messages if the level is set to ERROR or lower
+// Error logs error messages with an optional prefix if the level is set to ERROR or lower
 func (l *Logger) Error(msg string, v ...interface{}) {
+	l.ErrorWithPrefix("", msg, v...)
+}
+
+// ErrorWithPrefix logs error messages with a specific prefix
+func (l *Logger) ErrorWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= ERROR {
-		l.error.Printf(msg, v...)
+		l.error.Printf(formatMessage(prefix, msg), v...)
 	}
 }
 
-// Fatal logs fatal messages if the level is set to FATAL or lower
+// Fatal logs fatal messages with an optional prefix if the level is set to FATAL or lower
 func (l *Logger) Fatal(msg string, v ...interface{}) {
+	l.FatalWithPrefix("", msg, v...)
+}
+
+// FatalWithPrefix logs fatal messages with a specific prefix
+func (l *Logger) FatalWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= FATAL {
-		l.fatal.Printf(msg, v...)
+		l.fatal.Printf(formatMessage(prefix, msg), v...)
 	}
 }
 
-// Wrapper functions to simplify logging
+// Wrapper functions to simplify logging with optional prefix
 
 func Debug(msg string, v ...interface{}) {
 	Log.Debug(msg, v...)
+}
+
+func DebugWithPrefix(prefix, msg string, v ...interface{}) {
+	Log.DebugWithPrefix(prefix, msg, v...)
 }
 
 func Info(msg string, v ...interface{}) {
 	Log.Info(msg, v...)
 }
 
+func InfoWithPrefix(prefix, msg string, v ...interface{}) {
+	Log.InfoWithPrefix(prefix, msg, v...)
+}
+
 func Warn(msg string, v ...interface{}) {
 	Log.Warn(msg, v...)
+}
+
+func WarnWithPrefix(prefix, msg string, v ...interface{}) {
+	Log.WarnWithPrefix(prefix, msg, v...)
 }
 
 func Error(msg string, v ...interface{}) {
 	Log.Error(msg, v...)
 }
 
+func ErrorWithPrefix(prefix, msg string, v ...interface{}) {
+	Log.ErrorWithPrefix(prefix, msg, v...)
+}
+
 func Fatal(msg string, v ...interface{}) {
 	Log.Fatal(msg, v...)
+}
+
+func FatalWithPrefix(prefix, msg string, v ...interface{}) {
+	Log.FatalWithPrefix(prefix, msg, v...)
 }
