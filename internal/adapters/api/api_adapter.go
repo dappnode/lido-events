@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"os"
 
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
@@ -17,17 +16,14 @@ import (
 type APIHandler struct {
 	StoragePort ports.StoragePort
 	Router      *mux.Router
-	logger      *log.Logger
 }
 
 // NewAPIAdapter initializes the APIHandler with a logger and sets up routes
 func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
-	logger := log.New(os.Stdout, "[APIHandler] ", log.LstdFlags)
 
 	h := &APIHandler{
 		StoragePort: storagePort,
 		Router:      mux.NewRouter(),
-		logger:      logger,
 	}
 
 	h.SetupRoutes()
@@ -50,13 +46,13 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Printf("Invalid request body in UpdateTelegramConfig: %v", err)
+		log.Printf("Invalid request body in UpdateTelegramConfig: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.Token == "" && req.UserID == 0 {
-		h.logger.Println("Missing token and userId in UpdateTelegramConfig request")
+		log.Println("Missing token and userId in UpdateTelegramConfig request")
 		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest)
 		return
 	}
@@ -76,19 +72,19 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Printf("Invalid request body in UpdateOperatorID: %v", err)
+		log.Printf("Invalid request body in UpdateOperatorID: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.OperatorID == "" {
-		h.logger.Println("Missing operatorId in UpdateOperatorID request")
+		log.Println("Missing operatorId in UpdateOperatorID request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(req.OperatorID, 10); !ok {
-		h.logger.Println("Invalid operatorId format in UpdateOperatorID")
+		log.Println("Invalid operatorId format in UpdateOperatorID")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
@@ -107,7 +103,7 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 
 	operatorIdNum := new(big.Int)
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		h.logger.Println("Invalid operatorId in GetOperatorPerformance request")
+		log.Println("Invalid operatorId in GetOperatorPerformance request")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
@@ -119,14 +115,14 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 	}
 
 	if len(report) == 0 {
-		h.logger.Printf("No report found for operator ID %s", operatorId)
+		log.Printf("No report found for operator ID %s", operatorId)
 		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(report)
 	if err != nil {
-		h.logger.Printf("Error generating JSON response in GetOperatorPerformance: %v", err)
+		log.Printf("Error generating JSON response in GetOperatorPerformance: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
 		return
 	}
@@ -139,7 +135,7 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operatorId")
 	if operatorId == "" {
-		h.logger.Println("Missing operatorId in GetExitRequests request")
+		log.Println("Missing operatorId in GetExitRequests request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
 		return
 	}
@@ -151,14 +147,14 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if exitRequests == nil {
-		h.logger.Printf("No exit requests found for operator ID %s", operatorId)
+		log.Printf("No exit requests found for operator ID %s", operatorId)
 		writeErrorResponse(w, "No exit requests found for the given operator ID", http.StatusNotFound)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(exitRequests)
 	if err != nil {
-		h.logger.Printf("Error generating JSON response in GetExitRequests: %v", err)
+		log.Printf("Error generating JSON response in GetExitRequests: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
 		return
 	}
