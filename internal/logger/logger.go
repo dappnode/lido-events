@@ -57,11 +57,11 @@ func parseLogLevelFromEnv() LogLevel {
 func NewLogger(level LogLevel) *Logger {
 	return &Logger{
 		level: level,
-		debug: log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile),
-		info:  log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
-		warn:  log.New(os.Stdout, "WARN: ", log.Ldate|log.Ltime|log.Lshortfile),
-		error: log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
-		fatal: log.New(os.Stderr, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
+		debug: log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime),
+		info:  log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime),
+		warn:  log.New(os.Stdout, "WARN: ", log.Ldate|log.Ltime),
+		error: log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime),
+		fatal: log.New(os.Stderr, "FATAL: ", log.Ldate|log.Ltime),
 	}
 }
 
