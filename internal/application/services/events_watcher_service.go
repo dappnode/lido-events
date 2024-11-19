@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"sync"
 )
 
 type EventsWatcher struct {
@@ -26,20 +27,65 @@ func NewEventsWatcherService(veboPort ports.VeboPort, csModulePort ports.CsModul
 	}
 }
 
-// Scanners
+func (ew *EventsWatcher) WatchAllEvents(ctx context.Context, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
 
-func (ew *EventsWatcher) WatchReportSubmittedEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Watching for Vebo ReportSubmitted events")
+	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch all events...")
+
+	// Watch each event type in separate loops
+	go func() {
+		if err := ew.watchCsModuleEvents(ctx); err != nil {
+			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to CSModule events: %v", err))
+		}
+	}()
+
+	go func() {
+		if err := ew.watchCsFeeDistributorEvents(ctx); err != nil {
+			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to CsFeeDistributor events: %v", err))
+		}
+	}()
+
+	go func() {
+		if err := ew.watchReportSubmittedEvents(ctx); err != nil {
+			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to Vebo events: %v", err))
+		}
+	}()
+
+	// Block until context is done
+	<-ctx.Done()
+	logger.InfoWithPrefix(ew.servicePrefix, "Context canceled, stopping all event watchers.")
+}
+
+func (ew *EventsWatcher) watchReportSubmittedEvents(ctx context.Context) error {
+	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch Vebo ReportSubmitted events")
 	return ew.veboPort.WatchReportSubmittedEvents(ctx, ew.HandleReportSubmittedEvent)
 }
 
-func (ew *EventsWatcher) WatchCsModuleEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Watching for CsModule events")
-	return ew.csModulePort.WatchCsModuleEvents(ctx, ew)
+func (ew *EventsWatcher) watchCsModuleEvents(ctx context.Context) error {
+	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch CsModule events...")
+
+	// Listen for events in a loop to handle dynamic resubscriptions
+	for {
+		err := ew.csModulePort.WatchCsModuleEvents(ctx, ew)
+		if err != nil {
+			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Error watching CsModule events: %v", err))
+		}
+
+		select {
+		case <-ctx.Done():
+			// Stop watching events if the context is canceled
+			logger.InfoWithPrefix(ew.servicePrefix, "Context canceled, stopping CsModule events watcher.")
+			return nil
+		case <-ew.csModulePort.ResubscribeSignal():
+			// Operator IDs updated, restart watching events
+			logger.InfoWithPrefix(ew.servicePrefix, "Operator IDs updated, restarting CsModule events watcher...")
+		}
+	}
 }
 
-func (ew *EventsWatcher) WatchCsFeeDistributorEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Watching for CsFeeDistributor events")
+func (ew *EventsWatcher) watchCsFeeDistributorEvents(ctx context.Context) error {
+	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch CsFeeDistributor events")
 	return ew.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, ew.HandleDistributionDataUpdated)
 }
 

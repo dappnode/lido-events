@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"sync"
 	"time"
 )
 
@@ -30,7 +31,10 @@ func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifi
 }
 
 // ScanDistributionLogUpdatedEventsCron runs a periodic scan for DistributionLogUpdated events
-func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCron(ctx context.Context, interval time.Duration) {
+func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+	defer wg.Done() // Decrement the counter when the goroutine finishes
+	wg.Add(1)       // Increment the WaitGroup counter
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -56,7 +60,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 			}
 
 			// Perform the scan
-			if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, ds.HandleDistributionLogUpdatedEvent); err != nil {
+			if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, ds.handleDistributionLogUpdatedEvent); err != nil {
 				logger.ErrorWithPrefix(ds.servicePrefix, "Error scanning DistributionLogUpdated events: %v", err)
 				continue
 			}
@@ -74,7 +78,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 }
 
 // HandleDistributionLogUpdatedEvent processes a DistributionLogUpdated event
-func (ds *DistributionLogUpdatedEventScanner) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
+func (ds *DistributionLogUpdatedEventScanner) handleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
 	// TODO add message saying go to this dashboard to see the validator performance
 	logger.DebugWithPrefix(ds.servicePrefix, "Found DistributionLogUpdated event with log cid: %s", distributionLogUpdated.LogCid)
 
