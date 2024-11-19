@@ -2,10 +2,12 @@
 
 ## Overview
 
-**Description**: This application is a Go-based service designed with hexagonal architecture to manage and interact with Ethereum validators. It includes the following features:
+**Description**: This application is a Go-based service designed with hexagonal architecture to manage and interact with Lido Operators. It includes the following features:
 
-- Subscribing to the Ethereum events:
-- Scanning Ethereum events:
+- Subscribing to the Ethereum events based on the operator IDs loaded in the app
+- Scanning Ethereum events based on the operator IDs loaded in the app:
+  - `ExitRequested`: event emitted by the CSFeeDistrbutor SC that indicates whenever a validator requires to exit the CSM pool.
+  - `DistributedLogUpdated`: event emitted by the VEBO SC that indicates whenever a new log is distributed. This log contains the performance data of the validators as well as the treshold.
 - Executing validator exits in background when there is a exit request event requested for a validator of the operator ID loaded in the app
 - Fetching and parsing IPFS log CIDs in background to get the validator performance data
 - Sending notifications to user (e.g., via Telegram)
@@ -46,6 +48,7 @@ To configure the app, set the following environment variables:
 | `RPC_URL`        | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |
 | `IPFS_URL`       | URL of the IPFS gateway used to fetch logs. Default http://ipfs.dappnode:5001                        |
 | `LOG_LEVEL`      | Logging level (e.g., `DEBUG`, `INFO`, `WARN`, `ERROR`). Default INFO                                 |
+| `CORS`           | CORS origins domains allowed to fetch the api. Default to Lido CSM ui                                |
 
 Example `.env` file:
 
