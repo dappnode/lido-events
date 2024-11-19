@@ -67,7 +67,7 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
-	apiAdapter := api.NewAPIAdapter(storageAdapter)
+	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
 
 	// Start HTTP server
 	server := &http.Server{
