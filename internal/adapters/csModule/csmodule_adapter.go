@@ -14,11 +14,12 @@ import (
 )
 
 type CsModuleAdapter struct {
-	client          *ethclient.Client
-	csModuleAddress common.Address
-	storageAdapter  ports.StoragePort
-	nodeOperatorIds []*big.Int
-	mu              sync.RWMutex
+	client            *ethclient.Client
+	csModuleAddress   common.Address
+	storageAdapter    ports.StoragePort
+	nodeOperatorIds   []*big.Int
+	mu                sync.RWMutex
+	resubscribeSignal chan struct{}
 }
 
 func NewCsModuleAdapter(
@@ -37,22 +38,36 @@ func NewCsModuleAdapter(
 	}
 
 	adapter := &CsModuleAdapter{
-		client:          client,
-		csModuleAddress: csModuleAddress,
-		storageAdapter:  storageAdapter,
-		nodeOperatorIds: initialOperatorIds,
+		client:            client,
+		csModuleAddress:   csModuleAddress,
+		storageAdapter:    storageAdapter,
+		nodeOperatorIds:   initialOperatorIds,
+		resubscribeSignal: make(chan struct{}, 1),
 	}
 
 	operatorIdUpdates := storageAdapter.RegisterOperatorIdListener()
-	go func() {
-		for newOperatorIds := range operatorIdUpdates {
-			adapter.mu.Lock()
-			adapter.nodeOperatorIds = newOperatorIds
-			adapter.mu.Unlock()
-		}
-	}()
+	go adapter.handleOperatorIdUpdates(operatorIdUpdates)
 
 	return adapter, nil
+}
+
+func (csma *CsModuleAdapter) handleOperatorIdUpdates(updates <-chan []*big.Int) {
+	for newOperatorIds := range updates {
+		csma.mu.Lock()
+		csma.nodeOperatorIds = newOperatorIds
+		csma.mu.Unlock()
+
+		// Notify the resubscribe signal channel
+		select {
+		case csma.resubscribeSignal <- struct{}{}:
+		default: // Prevent blocking if there's already a pending signal
+		}
+	}
+}
+
+// Expose a method to retrieve the resubscribe signal channel
+func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
+	return csma.resubscribeSignal
 }
 
 // WatchCsModuleEvents watches for events emitted by the CsModule contract and calls the appropriate handler functions. Not required to log errors since it will be initialized from main

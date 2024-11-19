@@ -119,35 +119,11 @@ func main() {
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 
 	// Start background services
-	wg.Add(5)
-	go func() {
-		defer wg.Done()
-		distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute)
-	}()
-	go func() {
-		defer wg.Done()
-		validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute)
-	}()
-	go func() {
-		defer wg.Done()
-		validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute)
-	}()
-	go func() {
-		defer wg.Done()
-		pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute)
-	}()
-	go func() {
-		defer wg.Done()
-		if err := eventsWatcherService.WatchCsModuleEvents(ctx); err != nil {
-			logger.Fatal("Failed to subscribe to CSModule events: %v", err)
-		}
-		if err := eventsWatcherService.WatchCsFeeDistributorEvents(ctx); err != nil {
-			logger.Fatal("Failed to subscribe to CsFeeDistributor events: %v", err)
-		}
-		if err := eventsWatcherService.WatchReportSubmittedEvents(ctx); err != nil {
-			logger.Fatal("Failed to subscribe to Vebo events: %v", err)
-		}
-	}()
+	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute, &wg)
+	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute, &wg)
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute, &wg)
+	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute, &wg)
+	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle shutdown signals
 	go func() {

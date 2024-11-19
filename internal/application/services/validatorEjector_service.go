@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"sync"
 	"time"
 )
 
@@ -28,7 +29,10 @@ func NewValidatorEjectorService(storagePort ports.StoragePort, notifierPort port
 }
 
 // ValidatorEjectorCron starts a periodic service to exit validators that requested to exit
-func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval time.Duration) {
+func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+	defer wg.Done() // Decrement the counter when the goroutine finishes
+	wg.Add(1)       // Increment the WaitGroup counter
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 

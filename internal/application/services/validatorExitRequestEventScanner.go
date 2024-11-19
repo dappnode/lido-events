@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"sync"
 	"time"
 )
 
@@ -32,7 +33,10 @@ func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifier
 }
 
 // ScanValidatorExitRequestEventsCron runs a periodic scan for DistributionLogUpdated events
-func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration) {
+func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+	defer wg.Done() // Decrement the counter when the goroutine finishes
+	wg.Add(1)       // Increment the WaitGroup counter
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -58,7 +62,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 			}
 
 			// Perform the scan
-			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
+			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.handleValidatorExitRequestEvent); err != nil {
 				logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
 				continue
 			}
@@ -76,7 +80,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 }
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
-func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
+func (vs *ValidatorExitRequestEventScanner) handleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
 	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event: %v", validatorExitEvent)
 
 	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))

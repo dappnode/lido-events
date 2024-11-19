@@ -5,6 +5,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"sync"
 	"time"
 )
 
@@ -22,8 +23,11 @@ func NewPendingHashesLoader(storagePort ports.StoragePort, ipfsPort ports.IpfsPo
 	}
 }
 
-// LoadPendingHashesCron starts a periodic service to load pending hashes from IPFS
-func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, interval time.Duration) {
+// loadPendingHashesCron starts a periodic service to load pending hashes from IPFS
+func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+	defer wg.Done() // Decrement the counter when the goroutine finishes
+	wg.Add(1)       // Increment the WaitGroup counter
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -31,7 +35,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 		select {
 		case <-ticker.C:
 			// Call the load method periodically
-			if err := phl.LoadPendingHashes(); err != nil {
+			if err := phl.loadPendingHashes(); err != nil {
 				logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 				continue
 			}
@@ -43,8 +47,8 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	}
 }
 
-// LoadPendingHashes loads all pending hashes from the storage and fetches the corresponding IPFS data
-func (phl *PendingHashesLoader) LoadPendingHashes() error {
+// loadPendingHashes loads all pending hashes from the storage and fetches the corresponding IPFS data
+func (phl *PendingHashesLoader) loadPendingHashes() error {
 	// Get operator IDs
 	operatorIDs, err := phl.storagePort.GetOperatorIds()
 	if err != nil {
@@ -81,13 +85,13 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 		// Process each operator ID in the original report
 		for _, operatorID := range operatorIDs {
-			logger.DebugWithPrefix("Saving report data for operator ID %s", operatorID.String())
+			logger.DebugWithPrefix(phl.servicePrefix, "Saving report data for operator ID %s", operatorID.String())
 
 			// Get the data for the operator ID
 			data, exists := originalReport.Operators[operatorID.String()]
 			if !exists {
 				// Skip if the operator ID is not found in the report
-				logger.WarnWithPrefix("Operator ID %s not found in the original report, skipping", operatorID.String())
+				logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s not found in the original report, skipping", operatorID.String())
 				continue
 			}
 

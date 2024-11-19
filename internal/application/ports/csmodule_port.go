@@ -7,6 +7,7 @@ import (
 
 type CsModulePort interface {
 	WatchCsModuleEvents(ctx context.Context, handlers CsModuleHandlers) error
+	ResubscribeSignal() <-chan struct{}
 }
 
 type CsModuleHandlers interface {
