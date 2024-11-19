@@ -28,33 +28,40 @@ func NewEventsWatcherService(veboPort ports.VeboPort, csModulePort ports.CsModul
 }
 
 func (ew *EventsWatcher) WatchAllEvents(ctx context.Context, wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+	// Error channel to collect errors
+	errorChan := make(chan error, 3)
 
-	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch all events...")
+	// Start each watcher in its own goroutine
+	startWatcher := func(watchFunc func(context.Context) error, name string) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			logger.InfoWithPrefix(ew.servicePrefix, "Starting watcher for "+name+" events...")
+			if err := watchFunc(ctx); err != nil {
+				errorChan <- fmt.Errorf("%s watcher error: %w", name, err)
+			}
+		}()
+	}
 
-	// Watch each event type in separate loops
+	startWatcher(ew.watchCsModuleEvents, "CSModule")
+	startWatcher(ew.watchCsFeeDistributorEvents, "CsFeeDistributor")
+	startWatcher(ew.watchReportSubmittedEvents, "ReportSubmitted")
+
+	// Monitor for errors and context cancellation
 	go func() {
-		if err := ew.watchCsModuleEvents(ctx); err != nil {
-			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to CSModule events: %v", err))
+		defer close(errorChan)
+		for {
+			select {
+			case err := <-errorChan:
+				if err != nil {
+					logger.ErrorWithPrefix(ew.servicePrefix, "Error in event watcher: %v", err)
+				}
+			case <-ctx.Done():
+				logger.InfoWithPrefix(ew.servicePrefix, "Context canceled, stopping all event watchers.")
+				return
+			}
 		}
 	}()
-
-	go func() {
-		if err := ew.watchCsFeeDistributorEvents(ctx); err != nil {
-			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to CsFeeDistributor events: %v", err))
-		}
-	}()
-
-	go func() {
-		if err := ew.watchReportSubmittedEvents(ctx); err != nil {
-			logger.ErrorWithPrefix(ew.servicePrefix, fmt.Sprintf("Failed to subscribe to Vebo events: %v", err))
-		}
-	}()
-
-	// Block until context is done
-	<-ctx.Done()
-	logger.InfoWithPrefix(ew.servicePrefix, "Context canceled, stopping all event watchers.")
 }
 
 func (ew *EventsWatcher) watchReportSubmittedEvents(ctx context.Context) error {
