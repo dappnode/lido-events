@@ -65,13 +65,10 @@ func (ew *EventsWatcher) WatchAllEvents(ctx context.Context, wg *sync.WaitGroup)
 }
 
 func (ew *EventsWatcher) watchReportSubmittedEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch Vebo ReportSubmitted events")
 	return ew.veboPort.WatchReportSubmittedEvents(ctx, ew.HandleReportSubmittedEvent)
 }
 
 func (ew *EventsWatcher) watchCsModuleEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch CsModule events...")
-
 	// Listen for events in a loop to handle dynamic resubscriptions
 	for {
 		err := ew.csModulePort.WatchCsModuleEvents(ctx, ew)
@@ -92,7 +89,6 @@ func (ew *EventsWatcher) watchCsModuleEvents(ctx context.Context) error {
 }
 
 func (ew *EventsWatcher) watchCsFeeDistributorEvents(ctx context.Context) error {
-	logger.InfoWithPrefix(ew.servicePrefix, "Starting to watch CsFeeDistributor events")
 	return ew.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, ew.HandleDistributionDataUpdated)
 }
 
