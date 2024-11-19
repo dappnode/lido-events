@@ -9,6 +9,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -19,13 +20,25 @@ type APIHandler struct {
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes
-func NewAPIAdapter(storagePort ports.StoragePort) *APIHandler {
+
+// NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
+func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
 		StoragePort: storagePort,
 		Router:      mux.NewRouter(),
 	}
 
 	h.SetupRoutes()
+
+	// Add CORS middleware to the router using the provided allowed origins
+	corsAllowedOrigins := handlers.AllowedOrigins(allowedOrigins)
+	corsAllowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"})
+	corsAllowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
+
+	h.Router.Use(func(next http.Handler) http.Handler {
+		return handlers.CORS(corsAllowedOrigins, corsAllowedMethods, corsAllowedHeaders)(next)
+	})
+
 	return h
 }
 
