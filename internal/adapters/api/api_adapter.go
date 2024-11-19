@@ -47,8 +47,8 @@ func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST")
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.GetTelegramConfig).Methods("GET")
 	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.UpdateOperatorID).Methods("POST")
-	h.Router.HandleFunc("/api/v0/event_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
-	h.Router.HandleFunc("/api/v0/event_indexer/exit_requests", h.GetExitRequests).Methods("GET")
+	h.Router.HandleFunc("/api/v0/events_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
+	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET")
 }
 
 // GetTelegramConfig retrieves the Telegram configuration
@@ -137,6 +137,7 @@ func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
 
 // GetOperatorPerformance retrieves operator performance data
 func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Request) {
+	log.Println("GetOperatorPerformance request received")
 	operatorId := r.URL.Query().Get("operatorId")
 
 	operatorIdNum := new(big.Int)
