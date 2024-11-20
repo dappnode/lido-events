@@ -22,7 +22,7 @@ import (
 func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, error) {
 	wsURL := os.Getenv("WS_URL")
 	if wsURL == "" {
-		t.Skip("WS_URL is not set")
+		t.Fatal("WS_URL environment variable not set")
 	}
 
 	// Create the mock StoragePort

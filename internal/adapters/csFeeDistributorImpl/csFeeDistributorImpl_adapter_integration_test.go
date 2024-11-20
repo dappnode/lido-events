@@ -20,7 +20,7 @@ import (
 func setupCsFeeDistributorImplAdapter(t *testing.T) (*csfeedistributorimpl.CsFeeDistributorImplAdapter, error) {
 	wsURL := os.Getenv("WS_URL")
 	if wsURL == "" {
-		t.Skip("WS_URL is not set")
+		t.Fatal("WS_URL environment variable not set")
 	}
 
 	csfeedistributorimplAddress := common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED")
