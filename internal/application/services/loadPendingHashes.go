@@ -35,7 +35,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 		select {
 		case <-ticker.C:
 			// Call the load method periodically
-			if err := phl.loadPendingHashes(); err != nil {
+			if err := phl.LoadPendingHashes(); err != nil {
 				logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 				continue
 			}
@@ -48,7 +48,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 }
 
 // loadPendingHashes loads all pending hashes from the storage and fetches the corresponding IPFS data
-func (phl *PendingHashesLoader) loadPendingHashes() error {
+func (phl *PendingHashesLoader) LoadPendingHashes() error {
 	// Get operator IDs
 	operatorIDs, err := phl.storagePort.GetOperatorIds()
 	if err != nil {

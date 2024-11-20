@@ -40,7 +40,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 		select {
 		case <-ticker.C:
 			// Call the scan method periodically
-			if err := ve.ejectValidator(); err != nil {
+			if err := ve.EjectValidator(); err != nil {
 				logger.ErrorWithPrefix(ve.servicePrefix, "Error ejecting validators: %v", err)
 			}
 		case <-ctx.Done():
@@ -52,7 +52,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 }
 
 // ejectValidator orchestrates the voluntary exit process for a validator
-func (ve *ValidatorEjector) ejectValidator() error {
+func (ve *ValidatorEjector) EjectValidator() error {
 	logger.DebugWithPrefix(ve.servicePrefix, "Ejecting validators if any")
 
 	operatorIDs, err := ve.storagePort.GetOperatorIds()

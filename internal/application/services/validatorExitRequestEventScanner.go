@@ -62,7 +62,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 			}
 
 			// Perform the scan
-			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.handleValidatorExitRequestEvent); err != nil {
+			if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 				logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
 				continue
 			}
@@ -80,7 +80,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 }
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
-func (vs *ValidatorExitRequestEventScanner) handleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
+func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
 	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event: %v", validatorExitEvent)
 
 	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))
