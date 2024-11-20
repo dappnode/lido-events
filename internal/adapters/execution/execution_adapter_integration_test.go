@@ -16,7 +16,7 @@ import (
 func setupExecutionAdapter(t *testing.T) (*execution.ExecutionAdapter, error) {
 	rpcUrl := os.Getenv("RPC_URL")
 	if rpcUrl == "" {
-		t.Skip("RPC_URL is not set")
+		t.Fatal("RPC_URL environment variable not set")
 	}
 	// Initialize the adapter
 	adapter := execution.NewExecutionAdapter(rpcUrl)
