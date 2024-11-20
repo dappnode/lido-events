@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"lido-events/internal/application/ports"
-	"log"
+	"lido-events/internal/logger"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -20,7 +20,6 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 	// Load the initial configuration for Telegram
 	initialConfig, err := storageAdapter.GetTelegramConfig()
 	if err != nil {
-		log.Printf("NotifierAdapter: Failed to load Telegram configuration: %v", err)
 		return nil, err
 	}
 
@@ -46,7 +45,7 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 			if err == nil {
 				adapter.Bot = updatedBot
 			} else {
-				log.Printf("NotifierAdapter: Failed to update bot API with new token: %v", err)
+				logger.ErrorWithPrefix("Notifier", "Failed to update Telegram bot: %v", err)
 			}
 			adapter.mu.Unlock()
 		}
