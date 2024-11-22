@@ -69,22 +69,22 @@ func (ve *ValidatorEjector) EjectValidator() error {
 		}
 
 		for _, exitRequest := range exitRequests {
-			// if the validator is not active_ongoing, skip. Otherwise, we try to send the exit request
-			if exitRequest.Status != domain.StatusActiveOngoing {
-				logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 
-				// TODO: We could keep asking the chain about the exit process of this validator and give the user more information
-				// status, error := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
-				// if error != nil {
-				// 	logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status", error)
-				// }
-				// logger.DebugWithPrefix(ve.servicePrefix, "Updating exit request status to %s", status)
-				// ve.storagePort.UpdateExitRequestStatus(operatorID.String(), exitRequest.Event.ValidatorIndex.String(), status)
+			// First thing we do is to check the onchain status of the validator. This way we make sure we dont try to exit a validator that is already exiting
+			onchainStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.Event.ValidatorIndex.String())
+			if err != nil {
+				logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status from beaconchain, skipping.", err)
+				continue
+			}
+
+			// if the validator status is not active ongoing or active slashed we skip the exit request because it is already exiting.
+			if onchainStatus != domain.StatusActiveOngoing && onchainStatus != domain.StatusActiveSlashed {
+				logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 				continue
 			}
 
 			// send notification and skip on error
-			message := fmt.Sprintf("- 🚨 One of the validators is requested to exit: %s", exitRequest.Event.ValidatorIndex)
+			message := fmt.Sprintf("- 🚨 Your validator %s is requested to exit.", exitRequest.Event.ValidatorIndex)
 			ve.notifierPort.SendNotification(message)
 
 			// exit the validator
@@ -103,7 +103,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			// wait for the transaction to be included
 			// call ve.beaconchainPort.GetValidatorStatus(string(validator.Event.ValidatorPubkey)) in a loop until the status is domain.StatusActiveExiting
 			// a maximum of 40 times with a 3 second sleep between each call
-			//TODO: is there a better way to do this?
+			// TODO: If this ends before the status is ActiveExiting, the user will never get the notification that the validator has been exited successfully.
 			for i := 0; i < 40; i++ {
 				logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 
@@ -113,12 +113,12 @@ func (ve *ValidatorEjector) EjectValidator() error {
 					continue
 				}
 
-				if validatorStatus == domain.StatusActiveExiting {
+				if validatorStatus == domain.StatusActiveExiting || validatorStatus == domain.StatusExitedUnslashed || validatorStatus == domain.StatusExitedSlashed {
 					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has been exited", exitRequest.Event.ValidatorIndex)
 
 					// update the status on the db using UpdateExitRequest and skip on error
 					if err := ve.storagePort.UpdateExitRequestStatus(operatorID.String(), exitRequest.Event.ValidatorIndex.String(), domain.StatusActiveExiting); err != nil {
-						logger.ErrorWithPrefix(ve.servicePrefix, "Error updating exit request status", err)
+						logger.ErrorWithPrefix(ve.servicePrefix, "Error updating exit request status in db", err)
 					}
 
 					// send notification and skip on error
