@@ -63,6 +63,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 	for _, operatorID := range operatorIDs {
 
 		//  get exit requests
+		//TODO: we should always get validator status from the chain, not from the db
 		exitRequests, err := ve.storagePort.GetExitRequests(operatorID.String())
 		if err != nil {
 			continue
@@ -82,7 +83,8 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			ve.notifierPort.SendNotification(message)
 
 			// exit the validator
-			if err := ve.exitValidatorPort.ExitValidator(string(exitRequest.Event.ValidatorPubkey), exitRequest.Event.ValidatorIndex.String()); err != nil {
+			logger.InfoWithPrefix(ve.servicePrefix, "Exiting validator %s", exitRequest.Event.ValidatorIndex)
+			if err := ve.exitValidatorPort.ExitValidator(exitRequest.ValidatorPubkeyHex, exitRequest.Event.ValidatorIndex.String()); err != nil {
 				logger.WarnWithPrefix(ve.servicePrefix, "Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
 				// send notification with manual exit link and skip on errror
 				// TODO: wait for PR in docs to add the proper link
@@ -99,7 +101,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			for i := 0; i < 40; i++ {
 				logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 
-				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(string(exitRequest.Event.ValidatorPubkey))
+				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
 				if err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status", err)
 					continue
@@ -109,7 +111,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has been exited", exitRequest.Event.ValidatorIndex)
 
 					// update the status on the db using UpdateExitRequest and skip on error
-					if err := ve.storagePort.UpdateExitRequestStatus(operatorID.String(), string(exitRequest.Event.ValidatorPubkey), domain.StatusActiveExiting); err != nil {
+					if err := ve.storagePort.UpdateExitRequestStatus(operatorID.String(), exitRequest.Event.ValidatorIndex.String(), domain.StatusActiveExiting); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error updating exit request status", err)
 					}
 

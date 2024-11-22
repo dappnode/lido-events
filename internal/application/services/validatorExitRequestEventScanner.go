@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
@@ -81,9 +82,10 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
 func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
-	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event: %v", validatorExitEvent)
+	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event for node operatror id %s and validator index %s", validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex)
 
-	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(string(validatorExitEvent.ValidatorPubkey))
+	pubkeyHex := "0x" + hex.EncodeToString(validatorExitEvent.ValidatorPubkey) // This is exactly the format that signer needs for the pubkey to be when signing the exit message
+	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(validatorExitEvent.ValidatorIndex.String())
 	if err != nil {
 		return err
 	}
@@ -95,8 +97,9 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 	}
 
 	exitRequest := domain.ExitRequest{
-		Event:  *validatorExitEvent,
-		Status: validatorStatus,
+		Event:              *validatorExitEvent,
+		Status:             validatorStatus,
+		ValidatorPubkeyHex: pubkeyHex, // Save the pubkey in hex format for the ejector to use later
 	}
 
 	if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {

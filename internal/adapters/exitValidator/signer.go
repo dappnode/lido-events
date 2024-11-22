@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -50,6 +51,7 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 		return "", fmt.Errorf("failed to create HTTP request for URL %s: %w", url, err)
 	}
 	reqHttp.Header.Set("Content-Type", "application/json")
+	reqHttp.Header.Set("Accept", "application/json") // Important to add. If not, signer responds with plain text
 
 	client := &http.Client{}
 	resp, err := client.Do(reqHttp)
@@ -62,15 +64,20 @@ func Eth2SignVoluntaryExit(signerUrl string, req VoluntaryExitRequest) (string, 
 		return "", fmt.Errorf("unexpected status code %d from signer", resp.StatusCode)
 	}
 
-	// Decode the response body to extract the signature
-	var result struct {
-		Signature string `json:"signature"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response body from signer: %w", err)
+	// Read the response body
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return result.Signature, nil
+	var signatureResponse struct {
+		Signature string `json:"signature"`
+	}
+	if err := json.Unmarshal(responseData, &signatureResponse); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response JSON: %w", err)
+	}
+
+	return signatureResponse.Signature, nil
 }
 
 // ForkInfo holds the fork information
