@@ -80,6 +80,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			// if the validator status is not active ongoing or active slashed we skip the exit request because it is already exiting.
 			if onchainStatus != domain.StatusActiveOngoing && onchainStatus != domain.StatusActiveSlashed {
 				logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+				//TODO: If the validator is already exiting, we could delete this exit request from db.
 				continue
 			}
 
