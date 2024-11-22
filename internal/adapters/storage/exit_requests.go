@@ -103,3 +103,30 @@ func (fs *Storage) UpdateExitRequestStatus(operatorID string, validatorIndex str
 
 	return fs.SaveDatabase(db)
 }
+
+// DeleteExitRequest removes an exit request for a specific operator ID and validator index.
+func (fs *Storage) DeleteExitRequest(operatorID string, validatorIndex string) error {
+	db, err := fs.LoadDatabase()
+	if err != nil {
+		return err
+	}
+
+	operatorData, exists := db.Operators[operatorID]
+	if !exists {
+		return fmt.Errorf("operator ID %s not found", operatorID)
+	}
+
+	// Check if the exit request exists for the given validatorIndex
+	_, exists = operatorData.ExitRequests[validatorIndex]
+	if !exists {
+		return fmt.Errorf("exit request not found for validator index %s", validatorIndex)
+	}
+
+	// Delete the exit request
+	delete(operatorData.ExitRequests, validatorIndex)
+
+	// Save the updated OperatorData back to the database
+	db.Operators[operatorID] = operatorData
+
+	return fs.SaveDatabase(db)
+}
