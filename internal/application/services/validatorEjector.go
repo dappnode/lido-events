@@ -132,6 +132,11 @@ func (ve *ValidatorEjector) EjectValidator() error {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
 
+					// remove the exit request from the db
+					logger.DebugWithPrefix(ve.servicePrefix, "Deleting exit request for validator %s from db", exitRequest.Event.ValidatorIndex)
+					if err := ve.storagePort.DeleteExitRequest(operatorID.String(), exitRequest.Event.ValidatorIndex.String()); err != nil {
+						logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
+					}
 					break
 				}
 
