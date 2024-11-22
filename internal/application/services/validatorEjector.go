@@ -72,6 +72,14 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			// if the validator is not active_ongoing, skip. Otherwise, we try to send the exit request
 			if exitRequest.Status != domain.StatusActiveOngoing {
 				logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+
+				// TODO: We could keep asking the chain about the exit process of this validator and give the user more information
+				// status, error := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
+				// if error != nil {
+				// 	logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status", error)
+				// }
+				// logger.DebugWithPrefix(ve.servicePrefix, "Updating exit request status to %s", status)
+				// ve.storagePort.UpdateExitRequestStatus(operatorID.String(), exitRequest.Event.ValidatorIndex.String(), status)
 				continue
 			}
 
