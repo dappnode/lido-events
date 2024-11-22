@@ -95,6 +95,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			// wait for the transaction to be included
 			// call ve.beaconchainPort.GetValidatorStatus(string(validator.Event.ValidatorPubkey)) in a loop until the status is domain.StatusActiveExiting
 			// a maximum of 40 times with a 3 second sleep between each call
+			//TODO: is there a better way to do this?
 			for i := 0; i < 40; i++ {
 				logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 

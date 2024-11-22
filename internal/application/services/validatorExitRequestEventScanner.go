@@ -91,8 +91,8 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 	}
 
 	if validatorStatus == domain.StatusActiveOngoing {
-		logger.InfoWithPrefix(vs.servicePrefix, "Validator %s is active and requires to exit", validatorExitEvent.ValidatorIndex)
-		message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
+		logger.InfoWithPrefix(vs.servicePrefix, "Validator %s is active and has been requestes to exit", validatorExitEvent.ValidatorIndex)
+		message := fmt.Sprintf("- 🚨 Your validator with ID: %s has been requested to exit. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
 		vs.notifierPort.SendNotification(message)
 	}
 
