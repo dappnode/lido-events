@@ -113,10 +113,10 @@ func (ve *ValidatorEjector) EjectValidator() error {
 
 			// wait for the transaction to be included
 			// call ve.beaconchainPort.GetValidatorStatus(string(validator.Event.ValidatorPubkey)) in a loop until the status is domain.StatusActiveExiting
-			// a maximum of 60 times with a 30 second sleep between each call (check for half an hour two times x minute)
+			// a maximum of 64 times with a 30 second sleep between each call (check for 32 minutes, two times x minute)
 			// TODO: If this ends before the status is ActiveExiting, the user will never get the notification that the validator has been exited successfully.
 			// IMPORTANT: This should never take longer to finish than the next cron iteration (defined in main)
-			for i := 0; i < 60; i++ {
+			for i := 0; i < 64; i++ {
 				logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 
 				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
