@@ -23,10 +23,17 @@ func NewPendingHashesLoader(storagePort ports.StoragePort, ipfsPort ports.IpfsPo
 	}
 }
 
-// loadPendingHashesCron starts a periodic service to load pending hashes from IPFS
-func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
+
+	// Wait for the signal from cron event scanner
+	<-firstExecutionComplete
+
+	// Execute immediately on startup
+	if err := phl.LoadPendingHashes(); err != nil {
+		logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
+	}
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

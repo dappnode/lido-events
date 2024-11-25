@@ -30,16 +30,18 @@ func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifi
 	}
 }
 
-// ScanDistributionLogUpdatedEventsCron runs a periodic scan for DistributionLogUpdated events
-func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
 
+	// Execute immediately on startup
+	ds.runScan(ctx)
+
+	// Signal that the first execution is complete
+	close(firstExecutionComplete)
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-
-	// Run the scan logic immediately
-	ds.runScan(ctx)
 
 	for {
 		select {

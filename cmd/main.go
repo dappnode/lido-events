@@ -118,13 +118,17 @@ func main() {
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 
-	// Start background services
-	// TODO only execute next cron job if the previous one has finished
-	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg) // once every epoch
-	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg)     // once every epoch
-	// TODO: the below crons must start after the previous ones have finished their first run
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
-	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg)
+	// DistributionLogUpdated
+	distributionLogUpdatedExecutionComplete := make(chan struct{})
+	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg, distributionLogUpdatedExecutionComplete) // once every epoch
+	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg, distributionLogUpdatedExecutionComplete)
+
+	// ExitRequest
+	exitRequestExecutionComplete := make(chan struct{})
+	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete) // once every epoch
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
+
+	// Events watcher
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle shutdown signals
