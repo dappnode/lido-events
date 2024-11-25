@@ -41,6 +41,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 	// Run the scan logic immediately
 	vs.runScan(ctx)
 
+	logger.DebugWithPrefix(vs.servicePrefix, "First execution complete, sending signal to start periodic ejector cron for ValidatorExitRequest events")
 	// Signal that the first execution is complete
 	close(firstExecutionComplete)
 

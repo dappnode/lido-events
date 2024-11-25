@@ -29,6 +29,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 
 	// Wait for the signal from cron event scanner
 	<-firstExecutionComplete
+	logger.DebugWithPrefix(phl.servicePrefix, "Signal received, starting periodic cron for loading pending CIDs")
 
 	// Execute immediately on startup
 	if err := phl.LoadPendingHashes(); err != nil {

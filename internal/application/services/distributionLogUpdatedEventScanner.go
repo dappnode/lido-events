@@ -37,6 +37,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 	// Execute immediately on startup
 	ds.runScan(ctx)
 
+	logger.DebugWithPrefix(ds.servicePrefix, "First execution complete, sending signal to start periodic cron for loading pending CIDs")
 	// Signal that the first execution is complete
 	close(firstExecutionComplete)
 

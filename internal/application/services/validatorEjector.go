@@ -35,6 +35,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 
 	// Wait for the signal from cron event scanner
 	<-firstExecutionComplete
+	logger.DebugWithPrefix(ve.servicePrefix, "Signal received, starting periodic ejector for ValidatorExitRequest events")
 
 	// Execute immediately on startup
 	if err := ve.EjectValidator(); err != nil {
