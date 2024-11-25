@@ -126,10 +126,10 @@ func (ve *ValidatorEjector) EjectValidator() error {
 				}
 
 				if validatorStatus == domain.StatusActiveExiting || validatorStatus == domain.StatusExitedUnslashed || validatorStatus == domain.StatusExitedSlashed {
-					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has been exited", exitRequest.Event.ValidatorIndex)
+					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has entered the exit queue", exitRequest.Event.ValidatorIndex)
 
 					// send notification and skip on error
-					message = fmt.Sprintf("- 🚪 Validator %s has been exited automatically, no manual action required", exitRequest.Event.ValidatorIndex)
+					message = fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required", exitRequest.Event.ValidatorIndex)
 					if err := ve.notifierPort.SendNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
