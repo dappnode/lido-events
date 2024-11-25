@@ -27,13 +27,25 @@
 - **API Endpoints**:
   - **Exit requests**:
     - `GET /api/v0/event_indexer/exit_requests`
+      - query params:
+        - `operatorId`: Operator ID to get exit requests.
   - **Operator ID (/)**: Allows for updating the Lido operator ID.
     - `POST api/v0/events_indexer/operatorId`: Updates the operator ID.
+      - query params:
+        - `operatorId`: Operator ID to update.
+    - `DELETE api/v0/events_indexer/operatorId`: Deletes the operator ID.
+      - query params:
+        - `operatorId`: Operator ID to delete.
   - **Telegram**: Configures Telegram for notifications:
     - `POST /api/v0/events_indexer/telegramConfig`: Configures Telegram.
+      - body (JSON):
+        - `chatId`: Telegram chat ID.
+        - `token`: Telegram bot token.
     - `GET /api/v0/events_indexer/telegramConfig`: Retrieves Telegram configuration.
   - **Validator Performance**: Retrieves validator performance data by operator ID.
     - `GET /api/v0/event_indexer/operator_performance`: Retrieves the operator performance.
+      - query params:
+        - `operatorId`: Operator ID to get performance data.
 
 ## Environment Variables
 

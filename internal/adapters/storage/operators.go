@@ -33,6 +33,28 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 	return nil // Operator ID already exists, no changes needed
 }
 
+// DeleteOperator removes an operator ID from the storage if it exists.
+func (fs *Storage) DeleteOperator(operatorID string) error {
+	db, err := fs.LoadDatabase()
+	if err != nil {
+		return err
+	}
+
+	// Check if the operator ID exists
+	if _, exists := db.Operators[operatorID]; exists {
+		// Remove the operator from the storage
+		delete(db.Operators, operatorID)
+		if err := fs.SaveDatabase(db); err != nil {
+			return err
+		}
+		fs.notifyOperatorIdListeners() // Notify listeners of the change
+		return nil
+	}
+
+	// Return an error if the operator ID does not exist
+	return fmt.Errorf("operator ID %s not found", operatorID)
+}
+
 // GetOperatorIds retrieves a list of all operator IDs in storage.
 func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 	db, err := fs.LoadDatabase()

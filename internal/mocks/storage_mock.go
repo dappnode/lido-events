@@ -24,6 +24,12 @@ func (m *MockStoragePort) SaveOperatorId(operatorID string) error {
 	return args.Error(0)
 }
 
+// DeleteOperator simulates deleting an operator ID
+func (m *MockStoragePort) DeleteOperator(operatorID string) error {
+	args := m.Called(operatorID)
+	return args.Error(0)
+}
+
 // RegisterOperatorIdListener returns a channel for operator ID updates
 func (m *MockStoragePort) RegisterOperatorIdListener() chan []*big.Int {
 	args := m.Called()

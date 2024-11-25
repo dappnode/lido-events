@@ -46,7 +46,8 @@ func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIH
 func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST")
 	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.GetTelegramConfig).Methods("GET")
-	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.UpdateOperatorID).Methods("POST")
+	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.AddOperator).Methods("POST")
+	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.DeleteOperator).Methods("DELETE")
 	h.Router.HandleFunc("/api/v0/events_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
 	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET")
 }
@@ -107,27 +108,75 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-// UpdateOperatorID handles updates to the operator ID
-func (h *APIHandler) UpdateOperatorID(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "UpdateOperatorID request received")
+// DeleteOperator handles deletion of an operator ID
+func (h *APIHandler) DeleteOperator(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "DeleteOperator request received")
+	operatorId := r.URL.Query().Get("operatorId")
+
+	if operatorId == "" {
+		logger.DebugWithPrefix("API", "Missing operatorId in DeleteOperator request")
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := new(big.Int).SetString(operatorId, 10); !ok {
+		logger.DebugWithPrefix("API", "Invalid operatorId format in DeleteOperator")
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
+		return
+	}
+
+	// check it exists calling GetOperatorIds
+	operatorIds, err := h.StoragePort.GetOperatorIds()
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
+		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError)
+		return
+	}
+
+	found := false
+	for _, id := range operatorIds {
+		if id.String() == operatorId {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		logger.DebugWithPrefix("API", "Operator ID %s not found", operatorId)
+		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound)
+		return
+	}
+
+	if err := h.StoragePort.DeleteOperator(operatorId); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to delete Operator ID: %v", err)
+		writeErrorResponse(w, "Failed to delete Operator ID", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// AddOperator handles updates to the operator ID
+func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "AddOperator request received")
 	var req struct {
 		OperatorID string `json:"operatorId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.DebugWithPrefix("API", "Invalid request body in UpdateOperatorID: %v", err)
+		logger.DebugWithPrefix("API", "Invalid request body in AddOperator: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if req.OperatorID == "" {
-		logger.DebugWithPrefix("API", "Missing operatorId in UpdateOperatorID request")
+		logger.DebugWithPrefix("API", "Missing operatorId in AddOperator request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(req.OperatorID, 10); !ok {
-		logger.DebugWithPrefix("API", "Invalid operatorId format in UpdateOperatorID")
+		logger.DebugWithPrefix("API", "Invalid operatorId format in AddOperator")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
 	}
