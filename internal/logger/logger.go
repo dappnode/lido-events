@@ -121,15 +121,16 @@ func (l *Logger) ErrorWithPrefix(prefix, msg string, v ...interface{}) {
 	}
 }
 
-// Fatal logs fatal messages with an optional prefix if the level is set to FATAL or lower
+// Fatal logs fatal messages and exits the program
 func (l *Logger) Fatal(msg string, v ...interface{}) {
 	l.FatalWithPrefix("", msg, v...)
 }
 
-// FatalWithPrefix logs fatal messages with a specific prefix
+// FatalWithPrefix logs fatal messages with a specific prefix and exits the program
 func (l *Logger) FatalWithPrefix(prefix, msg string, v ...interface{}) {
 	if l.level <= FATAL {
 		l.fatal.Printf(formatMessage(prefix, msg), v...)
+		os.Exit(1) // Exit the program with a non-zero status code
 	}
 }
 
