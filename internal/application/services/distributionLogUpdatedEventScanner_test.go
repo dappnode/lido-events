@@ -73,6 +73,7 @@ func TestScanDistributionLogUpdatedEventsCron(t *testing.T) {
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
+	channel := make(chan struct{})
 
 	start := uint64(100)
 	end := uint64(200)
@@ -95,7 +96,7 @@ func TestScanDistributionLogUpdatedEventsCron(t *testing.T) {
 	)
 
 	// Run the method
-	go scanner.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Second, wg)
+	go scanner.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Second, wg, channel)
 	time.Sleep(2 * time.Second) // Let the cron execute at least once
 	cancel()                    // Stop the cron
 
@@ -117,6 +118,7 @@ func TestScanDistributionLogUpdatedEventsCron_NoLastProcessedBlock(t *testing.T)
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
+	channel := make(chan struct{})
 
 	deploymentBlock := uint64(50)
 	end := uint64(200)
@@ -139,7 +141,7 @@ func TestScanDistributionLogUpdatedEventsCron_NoLastProcessedBlock(t *testing.T)
 	)
 
 	// Run the method
-	go scanner.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Second, wg)
+	go scanner.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Second, wg, channel)
 	time.Sleep(2 * time.Second) // Let the cron execute at least once
 	cancel()                    // Stop the cron
 

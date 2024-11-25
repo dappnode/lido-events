@@ -29,9 +29,18 @@ func NewValidatorEjectorService(storagePort ports.StoragePort, notifierPort port
 }
 
 // ValidatorEjectorCron starts a periodic service to exit validators that requested to exit
-func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
+
+	// Wait for the signal from cron event scanner
+	<-firstExecutionComplete
+	logger.DebugWithPrefix(ve.servicePrefix, "Signal received, starting periodic ejector for ValidatorExitRequest events")
+
+	// Execute immediately on startup
+	if err := ve.EjectValidator(); err != nil {
+		logger.ErrorWithPrefix(ve.servicePrefix, "Error ejecting validators: %v", err)
+	}
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

@@ -99,6 +99,7 @@ func TestLoadPendingHashesCron_WithComplexTypes(t *testing.T) {
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
+	channel := make(chan struct{})
 
 	operatorIDs := []*big.Int{
 		big.NewInt(1),
@@ -142,7 +143,7 @@ func TestLoadPendingHashesCron_WithComplexTypes(t *testing.T) {
 	loader := services.NewPendingHashesLoader(mockStorage, mockIpfs)
 
 	// Run the LoadPendingHashesCron method
-	go loader.LoadPendingHashesCron(ctx, 1*time.Second, wg)
+	go loader.LoadPendingHashesCron(ctx, 1*time.Second, wg, channel)
 	time.Sleep(2 * time.Second) // Let the cron execute at least once
 	cancel()                    // Stop the cron
 

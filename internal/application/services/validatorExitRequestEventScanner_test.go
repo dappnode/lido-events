@@ -63,6 +63,7 @@ func TestScanValidatorExitRequestEventsCron(t *testing.T) {
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
+	channel := make(chan struct{})
 
 	start := uint64(10)
 	end := uint64(20)
@@ -97,7 +98,7 @@ func TestScanValidatorExitRequestEventsCron(t *testing.T) {
 	)
 
 	// Run the method
-	go scanner.ScanValidatorExitRequestEventsCron(ctx, 1*time.Second, wg)
+	go scanner.ScanValidatorExitRequestEventsCron(ctx, 1*time.Second, wg, channel)
 	time.Sleep(2 * time.Second) // Let the cron execute at least once
 	cancel()                    // Stop the cron
 
