@@ -192,12 +192,12 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 	// TODO: this logic should be in the services layer
 	if err := h.StoragePort.SaveDistributionLogLastProcessedBlock(0); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update DistributionLogLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to update DistributionLogLastProcessedBlock", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError)
 		return
 	}
 	if err := h.StoragePort.SaveValidatorExitRequestLastProcessedBlock(0); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update ValidatorExitRequestLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to update ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError)
 		return
 	}
 
