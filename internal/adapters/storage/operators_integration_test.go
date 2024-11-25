@@ -120,3 +120,59 @@ func TestGetOperatorIds_InvalidOperatorId(t *testing.T) {
 	assert.Nil(t, operatorIDs)
 	assert.EqualError(t, err, "failed to convert operator ID to big.Int")
 }
+
+// TestDeleteOperator_ExistingOperator tests deleting an existing operator ID.
+func TestDeleteOperator_ExistingOperator(t *testing.T) {
+	// Initialize the database with an operator ID
+	initialData := &storage.Database{
+		Operators: map[string]storage.OperatorData{
+			"1": { // operatorID as string
+				Reports:      make(domain.Reports),
+				ExitRequests: make(domain.ExitRequests),
+			},
+		},
+	}
+
+	tmpFile := CreateTempDatabaseFile(t, initialData)
+	defer os.Remove(tmpFile.Name()) // Clean up
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	operatorID := "1"
+
+	// Delete the operator ID
+	err := storageAdapter.DeleteOperator(operatorID)
+	assert.NoError(t, err)
+
+	// Verify the operator ID was deleted
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+	assert.NotContains(t, db.Operators, operatorID)
+}
+
+// TestDeleteOperator_NonExistentOperator tests attempting to delete a non-existent operator ID.
+func TestDeleteOperator_NonExistentOperator(t *testing.T) {
+	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data
+	defer os.Remove(tmpFile.Name())           // Clean up
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	operatorID := "non-existent"
+
+	// Attempt to delete a non-existent operator ID
+	err := storageAdapter.DeleteOperator(operatorID)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "operator ID non-existent not found")
+}
+
+// TestDeleteOperator_EmptyDatabase tests deleting an operator ID from an empty database.
+func TestDeleteOperator_EmptyDatabase(t *testing.T) {
+	tmpFile := CreateTempDatabaseFile(t, nil) // Empty initial data
+	defer os.Remove(tmpFile.Name())           // Clean up
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	operatorID := "1"
+
+	// Attempt to delete an operator ID from an empty database
+	err := storageAdapter.DeleteOperator(operatorID)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "operator ID 1 not found")
+}

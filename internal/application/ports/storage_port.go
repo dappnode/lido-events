@@ -21,6 +21,7 @@ type StoragePort interface {
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error
 	RegisterOperatorIdListener() chan []*big.Int
+	DeleteOperator(operatorID string) error
 
 	// reports
 	GetReports(operatorID *big.Int) (domain.Reports, error)
