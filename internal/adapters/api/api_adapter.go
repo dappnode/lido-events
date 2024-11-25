@@ -187,6 +187,20 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set last block processed to 0, this will trigger the events scanner to start from the beginning
+	// and look for events for the new operator ID
+	// TODO: this logic should be in the services layer
+	if err := h.StoragePort.SaveDistributionLogLastProcessedBlock(0); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to update DistributionLogLastProcessedBlock: %v", err)
+		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError)
+		return
+	}
+	if err := h.StoragePort.SaveValidatorExitRequestLastProcessedBlock(0); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to update ValidatorExitRequestLastProcessedBlock: %v", err)
+		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
