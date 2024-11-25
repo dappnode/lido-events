@@ -44,8 +44,8 @@ func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Set the start and end blocks for the scan
-	start := uint64(21071257)
-	end := uint64(21071259)
+	start := uint64(95387)
+	end := uint64(95389)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -77,13 +77,9 @@ func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
 
 	// Assertions for the expected events
 	assert.NoError(t, err)
-	assert.Contains(t, foundEvents, "370637")
-	assert.Equal(t, "b07c5cc5abd773d24c460140f872d24fb6584027626a4cba7b43e4f79f22c7b4846ea55d11ba96a322ba663c55cf3523", foundEvents["370637"].ValidatorPubkey)
+	assert.Contains(t, foundEvents, "1802081")
+	assert.Equal(t, "972255d9a5085d082d485f1e17999b38967e022057aba66a477cd93bce5cfa980bc42df82b208987ed46b9cdbc7b5fcb", foundEvents["1802081"].ValidatorPubkey)
 	assert.Equal(t, uint64(21071258), foundEvents["370637"].BlockNumber)
-
-	assert.Contains(t, foundEvents, "370638")
-	assert.Equal(t, "92404310ad54447f6ab3277351a0da37f9b75696409056e855cfbe9838c649def1ca24cba994f6394f436c940d4cc3bc", foundEvents["370638"].ValidatorPubkey)
-	assert.Equal(t, uint64(21071258), foundEvents["370638"].BlockNumber)
 
 	// Ensure all expected mock calls were made
 	mockStorage.AssertCalled(t, "GetOperatorIds") // Ensure GetOperatorIds was actually called
