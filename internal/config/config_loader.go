@@ -104,7 +104,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500"
 		}
 		config = Config{
-			SignerUrl:                       "http://signer.holesky.dncore.dappnode",
+			SignerUrl:                       "http://signer.holesky.dncore.dappnode:9000",
 			IpfsUrl:                         ipfsUrl,
 			WsURL:                           wsURL,
 			RpcUrl:                          rpcURL,
@@ -134,7 +134,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500"
 		}
 		config = Config{
-			SignerUrl:                       "http://signer.mainnet.dncore.dappnode",
+			SignerUrl:                       "http://signer.mainnet.dncore.dappnode:9000",
 			IpfsUrl:                         ipfsUrl,
 			WsURL:                           wsURL,
 			RpcUrl:                          rpcURL,

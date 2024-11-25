@@ -96,6 +96,12 @@ func (m *MockStoragePort) UpdateExitRequestStatus(operatorID string, validatorIn
 	return args.Error(0)
 }
 
+// DeleteExitRequest simulates deleting an individual exit request for a specific operator ID and validator index.
+func (m *MockStoragePort) DeleteExitRequest(operatorID string, validatorIndex string) error {
+	args := m.Called(operatorID, validatorIndex)
+	return args.Error(0)
+}
+
 // GetTelegramConfig returns Telegram configuration data
 func (m *MockStoragePort) GetTelegramConfig() (domain.TelegramConfig, error) {
 	args := m.Called()

@@ -121,7 +121,7 @@ func main() {
 	// Start background services
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute, &wg)
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute, &wg)
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 10*time.Minute, &wg)
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
 	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute, &wg)
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 

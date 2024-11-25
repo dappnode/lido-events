@@ -32,6 +32,7 @@ type StoragePort interface {
 	SaveExitRequests(operatorID *big.Int, requests domain.ExitRequests) error
 	SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error
 	UpdateExitRequestStatus(operatorId string, validatorIndex string, status domain.ValidatorStatus) error
+	DeleteExitRequest(operatorID string, validatorIndex string) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)

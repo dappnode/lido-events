@@ -53,7 +53,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 
 // ejectValidator orchestrates the voluntary exit process for a validator
 func (ve *ValidatorEjector) EjectValidator() error {
-	logger.DebugWithPrefix(ve.servicePrefix, "Ejecting validators if any")
+	logger.DebugWithPrefix(ve.servicePrefix, "Validator Ejector cron started")
 
 	operatorIDs, err := ve.storagePort.GetOperatorIds()
 	if err != nil {
@@ -69,20 +69,38 @@ func (ve *ValidatorEjector) EjectValidator() error {
 		}
 
 		for _, exitRequest := range exitRequests {
-			// if the validator is not active_ongoing, skip
-			if exitRequest.Status != domain.StatusActiveOngoing {
-				logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s and no exit is required, skipping", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+
+			// First thing we do is to check the onchain status of the validator. This way we make sure we dont try to exit a validator that is already exiting
+			onchainStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.Event.ValidatorIndex.String())
+			if err != nil {
+				logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status from beaconchain, skipping.", err)
 				continue
 			}
 
-			logger.WarnWithPrefix(ve.servicePrefix, "Validator %s is %s, executing exit", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+			// if the validator status is not active ongoing or active slashed we skip the exit request because it is already exiting.
+			if onchainStatus != domain.StatusActiveOngoing && onchainStatus != domain.StatusActiveSlashed {
+				if onchainStatus != domain.StatusPendingInitialized && onchainStatus != domain.StatusPendingQueued {
+					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, deleting the exit request from db", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+					//Since the validator is already exiting, we remove the exit request from the db
+					if err := ve.storagePort.DeleteExitRequest(operatorID.String(), exitRequest.Event.ValidatorIndex.String()); err != nil {
+						// An error here is no big deal, we will retry to delete this in the next iteration of the cron
+						logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
+					}
+				} else {
+					logger.DebugWithPrefix(ve.servicePrefix, "Validator %s is exited to request but it is in a pending status, %s waiting for it to be active", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+				}
+				continue
+			}
 
 			// send notification and skip on error
-			message := fmt.Sprintf("- 🚨 One of the validators requested to exit: %s", exitRequest.Event.ValidatorIndex)
-			ve.notifierPort.SendNotification(message)
+			message := fmt.Sprintf("- 🚨 Your validator %s is requested to exit.", exitRequest.Event.ValidatorIndex)
+			if err := ve.notifierPort.SendNotification(message); err != nil {
+				logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
+			}
 
 			// exit the validator
-			if err := ve.exitValidatorPort.ExitValidator(string(exitRequest.Event.ValidatorPubkey), exitRequest.Event.ValidatorIndex.String()); err != nil {
+			logger.InfoWithPrefix(ve.servicePrefix, "Exiting validator %s with status %s", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+			if err := ve.exitValidatorPort.ExitValidator(exitRequest.ValidatorPubkeyHex, exitRequest.Event.ValidatorIndex.String()); err != nil {
 				logger.WarnWithPrefix(ve.servicePrefix, "Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
 				// send notification with manual exit link and skip on errror
 				// TODO: wait for PR in docs to add the proper link
@@ -95,39 +113,41 @@ func (ve *ValidatorEjector) EjectValidator() error {
 
 			// wait for the transaction to be included
 			// call ve.beaconchainPort.GetValidatorStatus(string(validator.Event.ValidatorPubkey)) in a loop until the status is domain.StatusActiveExiting
-			// a maximum of 40 times with a 3 second sleep between each call
-			for i := 0; i < 40; i++ {
+			// a maximum of 64 times with a 30 second sleep between each call (check for 32 minutes, two times x minute)
+			// TODO: If this ends before the status is ActiveExiting, the user will never get the notification that the validator has been exited successfully.
+			// IMPORTANT: This should never take longer to finish than the next cron iteration (defined in main)
+			for i := 0; i < 64; i++ {
 				logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 
-				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(string(exitRequest.Event.ValidatorPubkey))
+				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
 				if err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status", err)
 					continue
 				}
 
-				if validatorStatus == domain.StatusActiveExiting {
-					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has been exited", exitRequest.Event.ValidatorIndex)
-
-					// update the status on the db using UpdateExitRequest and skip on error
-					if err := ve.storagePort.UpdateExitRequestStatus(operatorID.String(), string(exitRequest.Event.ValidatorPubkey), domain.StatusActiveExiting); err != nil {
-						logger.ErrorWithPrefix(ve.servicePrefix, "Error updating exit request status", err)
-					}
+				if validatorStatus == domain.StatusActiveExiting || validatorStatus == domain.StatusExitedUnslashed || validatorStatus == domain.StatusExitedSlashed {
+					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has entered the exit queue", exitRequest.Event.ValidatorIndex)
 
 					// send notification and skip on error
-					message = fmt.Sprintf("- 🚪 Validator %s has been exited automatically, no manual action required", exitRequest.Event.ValidatorIndex)
+					message = fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required", exitRequest.Event.ValidatorIndex)
 					if err := ve.notifierPort.SendNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
 
+					// remove the exit request from the db
+					logger.DebugWithPrefix(ve.servicePrefix, "Deleting exit request for validator %s from db", exitRequest.Event.ValidatorIndex)
+					if err := ve.storagePort.DeleteExitRequest(operatorID.String(), exitRequest.Event.ValidatorIndex.String()); err != nil {
+						logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
+					}
 					break
 				}
 
-				time.Sleep(3 * time.Second)
+				time.Sleep(30 * time.Second)
 			}
 
 		}
 	}
 
-	logger.DebugWithPrefix(ve.servicePrefix, "Ejecting validators completed")
+	logger.DebugWithPrefix(ve.servicePrefix, "Validator Ejector cron finished")
 	return nil
 }
