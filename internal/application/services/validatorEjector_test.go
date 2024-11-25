@@ -73,6 +73,7 @@ func TestValidatorEjectorCron(t *testing.T) {
 	defer cancel()
 
 	wg := &sync.WaitGroup{}
+	channel := make(chan struct{})
 
 	operatorID := big.NewInt(1)
 	validatorPubKey := "0x1234567890abcdef"
@@ -105,7 +106,7 @@ func TestValidatorEjectorCron(t *testing.T) {
 	ejector := services.NewValidatorEjectorService(mockStorage, mockNotifier, mockExitValidator, mockBeaconchain)
 
 	// Run the ValidatorEjectorCron method
-	go ejector.ValidatorEjectorCron(ctx, 1*time.Second, wg)
+	go ejector.ValidatorEjectorCron(ctx, 1*time.Second, wg, channel)
 	time.Sleep(2 * time.Second) // Let the cron execute at least once
 	cancel()                    // Stop the cron
 
