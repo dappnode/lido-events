@@ -119,10 +119,12 @@ func main() {
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 
 	// Start background services
-	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 1*time.Minute, &wg)
-	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 1*time.Minute, &wg)
+	// TODO only execute next cron job if the previous one has finished
+	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg) // once every epoch
+	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg)     // once every epoch
+	// TODO: the below crons must start after the previous ones have finished their first run
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
-	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 1*time.Minute, &wg)
+	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg)
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle shutdown signals
