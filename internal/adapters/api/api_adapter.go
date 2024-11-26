@@ -23,33 +23,43 @@ type APIHandler struct {
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
 func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
-		storagePort,
-		mux.NewRouter(),
-		"API",
+		StoragePort:   storagePort,
+		Router:        mux.NewRouter(),
+		adapterPrefix: "API",
 	}
 
+	// Set up API routes
 	h.SetupRoutes()
 
-	// Add CORS middleware to the router using the provided allowed origins
+	// Define CORS configuration
 	corsAllowedOrigins := handlers.AllowedOrigins(allowedOrigins)
-	corsAllowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"})
+	corsAllowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS", "DELETE"})
 	corsAllowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
 
-	h.Router.Use(func(next http.Handler) http.Handler {
-		return handlers.CORS(corsAllowedOrigins, corsAllowedMethods, corsAllowedHeaders)(next)
-	})
+	// Add CORS middleware globally
+	h.Router.Use(handlers.CORS(
+		corsAllowedOrigins,
+		corsAllowedMethods,
+		corsAllowedHeaders,
+	))
 
 	return h
 }
 
 // SetupRoutes sets up all the routes for the API
 func (h *APIHandler) SetupRoutes() {
-	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST")
-	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.GetTelegramConfig).Methods("GET")
-	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.AddOperator).Methods("POST")
-	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.DeleteOperator).Methods("DELETE")
-	h.Router.HandleFunc("/api/v0/events_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET")
-	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET")
+	// Define API endpoints
+	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.UpdateTelegramConfig).Methods("POST", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.GetTelegramConfig).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.AddOperator).Methods("POST", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.DeleteOperator).Methods("DELETE", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET", "OPTIONS")
+
+	// Add a generic OPTIONS handler to ensure preflight requests are handled
+	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK) // Respond to OPTIONS requests with 200 OK
+	})
 }
 
 // GetTelegramConfig retrieves the Telegram configuration

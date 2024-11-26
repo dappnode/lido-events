@@ -20,27 +20,30 @@ type APIHandler struct {
 // NewProxyAPIAdapter initializes the APIHandler and sets up routes
 func NewProxyAPIAdapter(allowedOrigins []string, proxyApiURL string) *APIHandler {
 	h := &APIHandler{
-		mux.NewRouter(),
-		proxyApiURL,
-		"PROXY-API",
+		Router:        mux.NewRouter(),
+		proxyApiURL:   proxyApiURL,
+		adapterPrefix: "PROXY-API",
 	}
 
 	h.SetupRoutes()
 
-	// Configure CORS middleware with restricted headers
+	// Configure CORS middleware
+	corsAllowedOrigins := handlers.AllowedOrigins(allowedOrigins)
 	corsAllowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"})
 	corsAllowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
 
-	h.Router.Use(func(next http.Handler) http.Handler {
-		return handlers.CORS(corsAllowedMethods, corsAllowedHeaders)(next)
-	})
+	h.Router.Use(handlers.CORS(
+		corsAllowedOrigins,
+		corsAllowedMethods,
+		corsAllowedHeaders,
+	))
 
 	return h
 }
 
 // SetupRoutes sets up all the routes for the Proxy API
 func (h *APIHandler) SetupRoutes() {
-	h.Router.PathPrefix("/v1/").HandlerFunc(h.proxyHandler)
+	h.Router.PathPrefix("/v1/").HandlerFunc(h.proxyHandler).Methods("GET", "POST", "OPTIONS")
 }
 
 // proxyHandler handles all requests and proxies them to the target API
@@ -52,7 +55,7 @@ func (h *APIHandler) proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Append the incoming request's path to the target URL
+	// Append the incoming request's path and query parameters to the target URL
 	targetURL.Path = r.URL.Path
 	targetURL.RawQuery = r.URL.RawQuery
 
@@ -63,11 +66,8 @@ func (h *APIHandler) proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Copy headers from the original request, excluding the Origin header
+	// Copy headers from the original request
 	for key, values := range r.Header {
-		if key == "Origin" {
-			continue
-		}
 		for _, value := range values {
 			proxyReq.Header.Add(key, value)
 		}
@@ -82,7 +82,13 @@ func (h *APIHandler) proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Copy response headers, excluding CORS-related headers
+	// Add CORS headers to the response
+	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin")) // Reflect the origin for allowed requests
+	w.Header().Set("Access-Control-Allow-Credentials", "true")           // Allow credentials if needed
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	// Copy other response headers, excluding CORS-related headers
 	for key, values := range resp.Header {
 		if key == "Access-Control-Allow-Origin" || key == "Origin" {
 			continue
