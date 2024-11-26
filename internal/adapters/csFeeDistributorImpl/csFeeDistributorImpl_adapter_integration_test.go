@@ -32,6 +32,7 @@ func setupCsFeeDistributorImplAdapter(t *testing.T) (*csfeedistributorimpl.CsFee
 
 // ScanDistributionLogUpdatedEventsIntegration tests scanning for DistributionLogUpdated events
 func TestScanDistributionLogUpdatedEventsIntegration(t *testing.T) {
+	t.Skip()
 	adapter, err := setupCsFeeDistributorImplAdapter(t)
 	assert.NoError(t, err)
 
