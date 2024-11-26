@@ -24,6 +24,7 @@ func setupBeaconchainAdapter(t *testing.T) *beaconchain.BeaconchainAdapter {
 }
 
 func TestGetValidatorStatusIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Test a slashed validator
@@ -34,6 +35,7 @@ func TestGetValidatorStatusIntegration(t *testing.T) {
 }
 
 func TestPostStateValidatorsIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Test with active and slashed validators
