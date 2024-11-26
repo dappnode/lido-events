@@ -28,9 +28,6 @@ func TestFetchAndParseIpfs(t *testing.T) {
 		t.Fatalf("failed to fetch and parse IPFS data: %v", err)
 	}
 
-	// Print the fetched report for manual inspection (optional)
-	t.Logf("Fetched report: %+v", report)
-
 	// Assertions to validate fields based on expected structure
 
 	// Check if `Frame` has been populated

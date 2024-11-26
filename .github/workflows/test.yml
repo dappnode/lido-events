@@ -1,0 +1,32 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+env:
+  LOG_LEVEL: DEBUG
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      BEACONCHAIN_URL: ${{ secrets.BEACONCHAIN_URL }}
+      RPC_URL: ${{ secrets.RPC_URL }}
+      WS_URL: ${{ secrets.WS_URL }}
+      IPFS_URL: ${{ secrets.IPFS_URL }}
+      LOG_LEVEL: DEBUG
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Run integration tests
+      - name: Run Integration Tests
+        run: |
+          echo "Running Integration Tests"
+          NETWORK=holesky go test -v -tags=integration ./...

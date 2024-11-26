@@ -118,7 +118,7 @@ func TestGetOperatorIds_InvalidOperatorId(t *testing.T) {
 	operatorIDs, err := storageAdapter.GetOperatorIds()
 	assert.Error(t, err)
 	assert.Nil(t, operatorIDs)
-	assert.EqualError(t, err, "failed to convert operator ID to big.Int")
+	assert.EqualError(t, err, "failed to convert operator ID invalid to big.Int")
 }
 
 // TestDeleteOperator_ExistingOperator tests deleting an existing operator ID.
