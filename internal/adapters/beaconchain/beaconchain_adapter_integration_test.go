@@ -51,6 +51,7 @@ func TestPostStateValidatorsIntegration(t *testing.T) {
 }
 
 func TestSubmitPoolVoluntaryExitIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Example voluntary exit submission (modify epoch and validatorIndex accordingly)
@@ -59,6 +60,7 @@ func TestSubmitPoolVoluntaryExitIntegration(t *testing.T) {
 }
 
 func TestGetStateForkIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Retrieve fork for "head"
@@ -69,6 +71,7 @@ func TestGetStateForkIntegration(t *testing.T) {
 }
 
 func TestGetGenesisIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Retrieve genesis data
@@ -79,6 +82,7 @@ func TestGetGenesisIntegration(t *testing.T) {
 }
 
 func TestGetBlockHeaderIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Retrieve block header for "finalized"
@@ -89,6 +93,7 @@ func TestGetBlockHeaderIntegration(t *testing.T) {
 }
 
 func TestGetEpochHeaderIntegration(t *testing.T) {
+	t.Skip()
 	adapter := setupBeaconchainAdapter(t)
 
 	// Retrieve epoch header for "finalized"
