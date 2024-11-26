@@ -46,6 +46,7 @@
     - `GET /api/v0/event_indexer/operator_performance`: Retrieves the operator performance.
       - query params:
         - `operatorId`: Operator ID to get performance data.
+- Proxy API: a proxy API that redirect requests to the [Lico API keys](https://github.com/lidofinance/lido-keys-api). Its main functionality is to avoid the cors issues when the Lido CSM UI tries to fetch the API.
 
 ## Environment Variables
 
@@ -55,6 +56,7 @@ To configure the app, set the following environment variables:
 |------------------|------------------------------------------------------------------------------------------------------|
 | `NETWORK`        | Ethereum network (e.g., `mainnet`, `holesky`). Default holesky                                       |
 | `API_PORT`       | Port on which the API will be exposed. Default 8080                                                  |
+| `PROXY_API_PORT` | Proxy port on which the Proxy API will be exposed. Default 8081                                                 |
 | `BEACONCHAIN_URL`| URL of the Ethereum beacon chain client. Default http://beacon-chain.<network>,dncore.dappnode:3500  |
 | `WS_URL`         | URL of the Ethereum WebSocket client. Default ws://execution.<network>.dncore.dappnode:8546          |
 | `RPC_URL`        | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |

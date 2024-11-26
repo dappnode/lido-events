@@ -35,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /app/main .
 
 # Expose the application port
-EXPOSE 8080
+EXPOSE 8080 8081
 
 # Command to run the binary
 ENTRYPOINT ["./main"]
