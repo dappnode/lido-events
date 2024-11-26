@@ -11,6 +11,7 @@ import (
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
+	proxyapi "lido-events/internal/adapters/proxyApi"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"lido-events/internal/logger"
@@ -67,9 +68,9 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
-	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
 
 	// Start HTTP server
+	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
 	server := &http.Server{
 		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
 		Handler: apiAdapter.Router,
@@ -80,6 +81,21 @@ func main() {
 		logger.Info("Server started on :%d", networkConfig.ApiPort)
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
 			logger.Fatal("HTTP server ListenAndServe: %v", err)
+		}
+	}()
+
+	// Start Proxy API server
+	proxyApiAdapter := proxyapi.NewProxyAPIAdapter(networkConfig.CORS, networkConfig.LidoKeysApiUrl)
+	proxyServer := &http.Server{
+		Addr:    ":" + strconv.FormatUint(networkConfig.ProxyApiPort, 10),
+		Handler: proxyApiAdapter.Router,
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		logger.Info("Proxy API server started on :%d", networkConfig.ProxyApiPort)
+		if err := proxyServer.ListenAndServe(); err != http.ErrServerClosed {
+			logger.Fatal("Proxy API server ListenAndServe: %v", err)
 		}
 	}()
 
@@ -142,6 +158,13 @@ func main() {
 		defer serverCancel()
 		if err := server.Shutdown(serverCtx); err != nil {
 			logger.Info("HTTP server Shutdown: %v", err)
+		}
+
+		// Give the Proxy API server time to finish ongoing requests
+		proxyServerCtx, proxyServerCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer proxyServerCancel()
+		if err := proxyServer.Shutdown(proxyServerCtx); err != nil {
+			logger.Info("Proxy API server Shutdown: %v", err)
 		}
 	}()
 

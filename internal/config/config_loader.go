@@ -33,6 +33,10 @@ type Config struct {
 	// Block number of the deployment of the VEBO contract and the CSFeeDistributor contract
 	VeboBlockDeployment             uint64
 	CsFeeDistributorBlockDeployment uint64
+
+	// Lido specifics
+	LidoKeysApiUrl string
+	ProxyApiPort   uint64
 }
 
 // Helper function to parse and validate CORS from environment variable
@@ -64,6 +68,17 @@ func LoadNetworkConfig() (Config, error) {
 			apiPort = port
 		} else {
 			logger.Fatal("Invalid API_PORT value: %s", apiPortStr)
+		}
+	}
+
+	proxyApiPortStr := os.Getenv("PROXY_API_PORT")
+	proxyApiPort := uint64(8081)
+	if proxyApiPortStr != "" {
+		// Try to parse the port as uint64
+		if port, err := strconv.ParseUint(proxyApiPortStr, 10, 64); err == nil {
+			proxyApiPort = port
+		} else {
+			logger.Fatal("Invalid PROXY_API_PORT value: %s", proxyApiPortStr)
 		}
 	}
 
@@ -121,6 +136,8 @@ func LoadNetworkConfig() (Config, error) {
 			VeboBlockDeployment:             uint64(30701),
 			CsFeeDistributorBlockDeployment: uint64(1774650),
 			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
+			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
+			ProxyApiPort:                    proxyApiPort,
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
@@ -151,6 +168,8 @@ func LoadNetworkConfig() (Config, error) {
 			VeboBlockDeployment:             uint64(17172556),
 			CsFeeDistributorBlockDeployment: uint64(20935463),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
+			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
+			ProxyApiPort:                    proxyApiPort,
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)
