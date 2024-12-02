@@ -16,14 +16,16 @@ import (
 // APIHandler holds the necessary dependencies for API endpoints
 type APIHandler struct {
 	StoragePort   ports.StoragePort
+	NotifierPort  ports.NotifierPort
 	Router        *mux.Router
 	adapterPrefix string
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(storagePort ports.StoragePort, notifierPort ports.NotifierPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
 		StoragePort:   storagePort,
+		NotifierPort:  notifierPort,
 		Router:        mux.NewRouter(),
 		adapterPrefix: "API",
 	}
@@ -115,6 +117,13 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// test the telegram connection
+	if err := h.NotifierPort.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
+		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -189,6 +198,22 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 		logger.DebugWithPrefix("API", "Invalid operatorId format in AddOperator")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
 		return
+	}
+
+	// check if operator id already exists and if so return ok
+	operatorIds, err := h.StoragePort.GetOperatorIds()
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
+		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError)
+		return
+	}
+
+	for _, id := range operatorIds {
+		if id.String() == req.OperatorID {
+			logger.DebugWithPrefix("API", "Operator ID %s already exists", req.OperatorID)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 	}
 
 	if err := h.StoragePort.SaveOperatorId(req.OperatorID); err != nil {

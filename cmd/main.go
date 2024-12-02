@@ -35,15 +35,9 @@ func waitForInitialConfig(storageAdapter *storage.Storage) {
 		if err != nil || len(operatorIds) == 0 {
 			logger.Info("Waiting for operator IDs to be set...")
 		} else {
-			// Check for Telegram config
-			telegramConfig, err := storageAdapter.GetTelegramConfig()
-			if err != nil || telegramConfig.Token == "" || telegramConfig.UserID == 0 {
-				logger.Info("Waiting for Telegram config to be set...")
-			} else {
-				// Both operator IDs and Telegram config are set
-				logger.Info("Operator IDs and Telegram config are set. Proceeding with initialization.")
-				return
-			}
+			// Operator IDs are set
+			logger.Info("Operator IDs are set. Proceeding with initialization.")
+			return
 		}
 		time.Sleep(2 * time.Second) // Poll every 2 seconds
 	}
@@ -68,9 +62,14 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
+	// Initialize the notifier adapter (Telegram configuration optional)
+	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
+	if err != nil {
+		logger.Warn("Telegram notifier not initialized: %v", err)
+	}
 
 	// Start HTTP server
-	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(storageAdapter, notifierAdapter, networkConfig.CORS)
 	server := &http.Server{
 		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
 		Handler: apiAdapter.Router,
@@ -106,10 +105,7 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
-	if err != nil {
-		logger.Fatal("Failed to initialize Telegram notifier: %v", err)
-	}
+
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
 		logger.Fatal("Failed to initialize CsFeeDistributorImpl adapter: %v", err)
