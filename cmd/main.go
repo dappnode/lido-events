@@ -35,15 +35,9 @@ func waitForInitialConfig(storageAdapter *storage.Storage) {
 		if err != nil || len(operatorIds) == 0 {
 			logger.Info("Waiting for operator IDs to be set...")
 		} else {
-			// Check for Telegram config
-			telegramConfig, err := storageAdapter.GetTelegramConfig()
-			if err != nil || telegramConfig.Token == "" || telegramConfig.UserID == 0 {
-				logger.Info("Waiting for Telegram config to be set...")
-			} else {
-				// Both operator IDs and Telegram config are set
-				logger.Info("Operator IDs and Telegram config are set. Proceeding with initialization.")
-				return
-			}
+			// Operator IDs are set
+			logger.Info("Operator IDs are set. Proceeding with initialization.")
+			return
 		}
 		time.Sleep(2 * time.Second) // Poll every 2 seconds
 	}
@@ -106,10 +100,13 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
+
+	// Initialize the notifier adapter (Telegram configuration optional)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
-		logger.Fatal("Failed to initialize Telegram notifier: %v", err)
+		logger.Warn("Telegram notifier not initialized: %v", err)
 	}
+
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {
 		logger.Fatal("Failed to initialize CsFeeDistributorImpl adapter: %v", err)
