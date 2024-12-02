@@ -118,7 +118,7 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	}
 
 	// test the telegram connection
-	if err := h.NotifierPort.SendNotification("Updated telegram configuration successfully"); err != nil {
+	if err := h.NotifierPort.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
 		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
 		return
