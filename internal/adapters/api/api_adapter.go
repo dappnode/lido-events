@@ -191,6 +191,22 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if operator id already exists and if so return ok
+	operatorIds, err := h.StoragePort.GetOperatorIds()
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
+		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError)
+		return
+	}
+
+	for _, id := range operatorIds {
+		if id.String() == req.OperatorID {
+			logger.DebugWithPrefix("API", "Operator ID %s already exists", req.OperatorID)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+
 	if err := h.StoragePort.SaveOperatorId(req.OperatorID); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Operator ID: %v", err)
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
