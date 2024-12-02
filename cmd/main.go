@@ -62,9 +62,14 @@ func main() {
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
+	// Initialize the notifier adapter (Telegram configuration optional)
+	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
+	if err != nil {
+		logger.Warn("Telegram notifier not initialized: %v", err)
+	}
 
 	// Start HTTP server
-	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(storageAdapter, notifierAdapter, networkConfig.CORS)
 	server := &http.Server{
 		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
 		Handler: apiAdapter.Router,
@@ -100,12 +105,6 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-
-	// Initialize the notifier adapter (Telegram configuration optional)
-	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
-	if err != nil {
-		logger.Warn("Telegram notifier not initialized: %v", err)
-	}
 
 	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
 	if err != nil {

@@ -16,14 +16,16 @@ import (
 // APIHandler holds the necessary dependencies for API endpoints
 type APIHandler struct {
 	StoragePort   ports.StoragePort
+	NotifierPort  ports.NotifierPort
 	Router        *mux.Router
 	adapterPrefix string
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(storagePort ports.StoragePort, notifierPort ports.NotifierPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
 		StoragePort:   storagePort,
+		NotifierPort:  notifierPort,
 		Router:        mux.NewRouter(),
 		adapterPrefix: "API",
 	}
@@ -112,6 +114,13 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Telegram configuration: %v", err)
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
+		return
+	}
+
+	// test the telegram connection
+	if err := h.NotifierPort.SendNotification("Updated telegram configuration successfully"); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
+		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
 		return
 	}
 
