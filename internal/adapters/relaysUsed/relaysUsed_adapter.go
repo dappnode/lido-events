@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type RelaysUsedAdapter struct {
@@ -23,7 +24,7 @@ func NewRelaysUsedAdapter(dappmanagerUrl, mevBoostDnpName string) *RelaysUsedAda
 // GetRelaysUsed fetches env RELAYS from MEV BOOST pkg
 func (da *RelaysUsedAdapter) GetRelaysUsed(ctx context.Context) ([]string, error) {
 	url := fmt.Sprintf("%s/env/%s?envName=RELAYS", da.dappmanagerUrl, da.mevBootDnpName)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GET request for URL %s: %w", url, err)
 	}
@@ -33,13 +34,31 @@ func (da *RelaysUsedAdapter) GetRelaysUsed(ctx context.Context) ([]string, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request to Dappmanager at %s: %w", url, err)
 	}
-
 	defer resp.Body.Close()
 
-	var result []string
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response for GetRelaysUsed: %w", err)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected response status: %d", resp.StatusCode)
 	}
 
-	return result, nil
+	var responseString string
+	if err := json.NewDecoder(resp.Body).Decode(&responseString); err != nil {
+		return nil, fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	// Split the comma-separated string into a slice of strings
+	relays := []string{}
+	if responseString != "" {
+		relays = splitAndTrim(responseString, ",")
+	}
+
+	return relays, nil
+}
+
+// Helper function to split and trim strings
+func splitAndTrim(input string, sep string) []string {
+	parts := strings.Split(input, sep)
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
 }
