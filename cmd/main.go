@@ -139,7 +139,7 @@ func main() {
 	relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
 	// Relays
-	relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
+	go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 
 	// DistributionLogUpdated
 	distributionLogUpdatedExecutionComplete := make(chan struct{})
