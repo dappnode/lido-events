@@ -7,9 +7,11 @@ import (
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
+	"lido-events/internal/adapters/dappmanager"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
+	relayschecker "lido-events/internal/adapters/mevBoostRelaysAllowList"
 	"lido-events/internal/adapters/notifier"
 	proxyapi "lido-events/internal/adapters/proxyApi"
 	"lido-events/internal/adapters/storage"
@@ -66,6 +68,11 @@ func main() {
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
 		logger.Warn("Telegram notifier not initialized: %v", err)
+	}
+	dappmanagerAdapter := dappmanager.NewDappmanagerAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relaysAllowListAdapter, err := relayschecker.NewRelaysCheckerAdapter(networkConfig.WsURL, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	if err != nil {
+		logger.Fatal("Failed to initialize RelaysChecker adapter: %v", err)
 	}
 
 	// Start HTTP server
