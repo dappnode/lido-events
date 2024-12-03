@@ -7,13 +7,13 @@ import (
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
-	"lido-events/internal/adapters/dappmanager"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
-	relayschecker "lido-events/internal/adapters/mevBoostRelaysAllowList"
 	"lido-events/internal/adapters/notifier"
 	proxyapi "lido-events/internal/adapters/proxyApi"
+	relaysallowed "lido-events/internal/adapters/relaysAllowed"
+	relaysused "lido-events/internal/adapters/relaysUsed"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"lido-events/internal/logger"
@@ -69,14 +69,14 @@ func main() {
 	if err != nil {
 		logger.Warn("Telegram notifier not initialized: %v", err)
 	}
-	dappmanagerAdapter := dappmanager.NewDappmanagerAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
-	relaysAllowListAdapter, err := relayschecker.NewRelaysCheckerAdapter(networkConfig.WsURL, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(networkConfig.WsURL, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	if err != nil {
-		logger.Fatal("Failed to initialize RelaysChecker adapter: %v", err)
+		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
 	}
 
 	// Start HTTP server
-	apiAdapter := api.NewAPIAdapter(storageAdapter, notifierAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
 	server := &http.Server{
 		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
 		Handler: apiAdapter.Router,

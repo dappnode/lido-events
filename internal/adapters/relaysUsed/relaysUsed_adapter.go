@@ -1,4 +1,4 @@
-package dappmanager
+package relaysused
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 	"net/http"
 )
 
-type DappmanagerAdapter struct {
+type RelaysUsedAdapter struct {
 	dappmanagerUrl string
 	mevBootDnpName string
 }
 
-// NewDappmanagerAdapter creates a new instance of DappmanagerAdapter with provided dappmanagerUrl and mevBoostDnpName
-func NewDappmanagerAdapter(dappmanagerUrl, mevBoostDnpName string) *DappmanagerAdapter {
-	return &DappmanagerAdapter{
+// NewRelaysUsedAdapter creates a new instance of DappmanagerAdapter with provided dappmanagerUrl and mevBoostDnpName
+func NewRelaysUsedAdapter(dappmanagerUrl, mevBoostDnpName string) *RelaysUsedAdapter {
+	return &RelaysUsedAdapter{
 		dappmanagerUrl,
 		mevBoostDnpName,
 	}
 }
 
 // GetRelaysUsed fetches env RELAYS from MEV BOOST pkg
-func (da *DappmanagerAdapter) GetRelaysUsed(ctx context.Context) ([]string, error) {
+func (da *RelaysUsedAdapter) GetRelaysUsed(ctx context.Context) ([]string, error) {
 	url := fmt.Sprintf("%s/env/%s?envName=RELAYS", da.dappmanagerUrl, da.mevBootDnpName)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

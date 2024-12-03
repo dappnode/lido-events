@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 
 // APIHandler holds the necessary dependencies for API endpoints
 type APIHandler struct {
+	ctx               context.Context
 	StoragePort       ports.StoragePort
 	NotifierPort      ports.NotifierPort
 	RelaysUsedPort    ports.RelaysUsedPort
@@ -24,8 +26,9 @@ type APIHandler struct {
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
+		ctx:               ctx,
 		StoragePort:       storagePort,
 		NotifierPort:      notifierPort,
 		RelaysUsedPort:    relaysUsedPort,
@@ -73,7 +76,7 @@ func (h *APIHandler) SetupRoutes() {
 // GetRelaysAllowed retrieves the list of allowed relays
 func (h *APIHandler) GetRelaysAllowed(w http.ResponseWriter, r *http.Request) {
 	logger.DebugWithPrefix("API", "GetRelaysAllowed request received")
-	relays, err := h.RelaysAllowedPort.GetRelaysAllowList()
+	relays, err := h.RelaysAllowedPort.GetRelaysAllowList(h.ctx)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching allowed relays: %v", err)
 		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError)
@@ -83,6 +86,27 @@ func (h *APIHandler) GetRelaysAllowed(w http.ResponseWriter, r *http.Request) {
 	jsonResponse, err := json.Marshal(relays)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysAllowed: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+// GetRelaysUsed retrieves the list of used relays
+func (h *APIHandler) GetRelaysUsed(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "GetRelaysUsed request received")
+	relays, err := h.RelaysUsedPort.GetRelaysUsed(h.ctx)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching used relays: %v", err)
+		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(relays)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysUsed: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
 		return
 	}
