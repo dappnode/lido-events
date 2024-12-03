@@ -136,6 +136,10 @@ func main() {
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
+	relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
+
+	// Relays
+	relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 
 	// DistributionLogUpdated
 	distributionLogUpdatedExecutionComplete := make(chan struct{})

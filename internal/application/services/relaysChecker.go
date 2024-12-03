@@ -22,7 +22,6 @@ func NewRelayCronService(
 	relaysAllowedPort ports.RelaysAllowedPort,
 	relaysUsedPort ports.RelaysUsedPort,
 	notifierPort ports.NotifierPort,
-	servicePrefix string,
 ) *RelayCronService {
 	return &RelayCronService{
 		relaysAllowedPort: relaysAllowedPort,
@@ -32,12 +31,9 @@ func NewRelayCronService(
 	}
 }
 
-func (rcs *RelayCronService) StartRelayMonitoringCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
+func (rcs *RelayCronService) StartRelayMonitoringCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done()
 	wg.Add(1)
-
-	<-firstExecutionComplete
-	logger.DebugWithPrefix(rcs.servicePrefix, "Signal received, starting periodic cron for monitoring relays")
 
 	// Execute immediately on startup
 	if err := rcs.monitorRelays(ctx); err != nil {
