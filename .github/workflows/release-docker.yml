@@ -23,7 +23,7 @@ jobs:
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
-          
+
       # Run integration tests
       - name: Run Integration Tests
         run: |
@@ -32,7 +32,7 @@ jobs:
 
   release:
     name: Release and Publish Docker Image
-    needs: test # Ensure the test job runs successfully first
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -70,6 +70,21 @@ jobs:
 
           echo "New version: $NEW_VERSION"
           echo "::set-output name=version::$NEW_VERSION"
+
+      # Create a new Git tag
+      - name: Create and push Git tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_VERSION=${{ steps.determine_version.outputs.version }}
+
+          # Configure git user
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          # Create and push the tag
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
 
       # Create a GitHub release
       - name: Create GitHub Release
