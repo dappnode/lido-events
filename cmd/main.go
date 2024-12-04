@@ -69,7 +69,7 @@ func main() {
 	}
 
 	// Start HTTP server
-	apiAdapter := api.NewAPIAdapter(storageAdapter, notifierAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
 	server := &http.Server{
 		Addr:    ":" + strconv.FormatUint(networkConfig.ApiPort, 10),
 		Handler: apiAdapter.Router,

@@ -60,6 +60,15 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 				if err == nil {
 					adapter.Bot = updatedBot
 					logger.InfoWithPrefix(servicePrefix, "Telegram bot configuration updated successfully.")
+
+					// Send a test notification to confirm the new configuration works
+					testMessage := "🔑 Updated telegram configuration successfully"
+					testErr := adapter.SendNotification(testMessage)
+					if testErr != nil {
+						logger.ErrorWithPrefix(servicePrefix, "Failed to send test notification after configuration update: %v", testErr)
+					} else {
+						logger.InfoWithPrefix(servicePrefix, "Test notification sent successfully.")
+					}
 				} else {
 					logger.ErrorWithPrefix(servicePrefix, "Failed to update Telegram bot: %v", err)
 				}
