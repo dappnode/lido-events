@@ -57,13 +57,11 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(ctx context.Context, st
 
 	for validatorExitRequestEvents.Next() {
 		if err := validatorExitRequestEvents.Error(); err != nil {
-			// Skip this event if there is an error retrieving it
-			continue
+			return fmt.Errorf("error reading ValidatorExitRequest event: %w", err)
 		}
 
 		if err := handleValidatorExitRequestEvent(validatorExitRequestEvents.Event); err != nil {
-			// Continue to the next event if handling fails
-			continue
+			return fmt.Errorf("failed to handle ValidatorExitRequest event: %w", err)
 		}
 	}
 
