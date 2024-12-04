@@ -46,13 +46,11 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(ctx cont
 
 	for distributionLogUpdated.Next() {
 		if err := distributionLogUpdated.Error(); err != nil {
-			// Skip this event if there is an error retrieving it
-			continue
+			return fmt.Errorf("error reading DistributionLogUpdated event: %w", err)
 		}
 
 		if err := handleDistributionLogUpdated(distributionLogUpdated.Event); err != nil {
-			// Continue to the next event if handling fails
-			continue
+			return fmt.Errorf("failed to handle DistributionLogUpdated event: %w", err)
 		}
 	}
 
