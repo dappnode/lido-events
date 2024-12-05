@@ -159,7 +159,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 				validatorStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.ValidatorPubkeyHex)
 				if err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status", err)
-					time.Sleep(30 * time.Second)
+					time.Sleep(10 * time.Second) // Wait a bit before retrying to avoid spamming the beaconchain and give it time to resync/recover.
 					continue
 				}
 
