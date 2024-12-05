@@ -88,10 +88,6 @@ func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleRep
 			select {
 			case event := <-reportSubmittedChan:
 				handleReportSubmittedEvent(event)
-				return
-			// case err := <-subReport.Err():
-			// 	// Exit on subscription error
-			// 	return
 			case <-ctx.Done():
 				return
 			}

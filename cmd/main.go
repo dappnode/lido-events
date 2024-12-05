@@ -25,6 +25,8 @@ import (
 	"lido-events/internal/logger"
 )
 
+var logPrefix = "MAIN"
+
 func main() {
 	// Set up context with cancellation and WaitGroup for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -34,15 +36,15 @@ func main() {
 	// Load configurations
 	networkConfig, err := config.LoadNetworkConfig()
 	if err != nil {
-		logger.Fatal("Failed to load network configuration: %v", err)
+		logger.FatalWithPrefix(logPrefix, "Failed to load network configuration: %v", err)
 	}
-	logger.Debug("Network config: %+v", networkConfig)
+	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
 	// Initialize adapters
 	storageAdapter := storage.NewStorageAdapter()
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
-		logger.Warn("Telegram notifier not initialized: %v", err)
+		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)
 	}
 
 	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
@@ -58,8 +60,7 @@ func main() {
 
 	// Wait for and validate initial configuration
 	if err := waitForConfig(ctx, storageAdapter); err != nil {
-		logger.Warn("Application shutting down due to configuration validation failure: %v", err)
-		return
+		logger.FatalWithPrefix(logPrefix, "Application shutting down due to configuration validation failure: %v", err)
 	}
 
 	// Initialize domain adapters
@@ -67,10 +68,22 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorImplAdapter, _ := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
-	veboAdapter, _ := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter)
-	csModuleAdapter, _ := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, storageAdapter)
-	csFeeDistributorAdapter, _ := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
+	}
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
+	}
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, storageAdapter)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
+	}
+	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
+	}
 
 	// Initialize domain services
 	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
@@ -95,7 +108,7 @@ func main() {
 
 	// Wait for all goroutines to finish
 	wg.Wait()
-	logger.Info("All services stopped. Shutting down application.")
+	logger.InfoWithPrefix(logPrefix, "All services stopped. Shutting down application.")
 }
 
 // Helper function to check if operator IDs and Telegram config are available
@@ -103,16 +116,16 @@ func waitForConfig(ctx context.Context, storageAdapter *storage.Storage) error {
 	for {
 		select {
 		case <-ctx.Done(): // Exit if the context is canceled
-			logger.Info("Context canceled before configuration was ready.")
+			logger.InfoWithPrefix(logPrefix, "Context canceled before configuration was ready.")
 			return ctx.Err()
 		default:
 			// Check for operator IDs
 			operatorIds, err := storageAdapter.GetOperatorIds()
 			if err != nil || len(operatorIds) == 0 {
-				logger.Info("Waiting for operator IDs to be set...")
+				logger.InfoWithPrefix(logPrefix, "Waiting for operator IDs to be set...")
 			} else {
 				// Operator IDs are set
-				logger.Info("Operator IDs are set. Proceeding with initialization.")
+				logger.InfoWithPrefix(logPrefix, "Operator IDs are set. Proceeding with initialization.")
 				return nil
 			}
 			time.Sleep(2 * time.Second) // Poll every 2 seconds
@@ -127,7 +140,7 @@ func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerSer
 
 	go func() {
 		<-signalChan
-		logger.Info("Received shutdown signal. Initiating graceful shutdown...")
+		logger.InfoWithPrefix(logPrefix, "Received shutdown signal. Initiating graceful shutdown...")
 		cancel()
 
 		// Shutdown API services with a timeout

@@ -203,49 +203,34 @@ func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers p
 			select {
 			case event := <-depositedSigningKeysChangedChan:
 				handlers.HandleDepositedSigningKeysCountChanged(event)
-				return
 			case event := <-elRewardsStealingPenaltyReportedChan:
 				handlers.HandleElRewardsStealingPenaltyReported(event)
-				return
 			case event := <-elRewardsStealingPenaltySettledChan:
 				handlers.HandleElRewardsStealingPenaltySettled(event)
-				return
 			case event := <-elRewardsStealingPenaltyCancelledChan:
 				handlers.HandleElRewardsStealingPenaltyCancelled(event)
-				return
 			case event := <-initialSlashingSubmittedChan:
 				handlers.HandleInitialSlashingSubmitted(event)
-				return
 			case event := <-keyRemovalChargeAppliedChan:
 				handlers.HandleKeyRemovalChargeApplied(event)
-				return
 			case event := <-nodeOperatorManagerAddressChangeProposedChan:
 				handlers.HandleNodeOperatorManagerAddressChangeProposed(event)
-				return
 			case event := <-nodeOperatorManagerAddressChangedChan:
 				handlers.HandleNodeOperatorManagerAddressChanged(event)
-				return
 			case event := <-nodeOperatorRewardAddressChangeProposedChan:
 				handlers.HandleNodeOperatorRewardAddressChangeProposed(event)
-				return
 			case event := <-nodeOperatorRewardAddressChangedChan:
 				handlers.HandleNodeOperatorRewardAddressChanged(event)
-				return
 			case event := <-stuckSigningKeysCountChangedChan:
 				handlers.HandleStuckSigningKeysCountChanged(event)
-				return
 			case event := <-vettedSigningKeysCountDecreasedChan:
 				handlers.HandleVettedSigningKeysCountDecreased(event)
-				return
 			case event := <-withdrawalSubmittedChan:
 				handlers.HandleWithdrawalSubmitted(event)
-				return
 			case event := <-totalSigningKeysCountChangedChan:
 				handlers.HandleTotalSigningKeysCountChanged(event)
-				return
 			case event := <-publicReleaseChan:
 				handlers.HandlePublicRelease(event)
-				return
 
 			case <-ctx.Done():
 				return
