@@ -34,11 +34,10 @@ func (h *APIHandler) GetRouter() http.Handler {
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
 		ctx:               ctx,
 		StoragePort:       storagePort,
-		NotifierPort:      notifierPort,
 		RelaysUsedPort:    relaysUsedPort,
 		RelaysAllowedPort: relaysAllowedPort,
 		Router:            mux.NewRouter(),
