@@ -64,6 +64,17 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 func (ve *ValidatorEjector) EjectValidator() error {
 	logger.DebugWithPrefix(ve.servicePrefix, "Validator Ejector cron started")
 
+	// skip if beacon syncing
+	syncStatus, err := ve.beaconchainPort.GetSyncingStatus()
+	if err != nil {
+		return err
+	}
+
+	if syncStatus {
+		logger.InfoWithPrefix(ve.servicePrefix, "Beaconchain is syncing, skipping validator ejector")
+		return nil
+	}
+
 	operatorIDs, err := ve.storagePort.GetOperatorIds()
 	if err != nil {
 		return err
