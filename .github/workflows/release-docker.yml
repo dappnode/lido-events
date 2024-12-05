@@ -23,7 +23,7 @@ jobs:
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
-          
+
       # Run integration tests
       - name: Run Integration Tests
         run: |
@@ -32,7 +32,7 @@ jobs:
 
   release:
     name: Release and Publish Docker Image
-    needs: test # Ensure the test job runs successfully first
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -52,7 +52,7 @@ jobs:
           INPUT_VERSION="${{ github.event.inputs.version }}"
           
           # Find the latest tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
 
           # If an input version is provided, use it
           if [[ -n "$INPUT_VERSION" ]]; then
@@ -71,6 +71,7 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "::set-output name=version::$NEW_VERSION"
 
+
       # Create a GitHub release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -83,6 +84,12 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Push the new tag to the repository
+      - name: Push new tag
+        run: |
+          git tag ${{ steps.determine_version.outputs.version }}
+          git push origin ${{ steps.determine_version.outputs.version }}
 
       # Log in to GitHub Docker Registry
       - name: Log in to GitHub Docker Registry

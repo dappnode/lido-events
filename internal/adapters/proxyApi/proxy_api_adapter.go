@@ -66,8 +66,11 @@ func (h *APIHandler) proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Copy headers from the original request
+	// Copy headers from the original request, excluding the Origin header
 	for key, values := range r.Header {
+		if key == "Origin" {
+			continue // Skip the Origin header
+		}
 		for _, value := range values {
 			proxyReq.Header.Add(key, value)
 		}
@@ -84,7 +87,7 @@ func (h *APIHandler) proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Add CORS headers to the response
 	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin")) // Reflect the origin for allowed requests
-	w.Header().Set("Access-Control-Allow-Credentials", "true")           // Allow credentials if needed
+	w.Header().Set("Access-Control-Allow-Credentials", "true")            // Allow credentials if needed
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

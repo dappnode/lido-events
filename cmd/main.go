@@ -30,18 +30,23 @@ import (
 )
 
 // Helper function to check if operator IDs and Telegram config are available
-func waitForInitialConfig(storageAdapter *storage.Storage) {
+func waitForInitialConfig(ctx context.Context, storageAdapter *storage.Storage) error {
 	for {
-		// Check for operator IDs
-		operatorIds, err := storageAdapter.GetOperatorIds()
-		if err != nil || len(operatorIds) == 0 {
-			logger.Info("Waiting for operator IDs to be set...")
-		} else {
-			// Operator IDs are set
-			logger.Info("Operator IDs are set. Proceeding with initialization.")
-			return
+		select {
+		case <-ctx.Done(): // Exit if the context is canceled
+			return ctx.Err()
+		default:
+			// Check for operator IDs
+			operatorIds, err := storageAdapter.GetOperatorIds()
+			if err != nil || len(operatorIds) == 0 {
+				logger.Info("Waiting for operator IDs to be set...")
+			} else {
+				// Operator IDs are set
+				logger.Info("Operator IDs are set. Proceeding with initialization.")
+				return nil
+			}
+			time.Sleep(2 * time.Second) // Poll every 2 seconds
 		}
-		time.Sleep(2 * time.Second) // Poll every 2 seconds
 	}
 }
 
@@ -105,8 +110,31 @@ func main() {
 		}
 	}()
 
-	// Wait for initial configuration to be set
-	waitForInitialConfig(storageAdapter)
+	// Wait for initial configuration in a separate goroutine
+	configReady := make(chan error, 1)
+	go func() {
+		configReady <- waitForInitialConfig(ctx, storageAdapter)
+	}()
+
+	// Start listening for signals in a separate goroutine
+	go func() {
+		<-signalChan
+		logger.Info("Received shutdown signal. Initiating graceful shutdown...")
+		cancel() // Cancel context to stop all services
+	}()
+
+	// Wait for either the config to be ready or the context to be canceled
+	select {
+	case err := <-configReady:
+		if err != nil {
+			logger.Warn("Shutting down due to: %v", err)
+			return
+		}
+		logger.Info("Configuration is ready. Proceeding with initialization.")
+	case <-ctx.Done():
+		logger.Info("Context canceled before configuration was ready.")
+		return
+	}
 
 	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
