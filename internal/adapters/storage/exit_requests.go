@@ -38,7 +38,6 @@ func (fs *Storage) SaveExitRequests(operatorID *big.Int, requests domain.ExitReq
 
 // SaveExitRequest saves an individual exit request for a specific operator ID and validator index.
 func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error {
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
@@ -81,7 +80,6 @@ func (fs *Storage) GetExitRequests(operatorID string) (domain.ExitRequests, erro
 
 // UpdateExitRequestStatus updates the status of a specific exit request for a validator index.
 func (fs *Storage) UpdateExitRequestStatus(operatorID string, validatorIndex string, status domain.ValidatorStatus) error {
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
@@ -108,7 +106,6 @@ func (fs *Storage) UpdateExitRequestStatus(operatorID string, validatorIndex str
 
 // DeleteExitRequest removes an exit request for a specific operator ID and validator index.
 func (fs *Storage) DeleteExitRequest(operatorID string, validatorIndex string) error {
-
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return err
