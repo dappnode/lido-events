@@ -100,10 +100,9 @@ func main() {
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
 	relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
-	// Relays
+	// Start domain services
 	go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 
-	// Start domain services
 	distributionLogUpdatedExecutionComplete := make(chan struct{})
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg, distributionLogUpdatedExecutionComplete)
 	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg, distributionLogUpdatedExecutionComplete)
