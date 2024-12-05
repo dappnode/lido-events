@@ -88,16 +88,22 @@ func (ve *ValidatorEjector) EjectValidator() error {
 				defer wg.Done()
 				defer func() { <-sem }() // Remove a token from the semaphore when the goroutine finishes
 
+				// First thing we do is to check the onchain status of the validator. This way we make sure we dont try to exit a validator that is already exiting
 				onchainStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.Event.ValidatorIndex.String())
 				if err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error getting validator status from beaconchain, skipping.", err)
 					return
 				}
 
+				// TODO: simplify this logic
+				// if the validator status is not active ongoing or active slashed we skip the exit request because it is already exiting.
 				if onchainStatus != domain.StatusActiveOngoing && onchainStatus != domain.StatusActiveSlashed {
 					if onchainStatus != domain.StatusPendingInitialized && onchainStatus != domain.StatusPendingQueued {
 						logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, deleting the exit request from db", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+						// TODO: send notification validator exited if timestamp of the event is within an hour
+						// Since the validator is already exiting, we remove the exit request from the db
 						if err := ve.storagePort.DeleteExitRequest(operatorID, exitRequest.Event.ValidatorIndex.String()); err != nil {
+							// An error here is no big deal, we will retry to delete this in the next iteration of the cron
 							logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
 						}
 					} else {
@@ -114,6 +120,8 @@ func (ve *ValidatorEjector) EjectValidator() error {
 				logger.InfoWithPrefix(ve.servicePrefix, "Exiting validator %s with status %s", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 				if err := ve.exitValidatorPort.ExitValidator(exitRequest.ValidatorPubkeyHex, exitRequest.Event.ValidatorIndex.String()); err != nil {
 					logger.WarnWithPrefix(ve.servicePrefix, "Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
+					// send notification with manual exit link and skip on errror
+					// TODO: wait for PR in docs to add the proper link
 					message = fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to learn how to do the exit manually %s", exitRequest.Event.ValidatorIndex, "https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui")
 					if err := ve.notifierPort.SendNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending manual exit notification", err)
@@ -121,6 +129,12 @@ func (ve *ValidatorEjector) EjectValidator() error {
 					return
 				}
 
+				// TODO: send notification "exited submitted. Your validator will exit within X minutes. wait for confirmatio, If not confirmation received, please check manually"
+				// wait for the transaction to be included
+				// call ve.beaconchainPort.GetValidatorStatus(string(validator.Event.ValidatorPubkey)) in a loop until the status is domain.StatusActiveExiting
+				// a maximum of 64 times with a 30 second sleep between each call (check for 32 minutes, two times x minute)
+				// TODO: If this ends before the status is ActiveExiting, the user will never get the notification that the validator has been exited successfully.
+				// IMPORTANT: This should never take longer to finish than the next cron iteration (defined in main)
 				for i := 0; i < 64; i++ {
 					logger.DebugWithPrefix(ve.servicePrefix, "Waiting for validator %s to exit", exitRequest.Event.ValidatorIndex)
 
