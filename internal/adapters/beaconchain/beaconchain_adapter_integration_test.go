@@ -102,3 +102,22 @@ func TestGetEpochHeaderIntegration(t *testing.T) {
 	assert.Greater(t, epoch, uint64(0))
 	t.Logf("Epoch for finalized block: %d", epoch)
 }
+
+// TestGetSyncingStatusIntegration tests the GetSyncingStatus method of the BeaconchainAdapter
+func TestGetSyncingStatusIntegration(t *testing.T) {
+	adapter := setupBeaconchainAdapter(t)
+
+	// Call the GetSyncingStatus method
+	isSyncing, err := adapter.GetSyncingStatus()
+	assert.NoError(t, err)
+
+	// Assert the result is a valid boolean
+	assert.IsType(t, isSyncing, false, "Expected the result to be a boolean")
+
+	// Log the result for debugging
+	if isSyncing {
+		t.Log("The beacon node is syncing.")
+	} else {
+		t.Log("The beacon node is not syncing.")
+	}
+}
