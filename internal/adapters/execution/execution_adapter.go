@@ -113,3 +113,47 @@ func (e *ExecutionAdapter) GetBlockTimestampByNumber(blockNumber uint64) (uint64
 
 	return timestamp, nil
 }
+
+// IsSyncing checks if the Ethereum execution client is currently syncing.
+func (e *ExecutionAdapter) IsSyncing() (bool, error) {
+	// Create the request payload for eth_syncing
+	payload := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_syncing",
+		"params":  []interface{}{},
+		"id":      1,
+	}
+
+	// Marshal the payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal request payload for eth_syncing: %w", err)
+	}
+
+	// Send the request to the execution client
+	resp, err := http.Post(e.rpcURL, "application/json", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return false, fmt.Errorf("failed to send request to execution client at %s: %w", e.rpcURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("unexpected status code %d received from execution client", resp.StatusCode)
+	}
+
+	// Parse the response
+	var result struct {
+		Result interface{} `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, fmt.Errorf("failed to decode response from execution client: %w", err)
+	}
+
+	// If result is false, the node is not syncing
+	if result.Result == false {
+		return false, nil
+	}
+
+	// If result is a map or object, the node is syncing
+	return true, nil
+}
