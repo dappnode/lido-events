@@ -58,6 +58,18 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 
 // runScan contains the execution logic for scanning DistributionLogUpdated events
 func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
+	// Skip if node is syncing
+	isSyncing, err := ds.executionPort.IsSyncing()
+	if err != nil {
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error checking if node is syncing: %v", err)
+		return
+	}
+
+	if isSyncing {
+		logger.InfoWithPrefix(ds.servicePrefix, "Node is syncing, skipping DistributionLogUpdated scan")
+		return
+	}
+
 	// Retrieve start and end blocks for scanning
 	start, err := ds.storagePort.GetDistributionLogLastProcessedBlock()
 	if err != nil {
