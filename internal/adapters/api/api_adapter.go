@@ -20,6 +20,14 @@ type APIHandler struct {
 	adapterPrefix string
 }
 
+// Ensure APIHandler implements the ports.API interface
+var _ ports.API = (*APIHandler)(nil)
+
+// GetRouter implements the ports.API interface
+func (h *APIHandler) GetRouter() http.Handler {
+	return h.Router
+}
+
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
 func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
@@ -135,7 +143,7 @@ func (h *APIHandler) DeleteOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check it exists calling GetOperatorIds
+	// Check if operator ID exists
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
@@ -191,7 +199,7 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if operator id already exists and if so return ok
+	// Check if operator ID already exists
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
@@ -215,7 +223,7 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 
 	// Set last block processed to 0, this will trigger the events scanner to start from the beginning
 	// and look for events for the new operator ID
-	// TODO: this logic should be in the services layer
+	// TODO: Consider moving this logic to the services layer
 	if err := h.StoragePort.SaveDistributionLogLastProcessedBlock(0); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update DistributionLogLastProcessedBlock: %v", err)
 		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError)
