@@ -69,10 +69,9 @@ func (ve *ValidatorEjector) EjectValidator() error {
 		return err
 	}
 
-	// We want to process at most 10 exit requests in parallel.
-	concurrencyLimit := 10 // TODO; this could be part of configuration parameters
-	sem := make(chan struct{}, concurrencyLimit)
-	var wg sync.WaitGroup
+	concurrencyLimit := 10                       // TODO; this could be part of configuration parameters
+	sem := make(chan struct{}, concurrencyLimit) // Semaphore pattern to limit the number of concurrent goroutines
+	var wg sync.WaitGroup                        // WaitGroup to wait for all goroutines to finish if receiving a signal to stop or finish
 
 	for _, operatorID := range operatorIDs {
 		exitRequests, err := ve.storagePort.GetExitRequests(operatorID.String())
@@ -80,13 +79,14 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			continue
 		}
 
+		// Iterate over the exit requests
 		for _, exitRequest := range exitRequests {
-			sem <- struct{}{}
+			sem <- struct{}{} // Add a token to the semaphore. This will block until a token is available if the limit is reached
 			wg.Add(1)
 
 			go func(exitRequest domain.ExitRequest, operatorID string) {
 				defer wg.Done()
-				defer func() { <-sem }()
+				defer func() { <-sem }() // Remove a token from the semaphore when the goroutine finishes
 
 				onchainStatus, err := ve.beaconchainPort.GetValidatorStatus(exitRequest.Event.ValidatorIndex.String())
 				if err != nil {
