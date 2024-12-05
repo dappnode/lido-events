@@ -18,6 +18,8 @@ import (
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
 	proxyapi "lido-events/internal/adapters/proxyApi"
+	relaysallowed "lido-events/internal/adapters/relaysAllowed"
+	relaysused "lido-events/internal/adapters/relaysUsed"
 	"lido-events/internal/adapters/storage"
 	"lido-events/internal/adapters/vebo"
 	"lido-events/internal/application/services"
@@ -46,8 +48,13 @@ func main() {
 	if err != nil {
 		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)
 	}
+	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(networkConfig.WsURL, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	if err != nil {
+		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
+	}
 
-	apiAdapter := api.NewAPIAdapter(storageAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
 	proxyApiAdapter := proxyapi.NewProxyAPIAdapter(networkConfig.CORS, networkConfig.LidoKeysApiUrl)
 
 	// Initialize API services
@@ -91,8 +98,11 @@ func main() {
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment)
 	validatorEjectorService := services.NewValidatorEjectorService(storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, ipfsAdapter)
+	relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
 	// Start domain services
+	go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
+
 	distributionLogUpdatedExecutionComplete := make(chan struct{})
 	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg, distributionLogUpdatedExecutionComplete)
 	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg, distributionLogUpdatedExecutionComplete)

@@ -11,6 +11,8 @@ import (
 )
 
 type Config struct {
+	MevBoostDnpName    string
+	DappmanagerUrl     string
 	SignerUrl          string
 	IpfsUrl            string
 	WsURL              string
@@ -24,11 +26,12 @@ type Config struct {
 	CORS []string
 
 	// Individual contract addresses
-	CSAccountingAddress         common.Address
-	CSFeeDistributorAddress     common.Address
-	CSFeeDistributorImplAddress common.Address
-	VEBOAddress                 common.Address
-	CSModuleAddress             common.Address
+	CSAccountingAddress           common.Address
+	CSFeeDistributorAddress       common.Address
+	CSFeeDistributorImplAddress   common.Address
+	VEBOAddress                   common.Address
+	CSModuleAddress               common.Address
+	MEVBoostRelaysAllowListAddres common.Address
 
 	// Block number of the deployment of the VEBO contract and the CSFeeDistributor contract
 	VeboBlockDeployment             uint64
@@ -60,6 +63,11 @@ func parseCORS(envCORS string, defaultCORS []string) []string {
 }
 
 func LoadNetworkConfig() (Config, error) {
+	dappmanagerUrl := os.Getenv("DAPPMANAGER_URL")
+	if dappmanagerUrl == "" {
+		dappmanagerUrl = "http://my.dappnode"
+	}
+
 	apiPortStr := os.Getenv("API_PORT")
 	apiPort := uint64(8080)
 	if apiPortStr != "" {
@@ -119,6 +127,8 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500"
 		}
 		config = Config{
+			MevBoostDnpName:                 "mev-boost-holesky.dnp.dappnode.eth",
+			DappmanagerUrl:                  dappmanagerUrl,
 			SignerUrl:                       "http://signer.holesky.dncore.dappnode:9000",
 			IpfsUrl:                         ipfsUrl,
 			WsURL:                           wsURL,
@@ -133,6 +143,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
 			VEBOAddress:                     common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
+			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x2d86C5855581194a386941806E38cA119E50aEA3"),
 			VeboBlockDeployment:             uint64(30701),
 			CsFeeDistributorBlockDeployment: uint64(1774650),
 			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
@@ -151,6 +162,8 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500"
 		}
 		config = Config{
+			MevBoostDnpName:                 "mev-boost.dnp.dappnode.eth",
+			DappmanagerUrl:                  dappmanagerUrl,
 			SignerUrl:                       "http://signer.mainnet.dncore.dappnode:9000",
 			IpfsUrl:                         ipfsUrl,
 			WsURL:                           wsURL,
@@ -165,6 +178,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
 			VEBOAddress:                     common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
+			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
 			VeboBlockDeployment:             uint64(17172556),
 			CsFeeDistributorBlockDeployment: uint64(20935463),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),

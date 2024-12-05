@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"net/http"
@@ -15,9 +16,13 @@ import (
 
 // APIHandler holds the necessary dependencies for API endpoints
 type APIHandler struct {
-	StoragePort   ports.StoragePort
-	Router        *mux.Router
-	adapterPrefix string
+	ctx               context.Context
+	StoragePort       ports.StoragePort
+	NotifierPort      ports.NotifierPort
+	RelaysUsedPort    ports.RelaysUsedPort
+	RelaysAllowedPort ports.RelaysAllowedPort
+	Router            *mux.Router
+	adapterPrefix     string
 }
 
 // Ensure APIHandler implements the ports.API interface
@@ -29,11 +34,14 @@ func (h *APIHandler) GetRouter() http.Handler {
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(storagePort ports.StoragePort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
-		StoragePort:   storagePort,
-		Router:        mux.NewRouter(),
-		adapterPrefix: "API",
+		ctx:               ctx,
+		StoragePort:       storagePort,
+		RelaysUsedPort:    relaysUsedPort,
+		RelaysAllowedPort: relaysAllowedPort,
+		Router:            mux.NewRouter(),
+		adapterPrefix:     "API",
 	}
 
 	// Set up API routes
@@ -63,11 +71,55 @@ func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/operatorId", h.DeleteOperator).Methods("DELETE", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/operator_performance", h.GetOperatorPerformance).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.GetRelaysAllowed).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/relays_used", h.GetRelaysUsed).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK) // Respond to OPTIONS requests with 200 OK
 	})
+}
+
+// GetRelaysAllowed retrieves the list of allowed relays
+func (h *APIHandler) GetRelaysAllowed(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "GetRelaysAllowed request received")
+	relays, err := h.RelaysAllowedPort.GetRelaysAllowList(h.ctx)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching allowed relays: %v", err)
+		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(relays)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysAllowed: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+// GetRelaysUsed retrieves the list of used relays
+func (h *APIHandler) GetRelaysUsed(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "GetRelaysUsed request received")
+	relays, err := h.RelaysUsedPort.GetRelaysUsed(h.ctx)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching used relays: %v", err)
+		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(relays)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysUsed: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 // GetTelegramConfig retrieves the Telegram configuration
