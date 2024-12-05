@@ -50,10 +50,6 @@ func (csfa *CsFeeDistributorAdapter) WatchCsFeeDistributorEvents(ctx context.Con
 			select {
 			case event := <-distributionDataUpdatedChan:
 				handleDistributionDataUpdated(event)
-				return
-			// case err := <-sub.Err():
-			// 	// Subscription error should be handled by returning it to the service layer.
-			// 	return
 			case <-ctx.Done():
 				return
 			}

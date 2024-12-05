@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"lido-events/internal/application/ports"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -15,6 +17,14 @@ type APIHandler struct {
 	Router        *mux.Router
 	proxyApiURL   string
 	adapterPrefix string
+}
+
+// Ensure APIHandler implements the ports.ProxyAPI interface
+var _ ports.ProxyAPI = (*APIHandler)(nil)
+
+// GetRouter implements the ports.ProxyAPI interface
+func (h *APIHandler) GetRouter() http.Handler {
+	return h.Router
 }
 
 // NewProxyAPIAdapter initializes the APIHandler and sets up routes

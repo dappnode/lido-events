@@ -38,3 +38,25 @@ func TestGetMostRecentBlockNumberIntegration(t *testing.T) {
 	// Log the block number for debugging
 	t.Logf("Most recent block number: %d", blockNumber)
 }
+
+// TestGetBlockTimestampByNumberIntegration tests fetching the timestamp of a specific block
+func TestGetBlockTimestampByNumberIntegration(t *testing.T) {
+	adapter, err := setupExecutionAdapter(t)
+	assert.NoError(t, err)
+
+	// Specify the block number to test
+	blockNumber := uint64(2876079)
+
+	// Call the GetBlockTimestampByNumber method
+	timestamp, err := adapter.GetBlockTimestampByNumber(blockNumber)
+	assert.NoError(t, err)
+
+	// Ensure timestamp is greater than 0, indicating a valid response
+	assert.Greater(t, timestamp, uint64(0), "Expected a non-zero timestamp")
+
+	// ensure timestamp is 1733395440
+	assert.Equal(t, uint64(1733395440), timestamp, "Expected timestamp to be 1733395440")
+
+	// Log the timestamp for debugging
+	t.Logf("Timestamp for block %d: %d (Unix)", blockNumber, timestamp)
+}

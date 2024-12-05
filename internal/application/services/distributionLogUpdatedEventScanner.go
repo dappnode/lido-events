@@ -99,10 +99,20 @@ func (ds *DistributionLogUpdatedEventScanner) HandleDistributionLogUpdatedEvent(
 		return err
 	}
 
-	message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
-	if err := ds.notifierPort.SendNotification(message); err != nil {
-		logger.ErrorWithPrefix(ds.servicePrefix, "Error sending distributionLogUpdated notification: %v", err)
+	blockTimestamp, err := ds.executionPort.GetBlockTimestampByNumber(distributionLogUpdated.Raw.BlockNumber)
+	if err != nil {
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error getting block timestamp for block number %d: %v", distributionLogUpdated.Raw.BlockNumber, err)
 		return err
+	}
+
+	// If the block timestamp is within the last 24 hours, send a notification
+	if time.Now().Unix()-int64(blockTimestamp) < 24*60*60 {
+		message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
+		if err := ds.notifierPort.SendNotification(message); err != nil {
+			logger.ErrorWithPrefix(ds.servicePrefix, "Error sending distributionLogUpdated notification: %v", err)
+			return err
+		}
+
 	}
 
 	return nil
