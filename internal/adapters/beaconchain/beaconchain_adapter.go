@@ -21,6 +21,32 @@ func NewBeaconchainAdapter(beaconChainUrl string) *BeaconchainAdapter {
 	}
 }
 
+// GetSyncingStatus checks if the beacon node is syncing.
+func (b *BeaconchainAdapter) GetSyncingStatus() (bool, error) {
+	url := fmt.Sprintf("%s/eth/v1/node/syncing", b.beaconChainUrl)
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("unexpected status code %d received from Beaconchain", resp.StatusCode)
+	}
+
+	// Parse the response
+	var result struct {
+		Data struct {
+			IsSyncing bool `json:"is_syncing"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, fmt.Errorf("failed to decode response from Beaconchain: %w", err)
+	}
+
+	return result.Data.IsSyncing, nil
+}
+
 func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error) {
 	validatorData, err := b.PostStateValidators("finalized", []string{pubkey}, nil)
 	if err != nil {

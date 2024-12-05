@@ -62,6 +62,26 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 
 // runScan contains the execution logic for scanning ValidatorExitRequest events
 func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
+	// Skip if execution or beaconchain nodes are syncing
+	executionSyncing, err := vs.executionPort.IsSyncing()
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if execution node is syncing: %v", err)
+		return
+	}
+	if executionSyncing {
+		logger.InfoWithPrefix(vs.servicePrefix, "Execution node is syncing, skipping ValidatorExitRequest event scan")
+		return
+	}
+	beaconchainSyncing, err := vs.beaconchainPort.GetSyncingStatus()
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if beaconchain node is syncing: %v", err)
+		return
+	}
+	if beaconchainSyncing {
+		logger.InfoWithPrefix(vs.servicePrefix, "Beaconchain node is syncing, skipping ValidatorExitRequest event scan")
+		return
+	}
+
 	// Retrieve start and end blocks for scanning
 	start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock()
 	if err != nil {

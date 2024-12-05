@@ -60,3 +60,24 @@ func TestGetBlockTimestampByNumberIntegration(t *testing.T) {
 	// Log the timestamp for debugging
 	t.Logf("Timestamp for block %d: %d (Unix)", blockNumber, timestamp)
 }
+
+// TestIsSyncingIntegration tests the IsSyncing method of the ExecutionAdapter
+func TestIsSyncingIntegration(t *testing.T) {
+	// Set up the execution adapter
+	adapter, err := setupExecutionAdapter(t)
+	assert.NoError(t, err)
+
+	// Call the IsSyncing method
+	isSyncing, err := adapter.IsSyncing()
+	assert.NoError(t, err)
+
+	// Assert the result is a valid boolean
+	assert.IsType(t, isSyncing, false, "Expected the result to be a boolean")
+
+	// Log the result for debugging
+	if isSyncing {
+		t.Log("The Ethereum node is syncing.")
+	} else {
+		t.Log("The Ethereum node is not syncing.")
+	}
+}
