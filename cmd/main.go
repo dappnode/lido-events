@@ -10,6 +10,7 @@ import (
 
 	"lido-events/internal/adapters/api"
 	"lido-events/internal/adapters/beaconchain"
+	clientsproxyapi "lido-events/internal/adapters/clientsProxyApi"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csmodule "lido-events/internal/adapters/csModule"
@@ -56,14 +57,17 @@ func main() {
 
 	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
 	proxyApiAdapter := proxyapi.NewProxyAPIAdapter(networkConfig.CORS, networkConfig.LidoKeysApiUrl)
+	clientsProxyApiAdapter := clientsproxyapi.NewClientsProxyAPIAdapter(networkConfig.CORS)
 
 	// Initialize API services
 	apiService := services.NewAPIServerService(apiAdapter, networkConfig.ApiPort)
 	proxyService := services.NewProxyAPIServerService(proxyApiAdapter, networkConfig.ProxyApiPort)
+	clientsProxyService := services.NewClientsProxyAPIServerService(clientsProxyApiAdapter, networkConfig.ClientsProxyApiPort)
 
 	// Start API services
 	apiService.Start(&wg)
 	proxyService.Start(&wg)
+	clientsProxyService.Start(&wg)
 
 	// Wait for and validate initial configuration
 	if err := waitForConfig(ctx, storageAdapter); err != nil {
@@ -114,7 +118,7 @@ func main() {
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle OS signals for shutdown
-	handleShutdown(cancel, apiService, proxyService)
+	handleShutdown(cancel, apiService, proxyService, clientsProxyService)
 
 	// Wait for all goroutines to finish
 	wg.Wait()
@@ -144,7 +148,7 @@ func waitForConfig(ctx context.Context, storageAdapter *storage.Storage) error {
 }
 
 // handleShutdown manages graceful shutdown for services
-func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerService, proxyService *services.ProxyAPIServerService) {
+func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerService, proxyService *services.ProxyAPIServerService, clientsProxyApiService *services.ClientsProxyAPIServerService) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -159,5 +163,6 @@ func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerSer
 
 		apiService.Shutdown(shutdownCtx)
 		proxyService.Shutdown(shutdownCtx)
+		clientsProxyApiService.Shutdown(shutdownCtx)
 	}()
 }
