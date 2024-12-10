@@ -43,7 +43,7 @@ func main() {
 	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
 	// Initialize adapters
-	storageAdapter := storage.NewStorageAdapter()
+	storageAdapter := storage.NewStorageAdapter(networkConfig.DBDirectory)
 	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
 	if err != nil {
 		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)

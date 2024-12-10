@@ -11,6 +11,7 @@ import (
 )
 
 type Config struct {
+	DBDirectory        string
 	MevBoostDnpName    string
 	DappmanagerUrl     string
 	SignerUrl          string
@@ -66,6 +67,15 @@ func LoadNetworkConfig() (Config, error) {
 	dappmanagerUrl := os.Getenv("DAPPMANAGER_URL")
 	if dappmanagerUrl == "" {
 		dappmanagerUrl = "http://my.dappnode"
+	}
+
+	dbDirectory := os.Getenv("DB_PATH")
+	if dbDirectory == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			logger.Fatal("Failed to get working directory: %v", err)
+		}
+		dbDirectory = cwd
 	}
 
 	apiPortStr := os.Getenv("API_PORT")
@@ -127,6 +137,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500"
 		}
 		config = Config{
+			DBDirectory:                     dbDirectory,
 			MevBoostDnpName:                 "mev-boost-holesky.dnp.dappnode.eth",
 			DappmanagerUrl:                  dappmanagerUrl,
 			SignerUrl:                       "http://signer.holesky.dncore.dappnode:9000",
@@ -162,6 +173,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500"
 		}
 		config = Config{
+			DBDirectory:                     dbDirectory,
 			MevBoostDnpName:                 "mev-boost.dnp.dappnode.eth",
 			DappmanagerUrl:                  dappmanagerUrl,
 			SignerUrl:                       "http://signer.mainnet.dncore.dappnode:9000",
