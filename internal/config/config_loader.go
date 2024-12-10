@@ -11,18 +11,19 @@ import (
 )
 
 type Config struct {
-	DBDirectory        string
-	MevBoostDnpName    string
-	DappmanagerUrl     string
-	SignerUrl          string
-	IpfsUrl            string
-	WsURL              string
-	RpcUrl             string
-	CSMStakingModuleID *big.Int
-	EtherscanURL       string
-	BeaconchainURL     string
-	CSMUIURL           string
-	ApiPort            uint64
+	DBDirectory         string
+	MevBoostDnpName     string
+	DappmanagerUrl      string
+	SignerUrl           string
+	IpfsUrl             string
+	WsURL               string
+	RpcUrl              string
+	CSMStakingModuleID  *big.Int
+	EtherscanURL        string
+	BeaconchainURL      string
+	CSMUIURL            string
+	ApiPort             uint64
+	ClientsProxyApiPort uint64
 
 	CORS []string
 
@@ -100,6 +101,17 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	}
 
+	clientsProxyApiPortStr := os.Getenv("CLIENTS_PROXY_API_PORT")
+	clientsProxyApiPort := uint64(8082)
+	if clientsProxyApiPortStr != "" {
+		// Try to parse the port as uint64
+		if port, err := strconv.ParseUint(clientsProxyApiPortStr, 10, 64); err == nil {
+			clientsProxyApiPort = port
+		} else {
+			logger.Fatal("Invalid CLIENTS_PROXY_API_PORT value: %s", clientsProxyApiPortStr)
+		}
+	}
+
 	network := os.Getenv("NETWORK")
 	// Default to holesky
 	if network == "" {
@@ -149,6 +161,7 @@ func LoadNetworkConfig() (Config, error) {
 			BeaconchainURL:                  beaconchainURL,
 			CSMUIURL:                        "https://csm.testnet.fi",
 			ApiPort:                         apiPort,
+			ClientsProxyApiPort:             clientsProxyApiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
 			CSAccountingAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
@@ -185,6 +198,7 @@ func LoadNetworkConfig() (Config, error) {
 			BeaconchainURL:                  "https://beaconcha.in",
 			CSMUIURL:                        "https://csm.lido.fi",
 			ApiPort:                         apiPort,
+			ClientsProxyApiPort:             clientsProxyApiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
 			CSAccountingAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
