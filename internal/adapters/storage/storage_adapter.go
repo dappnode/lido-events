@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"math/big"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -17,9 +18,9 @@ type Storage struct {
 	telegramConfigListeners []chan domain.TelegramConfig
 }
 
-func NewStorageAdapter() *Storage {
+func NewStorageAdapter(dbDirectory string) *Storage {
 	return &Storage{
-		DBFile: "db.json",
+		DBFile: fmt.Sprintf("%s/db.json", strings.TrimRight(dbDirectory, "/")),
 	}
 }
 
