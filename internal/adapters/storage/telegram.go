@@ -2,6 +2,7 @@ package storage
 
 import (
 	"lido-events/internal/application/domain"
+	"sync"
 )
 
 // TODO: determine if token should be stored hashed
@@ -20,7 +21,7 @@ func (fs *Storage) SaveTelegramConfig(config domain.TelegramConfig) error {
 		return err
 	}
 
-	fs.notifyTelegramConfigListeners() // Notify listeners of the change
+	fs.notifyTelegramConfigListenersSync() // Notify listeners of the change
 	return nil
 }
 
@@ -40,18 +41,26 @@ func (fs *Storage) RegisterTelegramConfigListener() chan domain.TelegramConfig {
 	return updateChan
 }
 
-// notifyTelegramConfigListeners sends updates to all registered listeners of Telegram config changes.
-func (fs *Storage) notifyTelegramConfigListeners() {
+// notifyTelegramConfigListenersSync sends updates to all registered listeners of Telegram config changes.
+func (fs *Storage) notifyTelegramConfigListenersSync() {
 	config, err := fs.GetTelegramConfig()
 	if err != nil {
 		return
 	}
 
+	var wg sync.WaitGroup
 	for _, listener := range fs.telegramConfigListeners {
-		select {
-		case listener <- config:
-		default:
-			// Ignore if channel is full to prevent blocking
-		}
+		wg.Add(1)
+		go func(listener chan domain.TelegramConfig) {
+			defer wg.Done()
+			select {
+			case listener <- config:
+				// Config sent successfully
+			default:
+				// Ignore if channel is full to prevent blocking
+			}
+		}(listener)
 	}
+
+	wg.Wait() // Wait for all listeners to process the update
 }

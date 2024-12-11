@@ -73,6 +73,9 @@ func (tb *TelegramBot) SendNotification(message string) error {
 		return nil
 	}
 
+	// print user id
+	logger.DebugWithPrefix(tb.servicePrefix, "Sending notification to user ID: %d", tb.UserID)
+
 	msg := tgbotapi.NewMessage(tb.UserID, message)
 	_, err := tb.Bot.Send(msg)
 	if err != nil {
