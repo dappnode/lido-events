@@ -2,7 +2,6 @@ package execution
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -57,23 +56,11 @@ func (e *ExecutionAdapter) GetMostRecentBlockNumber() (uint64, error) {
 		return 0, fmt.Errorf("failed to decode response from execution client: %w", err)
 	}
 
-	// Convert the hexadecimal block number to uint64 using hexutil.Decode
-	decodedBytes, err := hexutil.Decode(result.Result)
+	// Convert the hexadecimal block number to uint64 using hexutil.DecodeUint64
+	blockNumber, err := hexutil.DecodeUint64(result.Result)
 	if err != nil {
 		return 0, fmt.Errorf("failed to decode block number from result %s: %w", result.Result, err)
 	}
-
-	// Ensure the decoded byte slice does not exceed 8 bytes for uint64
-	if len(decodedBytes) > 8 {
-		return 0, fmt.Errorf("block number too large to fit in uint64: length %d bytes", len(decodedBytes))
-	}
-
-	// Convert the byte slice to uint64
-	var blockNumber uint64
-	// If the byte slice is less than 8 bytes, pad it with leading zeros
-	paddedBytes := make([]byte, 8)
-	copy(paddedBytes[8-len(decodedBytes):], decodedBytes)
-	blockNumber = binary.BigEndian.Uint64(paddedBytes)
 
 	return blockNumber, nil
 }
