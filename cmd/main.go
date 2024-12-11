@@ -54,7 +54,7 @@ func main() {
 		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
 	}
 
-	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
+	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
 	proxyApiAdapter := proxyapi.NewProxyAPIAdapter(networkConfig.CORS, networkConfig.LidoKeysApiUrl)
 
 	// Initialize API services

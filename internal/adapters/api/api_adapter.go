@@ -34,10 +34,11 @@ func (h *APIHandler) GetRouter() http.Handler {
 }
 
 // NewAPIAdapter initializes the APIHandler and sets up routes with CORS enabled
-func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
+func NewAPIAdapter(ctx context.Context, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, allowedOrigins []string) *APIHandler {
 	h := &APIHandler{
 		ctx:               ctx,
 		StoragePort:       storagePort,
+		NotifierPort:      notifierPort,
 		RelaysUsedPort:    relaysUsedPort,
 		RelaysAllowedPort: relaysAllowedPort,
 		Router:            mux.NewRouter(),
@@ -169,16 +170,16 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// send test notification to verify the chat id exists
-	if err := h.NotifierPort.SendNotification("🙋 Test notification"); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
-		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
-		return
-	}
-
 	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Telegram configuration: %v", err)
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
+		return
+	}
+
+	// send update notification to verify the chat id exists
+	if err := h.NotifierPort.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
+		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
 		return
 	}
 
