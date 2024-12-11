@@ -182,7 +182,7 @@ func LoadNetworkConfig() (Config, error) {
 			RpcUrl:                          rpcURL,
 			CSMStakingModuleID:              big.NewInt(3),
 			EtherscanURL:                    "https://etherscan.io",
-			BeaconchainURL:                  "https://beaconcha.in",
+			BeaconchainURL:                  beaconchainURL,
 			CSMUIURL:                        "https://csm.lido.fi",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
