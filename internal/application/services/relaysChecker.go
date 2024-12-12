@@ -123,7 +123,7 @@ func (rcs *RelayCronService) analyzeRelays(allowedRelays []domain.RelayAllowed, 
 }
 
 func (rcs *RelayCronService) buildMissingMandatoryNotification(allowedRelays []domain.RelayAllowed) string {
-	message := "⚠️ Mandatory Relay Alert\n\nNo mandatory relays are currently in use. At least one mandatory relay must be used. Edit your relays in the stakers UI\n"
+	message := "- ⚠️ Mandatory Relay Alert\n\nNo mandatory relays are currently in use. At least one mandatory relay must be used. Edit your relays in the stakers UI\n"
 	message += "\nMandatory relays:\n"
 	for _, relay := range allowedRelays {
 		if relay.IsMandatory {
@@ -138,7 +138,7 @@ func (rcs *RelayCronService) buildMissingMandatoryNotification(allowedRelays []d
 }
 
 func (rcs *RelayCronService) buildBlacklistNotification(blacklistedRelays []string) string {
-	message := "🚨 Relay Blacklist Warning\n\nThe following relays are being used but are not allowed:\n"
+	message := "- 🚨 Relay Blacklist Warning\n\nThe following relays are being used but are not allowed:\n"
 	for _, relay := range blacklistedRelays {
 		message += fmt.Sprintf("- `%s`\n", relay)
 	}
