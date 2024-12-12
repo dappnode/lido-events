@@ -37,5 +37,4 @@ type StoragePort interface {
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)
 	SaveTelegramConfig(config domain.TelegramConfig) error
-	RegisterTelegramConfigListener() chan domain.TelegramConfig
 }

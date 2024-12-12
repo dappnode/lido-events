@@ -13,6 +13,7 @@ type TelegramBot struct {
 	Bot           *tgbotapi.BotAPI
 	UserID        int64
 	servicePrefix string
+	storagePort   ports.StoragePort
 }
 
 func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (*TelegramBot, error) {
@@ -20,62 +21,68 @@ func NewNotifierAdapter(ctx context.Context, storageAdapter ports.StoragePort) (
 
 	adapter := &TelegramBot{
 		servicePrefix: servicePrefix,
+		storagePort:   storageAdapter,
 	}
 
-	// Attempt to load the initial configuration for Telegram
-	initialConfig, err := storageAdapter.GetTelegramConfig()
+	// Initialize if config exists.
+	config, err := storageAdapter.GetTelegramConfig()
 	if err != nil {
 		logger.WarnWithPrefix(servicePrefix, "Failed to load initial Telegram configuration: %v", err)
-	} else if initialConfig.Token != "" && initialConfig.UserID != 0 {
-		// Initialize the bot if the configuration is valid
-		bot, err := tgbotapi.NewBotAPI(initialConfig.Token)
+	} else if config.Token != "" && config.UserID != 0 {
+		bot, err := tgbotapi.NewBotAPI(config.Token)
 		if err != nil {
 			logger.WarnWithPrefix(servicePrefix, "Failed to initialize Telegram bot: %v", err)
 		} else {
 			adapter.Bot = bot
-			adapter.UserID = initialConfig.UserID
+			adapter.UserID = config.UserID
 			logger.InfoWithPrefix(servicePrefix, "Telegram bot initialized successfully.")
 		}
 	} else {
-		logger.WarnWithPrefix(servicePrefix, "Initial Telegram configuration is incomplete. Notifications will be disabled.")
+		logger.WarnWithPrefix(servicePrefix, "Initial Telegram configuration is incomplete. Notifications disabled.")
 	}
-
-	// Listen for configuration updates in a separate goroutine
-	telegramConfigUpdates := storageAdapter.RegisterTelegramConfigListener()
-	go func() {
-		for newConfig := range telegramConfigUpdates {
-			adapter.UserID = newConfig.UserID
-			// Update the bot API instance with the new token
-			if newConfig.Token != "" {
-				updatedBot, err := tgbotapi.NewBotAPI(newConfig.Token)
-				if err == nil {
-					adapter.Bot = updatedBot
-					logger.InfoWithPrefix(servicePrefix, "Telegram bot configuration updated successfully.")
-				} else {
-					logger.ErrorWithPrefix(servicePrefix, "Failed to update Telegram bot: %v", err)
-					adapter.Bot = nil // Disable notifications on failure
-				}
-			} else {
-				logger.WarnWithPrefix(servicePrefix, "Received incomplete Telegram configuration. Notifications will be disabled.")
-				adapter.Bot = nil // Disable notifications if the new config is invalid
-			}
-		}
-	}()
 
 	return adapter, nil
 }
 
-// SendNotification sends a message via Telegram
+func (tb *TelegramBot) UpdateBotConfig() error {
+	config, err := tb.storagePort.GetTelegramConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get Telegram config: %v", err)
+	}
+
+	if config.Token == "" || config.UserID == 0 {
+		tb.Bot = nil
+		tb.UserID = 0
+		logger.WarnWithPrefix(tb.servicePrefix, "Incomplete Telegram configuration. Notifications disabled.")
+		return nil
+	}
+
+	bot, err := tgbotapi.NewBotAPI(config.Token)
+	if err != nil {
+		tb.Bot = nil
+		return fmt.Errorf("failed to update Telegram bot: %v", err)
+	}
+
+	tb.Bot = bot
+	tb.UserID = config.UserID
+
+	// Send a test notification after the bot has been updated
+	if err := tb.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
+		return fmt.Errorf("failed to send test notification: %w", err)
+	}
+
+	logger.InfoWithPrefix(tb.servicePrefix, "Telegram bot configuration updated successfully.")
+
+	return nil
+}
+
 func (tb *TelegramBot) SendNotification(message string) error {
-	// Check if the bot is initialized
 	if tb.Bot == nil {
 		logger.WarnWithPrefix(tb.servicePrefix, "Telegram bot is not initialized. Skipping notification.")
 		return nil
 	}
 
-	// print user id
 	logger.DebugWithPrefix(tb.servicePrefix, "Sending notification to user ID: %d", tb.UserID)
-
 	msg := tgbotapi.NewMessage(tb.UserID, message)
 	_, err := tb.Bot.Send(msg)
 	if err != nil {

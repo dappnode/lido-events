@@ -170,16 +170,17 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Update storage
 	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Telegram configuration: %v", err)
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
 		return
 	}
 
-	// send update notification to verify the chat id exists
-	if err := h.NotifierPort.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
-		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
+	// Synchronously update the Telegram bot configuration
+	if err := h.NotifierPort.UpdateBotConfig(); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to update Telegram bot configuration: %v", err)
+		writeErrorResponse(w, "Failed to update Telegram bot configuration", http.StatusInternalServerError)
 		return
 	}
 
