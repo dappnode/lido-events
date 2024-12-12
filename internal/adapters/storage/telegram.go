@@ -2,14 +2,10 @@ package storage
 
 import (
 	"lido-events/internal/application/domain"
-	"sync"
 )
 
-// TODO: determine if token should be stored hashed
+// Telegram Config Methods
 
-// Telegram Configuration Methods
-
-// SaveTelegramConfig saves the Telegram configuration to storage and notifies listeners of the update.
 func (fs *Storage) SaveTelegramConfig(config domain.TelegramConfig) error {
 	db, err := fs.LoadDatabase()
 	if err != nil {
@@ -21,46 +17,14 @@ func (fs *Storage) SaveTelegramConfig(config domain.TelegramConfig) error {
 		return err
 	}
 
-	fs.notifyTelegramConfigListenersSync() // Notify listeners of the change
+	// No notification to listeners needed anymore since we are doing synchronous updates.
 	return nil
 }
 
-// GetTelegramConfig retrieves the Telegram configuration from storage.
 func (fs *Storage) GetTelegramConfig() (domain.TelegramConfig, error) {
 	db, err := fs.LoadDatabase()
 	if err != nil {
 		return domain.TelegramConfig{}, err
 	}
 	return db.Telegram, nil
-}
-
-// RegisterTelegramConfigListener registers a channel to receive updates when the Telegram config changes.
-func (fs *Storage) RegisterTelegramConfigListener() chan domain.TelegramConfig {
-	updateChan := make(chan domain.TelegramConfig, 1)
-	fs.telegramConfigListeners = append(fs.telegramConfigListeners, updateChan)
-	return updateChan
-}
-
-// notifyTelegramConfigListenersSync sends updates to all registered listeners of Telegram config changes.
-func (fs *Storage) notifyTelegramConfigListenersSync() {
-	config, err := fs.GetTelegramConfig()
-	if err != nil {
-		return
-	}
-
-	var wg sync.WaitGroup
-	for _, listener := range fs.telegramConfigListeners {
-		wg.Add(1)
-		go func(listener chan domain.TelegramConfig) {
-			defer wg.Done()
-			select {
-			case listener <- config:
-				// Config sent successfully
-			default:
-				// Ignore if channel is full to prevent blocking
-			}
-		}(listener)
-	}
-
-	wg.Wait() // Wait for all listeners to process the update
 }
