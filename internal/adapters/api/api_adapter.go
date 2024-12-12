@@ -87,14 +87,14 @@ func (h *APIHandler) GetRelaysAllowed(w http.ResponseWriter, r *http.Request) {
 	relays, err := h.RelaysAllowedPort.GetRelaysAllowList(h.ctx)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching allowed relays: %v", err)
-		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(relays)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysAllowed: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -108,14 +108,14 @@ func (h *APIHandler) GetRelaysUsed(w http.ResponseWriter, r *http.Request) {
 	relays, err := h.RelaysUsedPort.GetRelaysUsed(h.ctx)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching used relays: %v", err)
-		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(relays)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysUsed: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -129,20 +129,20 @@ func (h *APIHandler) GetTelegramConfig(w http.ResponseWriter, r *http.Request) {
 	config, err := h.StoragePort.GetTelegramConfig()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching Telegram configuration: %v", err)
-		writeErrorResponse(w, "Error fetching Telegram configuration", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error fetching Telegram configuration", http.StatusInternalServerError, err)
 		return
 	}
 
 	if config.Token == "" && config.UserID == 0 {
 		logger.DebugWithPrefix("API", "No Telegram configuration found")
-		writeErrorResponse(w, "No Telegram configuration found", http.StatusNotFound)
+		writeErrorResponse(w, "No Telegram configuration found", http.StatusNotFound, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(config)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetTelegramConfig: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -160,27 +160,27 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.WarnWithPrefix("API", "Invalid request body in UpdateTelegramConfig: %v", err)
-		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest, err)
 		return
 	}
 
 	if req.Token == "" && req.UserID == 0 {
 		logger.DebugWithPrefix("API", "Missing token and userId in UpdateTelegramConfig request")
-		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest)
+		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest, nil)
 		return
 	}
 
 	// Update storage
 	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Telegram configuration: %v", err)
-		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Synchronously update the Telegram bot configuration
 	if err := h.NotifierPort.UpdateBotConfig(); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Telegram bot configuration: %v", err)
-		writeErrorResponse(w, "Failed to update Telegram bot configuration", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to update Telegram bot configuration", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -194,13 +194,13 @@ func (h *APIHandler) DeleteOperator(w http.ResponseWriter, r *http.Request) {
 
 	if operatorId == "" {
 		logger.DebugWithPrefix("API", "Missing operatorId in DeleteOperator request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(operatorId, 10); !ok {
 		logger.DebugWithPrefix("API", "Invalid operatorId format in DeleteOperator")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
@@ -208,7 +208,7 @@ func (h *APIHandler) DeleteOperator(w http.ResponseWriter, r *http.Request) {
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
-		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -222,13 +222,13 @@ func (h *APIHandler) DeleteOperator(w http.ResponseWriter, r *http.Request) {
 
 	if !found {
 		logger.DebugWithPrefix("API", "Operator ID %s not found", operatorId)
-		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound)
+		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound, err)
 		return
 	}
 
 	if err := h.StoragePort.DeleteOperator(operatorId); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to delete Operator ID: %v", err)
-		writeErrorResponse(w, "Failed to delete Operator ID", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to delete Operator ID", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -244,19 +244,19 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.DebugWithPrefix("API", "Invalid request body in AddOperator: %v", err)
-		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest, err)
 		return
 	}
 
 	if req.OperatorID == "" {
 		logger.DebugWithPrefix("API", "Missing operatorId in AddOperator request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(req.OperatorID, 10); !ok {
 		logger.DebugWithPrefix("API", "Invalid operatorId format in AddOperator")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
@@ -264,7 +264,7 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
-		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -278,7 +278,7 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.StoragePort.SaveOperatorId(req.OperatorID); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update Operator ID: %v", err)
-		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -287,12 +287,12 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 	// TODO: Consider moving this logic to the services layer
 	if err := h.StoragePort.SaveDistributionLogLastProcessedBlock(0); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update DistributionLogLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError, err)
 		return
 	}
 	if err := h.StoragePort.SaveValidatorExitRequestLastProcessedBlock(0); err != nil {
 		logger.ErrorWithPrefix("API", "Failed to update ValidatorExitRequestLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError)
+		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -307,27 +307,27 @@ func (h *APIHandler) GetOperatorPerformance(w http.ResponseWriter, r *http.Reque
 	operatorIdNum := new(big.Int)
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
 		logger.DebugWithPrefix("API", "Invalid operatorId format in GetOperatorPerformance")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest)
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
 	report, err := h.StoragePort.GetReports(operatorIdNum)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching Lido report: %v", err)
-		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError, err)
 		return
 	}
 
 	if len(report) == 0 {
 		logger.WarnWithPrefix("API", "No report found for operator ID %s", operatorId)
-		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound)
+		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(report)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetOperatorPerformance: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -341,27 +341,27 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 	operatorId := r.URL.Query().Get("operatorId")
 	if operatorId == "" {
 		logger.DebugWithPrefix("API", "Missing operatorId in GetExitRequests request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest)
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	exitRequests, err := h.StoragePort.GetExitRequests(operatorId)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching exit requests: %v", err)
-		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError, err)
 		return
 	}
 
 	if exitRequests == nil {
 		logger.DebugWithPrefix("API", "No exit requests found for operator ID %s", operatorId)
-		writeErrorResponse(w, "No exit requests found for the given operator ID", http.StatusNotFound)
+		writeErrorResponse(w, "No exit requests found for the given operator ID", http.StatusNotFound, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(exitRequests)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetExitRequests: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -370,8 +370,11 @@ func (h *APIHandler) GetExitRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 // Utility function for consistent error responses
-func writeErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+func writeErrorResponse(w http.ResponseWriter, message string, statusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
+	if err != nil {
+		message += ": " + err.Error()
+	}
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
