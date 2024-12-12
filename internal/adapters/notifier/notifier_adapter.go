@@ -65,7 +65,14 @@ func (tb *TelegramBot) UpdateBotConfig() error {
 
 	tb.Bot = bot
 	tb.UserID = config.UserID
+
+	// Send a test notification after the bot has been updated
+	if err := tb.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
+		return fmt.Errorf("failed to send test notification: %w", err)
+	}
+
 	logger.InfoWithPrefix(tb.servicePrefix, "Telegram bot configuration updated successfully.")
+
 	return nil
 }
 

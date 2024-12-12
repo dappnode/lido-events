@@ -184,13 +184,6 @@ func (h *APIHandler) UpdateTelegramConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Send a test notification after the bot has been updated
-	if err := h.NotifierPort.SendNotification("🔑 Updated telegram configuration successfully"); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to send test notification: %v", err)
-		writeErrorResponse(w, "Failed to send test notification", http.StatusInternalServerError)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 }
 
