@@ -175,7 +175,7 @@ func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, v
 	// Check if the report is older than 24h (86400 seconds)
 	// Only skip if it's older than 24h
 	if timeDiff > 86400 {
-		logger.DebugWithPrefix(phl.servicePrefix, "Skipping notification for operator ID %s, report (epoch %d) is older than 6 days", operatorID.String(), originalReport.Frame[1])
+		logger.DebugWithPrefix(phl.servicePrefix, "Skipping notification for operator ID %s, report (epoch %d) is older than 24h", operatorID.String(), originalReport.Frame[1])
 		return
 	}
 
@@ -192,8 +192,8 @@ func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, v
 		// Add bad validators' performance
 		message += strings.Join(badValidators, "\n") + "\n"
 
-		// Log the warning message
-		logger.WarnWithPrefix(phl.servicePrefix, message)
+		// Log the notification message
+		logger.InfoWithPrefix(phl.servicePrefix, "Sending bad performance notification for report epoch %d", originalReport.Frame[1])
 
 		// Send the notification
 		if err := phl.notifierPort.SendNotification(message); err != nil {
@@ -214,8 +214,8 @@ func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, v
 		// Add good validators' performance
 		message += strings.Join(goodValidators, "\n") + "\n"
 
-		// Log the success message
-		logger.InfoWithPrefix(phl.servicePrefix, message)
+		// Log the notification message
+		logger.InfoWithPrefix(phl.servicePrefix, "Sending good performance notification for report epoch %d", originalReport.Frame[1])
 
 		// Send the notification
 		if err := phl.notifierPort.SendNotification(message); err != nil {
