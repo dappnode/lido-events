@@ -7,22 +7,25 @@ import (
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 )
 
 type PendingHashesLoader struct {
-	storagePort   ports.StoragePort
-	notifierPort  ports.NotifierPort
-	ipfsPort      ports.IpfsPort
-	servicePrefix string
+	storagePort    ports.StoragePort
+	notifierPort   ports.NotifierPort
+	ipfsPort       ports.IpfsPort
+	minGenesisTime uint64
+	servicePrefix  string
 }
 
-func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort) *PendingHashesLoader {
+func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort, minGenesisTime uint64) *PendingHashesLoader {
 	return &PendingHashesLoader{
 		storagePort,
 		notifierPort,
 		ipfsPort,
+		minGenesisTime,
 		"PendingHashesLoader",
 	}
 }
@@ -102,7 +105,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 			}
 
 			// Check performance and send notifications if needed
-			// TODO: only send the notification if the report is from the last 24 hours, consider using the frame to calculate the timestamp
+			// Only sends the notification if the report is from the last 24 hours. Calculated from genesis timestamp & report epoch
 			phl.CheckAndNotifyPerformance(operatorID, data.Validators, originalReport)
 
 			// Save the report
@@ -127,21 +130,96 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 }
 
 func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, validators map[string]domain.Validator, originalReport domain.OriginalReport) {
+	// Initialize slices to collect messages for bad and good-performing validators
+	var badValidators []string
+	var goodValidators []string
+
+	// Track if there are any bad-performing validators
+	anyBadPerformance := false
+	anyGoodPerformance := false
+
+	// Iterate through the validators and check performance
 	for validatorID, validator := range validators {
-		if validator.Perf.Assigned > 0 {
+		if validator.Perf.Assigned > 60 { // Only try to notify if the validator has had duties to at least 60 epochs
 			performance := float64(validator.Perf.Included) / float64(validator.Perf.Assigned) * 100
 			if performance < originalReport.Threshold {
-				message := fmt.Sprintf(
-					"- 🚨 Operator ID: %s, Validator: %s has performance %.2f%% below the threshold %.2f%% in frame %v",
-					operatorID.String(), validatorID, performance, originalReport.Threshold, originalReport.Frame,
-				)
-				logger.WarnWithPrefix(phl.servicePrefix, message)
+				// Mark that we have at least one bad-performing validator
+				anyBadPerformance = true
 
-				// Send notification
-				if err := phl.notifierPort.SendNotification(message); err != nil {
-					logger.ErrorWithPrefix(phl.servicePrefix, "Failed to send notification: %v", err)
-				}
+				// Collect bad-performing validator details
+				badValidators = append(badValidators, fmt.Sprintf("| %s | %.2f%% |", validatorID, performance))
+			} else {
+				// Collect good-performing validator details
+				anyGoodPerformance = true
+				goodValidators = append(goodValidators, fmt.Sprintf("| %s | %.2f%% |", validatorID, performance))
 			}
+		}
+	}
+
+	// Calculate the report timestamp from the frame data
+	reportTimestamp := phl.minGenesisTime + uint64(originalReport.Frame[1])*384
+
+	// Get the current time
+	currentTime := uint64(time.Now().Unix())
+
+	// Calculate the time difference in seconds
+	timeDiff := currentTime - reportTimestamp
+
+	// Convert the time difference to days and hours
+	days := timeDiff / 86400           // 86400 seconds in a day
+	hours := (timeDiff % 86400) / 3600 // 3600 seconds in an hour
+
+	// Format the time ago string
+	timeAgo := fmt.Sprintf("%d days and %d hours ago", days, hours)
+
+	// Check if the report is older than 24h (86400 seconds)
+	// Only skip if it's older than 24h
+	if timeDiff > 86400 {
+		logger.DebugWithPrefix(phl.servicePrefix, "Skipping notification for operator ID %s, report (epoch %d) is older than 24h", operatorID.String(), originalReport.Frame[1])
+		return
+	}
+
+	// If at least one validator had bad performance, send a bad performance notification
+	if anyBadPerformance {
+		// Create the bad performance notification message
+		message := fmt.Sprintf(
+			"- 🚨 Operator ID: %s, from epoch %d to epoch %d (%s), the following validators have had bad performance below the threshold of %.2f%%:\n",
+			operatorID.String(), originalReport.Frame[0], originalReport.Frame[1], timeAgo, originalReport.Threshold*100, // Multiply by 100 to convert to percentage
+		)
+		// Add table header
+		message += "| Validator ID | Performance (%) |\n"
+		message += "|--------------|-----------------|\n"
+		// Add bad validators' performance
+		message += strings.Join(badValidators, "\n") + "\n"
+
+		// Log the notification message
+		logger.InfoWithPrefix(phl.servicePrefix, "Sending bad performance notification for report epoch %d", originalReport.Frame[1])
+
+		// Send the notification
+		if err := phl.notifierPort.SendNotification(message); err != nil {
+			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to send bad performance notification: %v", err)
+		}
+	}
+
+	// If at least one validator had good performance, send a good performance notification
+	if anyGoodPerformance {
+		// Create the good performance notification message
+		message := fmt.Sprintf(
+			"- ✅ Operator ID: %s, from epoch %d to epoch %d (%s), the following validators performed well (above the threshold of %.2f%%):\n",
+			operatorID.String(), originalReport.Frame[0], originalReport.Frame[1], timeAgo, originalReport.Threshold*100, // Multiply by 100 to convert to percentage
+		)
+		// Add table header
+		message += "| Validator ID | Performance (%) |\n"
+		message += "|--------------|-----------------|\n"
+		// Add good validators' performance
+		message += strings.Join(goodValidators, "\n") + "\n"
+
+		// Log the notification message
+		logger.InfoWithPrefix(phl.servicePrefix, "Sending good performance notification for report epoch %d", originalReport.Frame[1])
+
+		// Send the notification
+		if err := phl.notifierPort.SendNotification(message); err != nil {
+			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to send good performance notification: %v", err)
 		}
 	}
 }
