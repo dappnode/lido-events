@@ -48,7 +48,20 @@ func (b *BeaconchainAdapter) GetSyncingStatus() (bool, error) {
 }
 
 func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error) {
-	validatorData, err := b.PostStateValidators("finalized", []string{pubkey}, []domain.ValidatorStatus{})
+
+	allStatuses := []domain.ValidatorStatus{
+		domain.StatusPendingInitialized,
+		domain.StatusPendingQueued,
+		domain.StatusActiveOngoing,
+		domain.StatusActiveExiting,
+		domain.StatusActiveSlashed,
+		domain.StatusExitedUnslashed,
+		domain.StatusExitedSlashed,
+		domain.StatusWithdrawalPossible,
+		domain.StatusWithdrawalDone,
+	}
+
+	validatorData, err := b.PostStateValidators("finalized", []string{pubkey}, allStatuses)
 	if err != nil {
 		return "", fmt.Errorf("failed to get validator data for pubkey %s: %w", pubkey, err)
 	}
