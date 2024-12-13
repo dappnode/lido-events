@@ -103,7 +103,6 @@ func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
 
 // HandleDistributionLogUpdatedEvent processes a DistributionLogUpdated event
 func (ds *DistributionLogUpdatedEventScanner) HandleDistributionLogUpdatedEvent(distributionLogUpdated *domain.BindingsDistributionLogUpdated) error {
-	// TODO add message saying go to this dashboard to see the validator performance
 	logger.DebugWithPrefix(ds.servicePrefix, "Found DistributionLogUpdated event with log cid: %s", distributionLogUpdated.LogCid)
 
 	if err := ds.storagePort.AddPendingHash(distributionLogUpdated.LogCid); err != nil {
@@ -119,7 +118,7 @@ func (ds *DistributionLogUpdatedEventScanner) HandleDistributionLogUpdatedEvent(
 
 	// If the block timestamp is within the last 24 hours, send a notification
 	if time.Now().Unix()-int64(blockTimestamp) < 24*60*60 {
-		message := fmt.Sprintf("- 📦 New distribution log updated: %s", distributionLogUpdated.LogCid)
+		message := fmt.Sprintf("- 📦 New distribution log updated: %s. This report will be fetched and parsed from an IPFS gateway for later validator performance visualization.", distributionLogUpdated.LogCid)
 		if err := ds.notifierPort.SendNotification(message); err != nil {
 			logger.ErrorWithPrefix(ds.servicePrefix, "Error sending distributionLogUpdated notification: %v", err)
 			return err
