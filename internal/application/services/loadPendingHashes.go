@@ -172,10 +172,9 @@ func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, v
 	// Format the time ago string
 	timeAgo := fmt.Sprintf("%d days and %d hours ago", days, hours)
 
-	// Check if the report is older than 6 days (604800 seconds)
-	// Only skip if it's older than 6 days
-	if timeDiff > 604800 { // If the report is older than 6 days (604800 seconds)
-		// Log and skip sending notifications if the report is older than 6 days
+	// Check if the report is older than 24h (86400 seconds)
+	// Only skip if it's older than 24h
+	if timeDiff > 86400 {
 		logger.DebugWithPrefix(phl.servicePrefix, "Skipping notification for operator ID %s, report (epoch %d) is older than 6 days", operatorID.String(), originalReport.Frame[1])
 		return
 	}
