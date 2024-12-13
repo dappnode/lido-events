@@ -12,17 +12,19 @@ import (
 )
 
 type PendingHashesLoader struct {
-	storagePort   ports.StoragePort
-	notifierPort  ports.NotifierPort
-	ipfsPort      ports.IpfsPort
-	servicePrefix string
+	storagePort    ports.StoragePort
+	notifierPort   ports.NotifierPort
+	ipfsPort       ports.IpfsPort
+	minGenesisTime uint64
+	servicePrefix  string
 }
 
-func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort) *PendingHashesLoader {
+func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort, minGenesisTime uint64) *PendingHashesLoader {
 	return &PendingHashesLoader{
 		storagePort,
 		notifierPort,
 		ipfsPort,
+		minGenesisTime,
 		"PendingHashesLoader",
 	}
 }
@@ -102,7 +104,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 			}
 
 			// Check performance and send notifications if needed
-			// TODO: only send the notification if the report is from the last 24 hours, consider using the frame to calculate the timestamp
+			// Only sends the notification if the report is from the last 24 hours. Calculated from genesis timestamp & report epoch
 			phl.CheckAndNotifyPerformance(operatorID, data.Validators, originalReport)
 
 			// Save the report
@@ -128,12 +130,26 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, validators map[string]domain.Validator, originalReport domain.OriginalReport) {
 	for validatorID, validator := range validators {
-		if validator.Perf.Assigned > 0 {
+		if validator.Perf.Assigned > 60 { // Only try to notify if the validator has had duties to at least 60 epochs
 			performance := float64(validator.Perf.Included) / float64(validator.Perf.Assigned) * 100
 			if performance < originalReport.Threshold {
+				// Calculate the report timestamp from the frame data
+				reportTimestamp := phl.minGenesisTime + uint64(originalReport.Frame[1])*384
+
+				// Get the current time
+				currentTime := uint64(time.Now().Unix())
+
+				// Check if the report is within the last 24 hours (86400 seconds)
+				if currentTime-reportTimestamp > 86400 {
+					// Log the debug message only if the performance is below the threshold and the report is too old
+					logger.DebugWithPrefix(phl.servicePrefix, "Skipping bad performance notification for operator ID %s, report (epoch %d) is older than 24 hours", operatorID.String(), originalReport.Frame[1])
+					return
+				}
+
+				// If the report is within 24 hours, proceed with sending the notification
 				message := fmt.Sprintf(
-					"- 🚨 Operator ID: %s, Validator: %s has performance %.2f%% below the threshold %.2f%% in frame %v",
-					operatorID.String(), validatorID, performance, originalReport.Threshold, originalReport.Frame,
+					"- 🚨 Operator ID: %s, Validator: %s has had a performance of %.2f%% below the threshold of %.2f%% from epoch %d to %d. You're probably missing too many attestations!",
+					operatorID.String(), validatorID, performance, originalReport.Threshold, originalReport.Frame[0], originalReport.Frame[1],
 				)
 				logger.WarnWithPrefix(phl.servicePrefix, message)
 

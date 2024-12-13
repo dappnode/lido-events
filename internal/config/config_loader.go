@@ -163,7 +163,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
 			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1695902100),
+			MinGenesisTime:                  uint64(1695902400),
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
@@ -200,7 +200,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1606824000),
+			MinGenesisTime:                  uint64(1606824023),
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)
