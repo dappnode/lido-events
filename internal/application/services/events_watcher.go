@@ -95,12 +95,13 @@ func (ew *EventsWatcher) watchCsFeeDistributorEvents(ctx context.Context) error 
 // Handlers Vebo
 
 func (ew *EventsWatcher) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
+	// TODO: research what does this event mean and what should be done with it and why its emitted so often
 	// send the notification message
-	message := fmt.Sprintf("- 📈 New submitted report in slot %s", reportSubmitted.RefSlot)
-	if err := ew.notifierPort.SendNotification(message); err != nil {
-		logger.ErrorWithPrefix(ew.servicePrefix, "Error sending reportSubmitted event notification", err)
-		return err
-	}
+	// message := fmt.Sprintf("- 📈 New submitted report in slot %s", reportSubmitted.RefSlot)
+	// if err := ew.notifierPort.SendNotification(message); err != nil {
+	// 	logger.ErrorWithPrefix(ew.servicePrefix, "Error sending reportSubmitted event notification", err)
+	// 	return err
+	// }
 
 	return nil
 }
