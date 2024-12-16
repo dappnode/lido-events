@@ -130,6 +130,26 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 }
 
 func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, validators map[string]domain.Validator, originalReport domain.OriginalReport) {
+	operatorData, exists := originalReport.Operators[operatorID.String()]
+	if !exists {
+		logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s not found in the original report, skipping", operatorID.String())
+		return
+	}
+
+	// Check if the operator is stuck, if so skip performance evaluation and send a notification
+	if operatorData.Stuck {
+		logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s is in a 'stuck' state; skipping performance evaluation", operatorID.String())
+		// send notification
+		message := fmt.Sprintf(
+			"- 🚨 Operator ID: %s, from epoch %d to epoch %d, is in a 'stuck' state. Please check the operator's performance.",
+			operatorID.String(), originalReport.Frame[0], originalReport.Frame[1],
+		)
+		if err := phl.notifierPort.SendNotification(message); err != nil {
+			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to send stuck state notification: %v", err)
+		}
+		return
+	}
+
 	// Initialize slices to collect messages for bad and good-performing validators
 	var badValidators []string
 	var goodValidators []string
@@ -139,19 +159,21 @@ func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, v
 	anyGoodPerformance := false
 
 	// Iterate through the validators and check performance
-	for validatorID, validator := range validators {
+	for validatorID, validator := range operatorData.Validators {
 		if validator.Perf.Assigned > 60 { // Only try to notify if the validator has had duties to at least 60 epochs
 			performance := float64(validator.Perf.Included) / float64(validator.Perf.Assigned) * 100
-			if performance < originalReport.Threshold {
+			if performance < originalReport.Threshold*100 {
 				// Mark that we have at least one bad-performing validator
 				anyBadPerformance = true
 
 				// Collect bad-performing validator details
 				badValidators = append(badValidators, fmt.Sprintf("| %s | %.2f%% |", validatorID, performance))
-			} else {
-				// Collect good-performing validator details
+			} else if performance >= originalReport.Threshold*100 {
+				// Only categorize as good if performance meets or exceeds the threshold
 				anyGoodPerformance = true
 				goodValidators = append(goodValidators, fmt.Sprintf("| %s | %.2f%% |", validatorID, performance))
+			} else {
+				logger.WarnWithPrefix(phl.servicePrefix, "Validator %s has an invalid performance value: %.2f%%", validatorID, performance)
 			}
 		}
 	}
