@@ -9,6 +9,7 @@ import (
 
 	"lido-events/internal/adapters/execution"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,4 +81,23 @@ func TestIsSyncingIntegration(t *testing.T) {
 	} else {
 		t.Log("The Ethereum node is not syncing.")
 	}
+}
+
+// TestGetTransactionReceiptIntegration tests retrieving the transaction receipt
+func TestGetTransactionReceiptIntegration(t *testing.T) {
+	adapter, err := setupExecutionAdapter(t)
+	assert.NoError(t, err)
+
+	// Specify a transaction hash to test
+	txHash := common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26")
+
+	// Call the GetTransactionReceipt method
+	receipt, err := adapter.GetTransactionReceipt(txHash)
+	assert.NoError(t, err)
+
+	// Ensure receipt is not nil
+	assert.NotNil(t, receipt, "Expected a non-nil transaction receipt")
+
+	// Log the receipt for debugging
+	t.Logf("Transaction receipt: %+v", receipt)
 }
