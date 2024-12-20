@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -157,4 +158,47 @@ func (e *ExecutionAdapter) IsSyncing() (bool, error) {
 
 	// If result is a map or object, the node is syncing
 	return true, nil
+}
+
+// GetTransactionReceipt retrieves the transaction receipt for a given transaction hash.
+func (e *ExecutionAdapter) GetTransactionReceipt(txHash common.Hash) (map[string]interface{}, error) {
+	// Create the request payload for eth_getTransactionReceipt
+	payload := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "eth_getTransactionReceipt",
+		"params":  []interface{}{txHash},
+		"id":      1,
+	}
+
+	// Marshal the payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request payload for eth_getTransactionReceipt: %w", err)
+	}
+
+	// Send the request to the execution client
+	resp, err := http.Post(e.rpcURL, "application/json", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request to execution client at %s: %w", e.rpcURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d received from execution client", resp.StatusCode)
+	}
+
+	// Parse the response
+	var result struct {
+		Result map[string]interface{} `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response from execution client: %w", err)
+	}
+
+	// Check if the result is null
+	if result.Result == nil {
+		return nil, nil // Returning nil to indicate no receipt is available
+	}
+
+	return result.Result, nil
 }

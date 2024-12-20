@@ -8,6 +8,8 @@ import (
 	"lido-events/internal/logger"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type DistributionLogUpdatedEventScanner struct {
@@ -16,16 +18,18 @@ type DistributionLogUpdatedEventScanner struct {
 	executionPort                   ports.ExecutionPort
 	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
 	csFeeDistributorBlockDeployment uint64
+	csModuleTxReceipt               common.Hash
 	servicePrefix                   string
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,
 		executionPort,
 		csFeeDistributorImplPort,
 		csFeeDistributorBlockDeployment,
+		csModuleTxReceipt,
 		"DistributionLogUpdatedEventScanner",
 	}
 }
@@ -67,6 +71,17 @@ func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
 
 	if isSyncing {
 		logger.InfoWithPrefix(ds.servicePrefix, "Node is syncing, skipping DistributionLogUpdated scan")
+		return
+	}
+
+	// Skip if tx receipt not found (nil). This means that the node does not store log receipts and there are no logs at all
+	receipt, err := ds.executionPort.GetTransactionReceipt(ds.csModuleTxReceipt)
+	if err != nil {
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error getting transaction receipt for csModule deployment: %v", err)
+		return
+	}
+	if receipt == nil {
+		logger.WarnWithPrefix(ds.servicePrefix, "Transaction receipt for csModule deployment not found, skipping ValidatorExitRequest event scan. This means that the node does not store log receipts and there are no logs at all")
 		return
 	}
 

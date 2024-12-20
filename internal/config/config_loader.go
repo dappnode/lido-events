@@ -38,6 +38,9 @@ type Config struct {
 	VeboBlockDeployment             uint64
 	CsFeeDistributorBlockDeployment uint64
 
+	// tx receipts
+	CSModuleTxReceipt common.Hash
+
 	// Lido specifics
 	LidoKeysApiUrl string
 	ProxyApiPort   uint64
@@ -161,6 +164,7 @@ func LoadNetworkConfig() (Config, error) {
 			VeboBlockDeployment:             uint64(30701),
 			CsFeeDistributorBlockDeployment: uint64(1774650),
 			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
+			CSModuleTxReceipt:               common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26"),
 			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1695902400),
@@ -198,6 +202,7 @@ func LoadNetworkConfig() (Config, error) {
 			VeboBlockDeployment:             uint64(17172556),
 			CsFeeDistributorBlockDeployment: uint64(20935463),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
+			CSModuleTxReceipt:               common.HexToHash("0x85d995eba9763907fdf35cd2034144dd9d53ce32cbec21349d4b12823c6860c5"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1606824023),
