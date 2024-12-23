@@ -8,6 +8,8 @@ import (
 	"lido-events/internal/logger"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type DistributionLogUpdatedEventScanner struct {
@@ -16,16 +18,18 @@ type DistributionLogUpdatedEventScanner struct {
 	executionPort                   ports.ExecutionPort
 	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
 	csFeeDistributorBlockDeployment uint64
+	csModuleTxReceipt               common.Hash
 	servicePrefix                   string
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,
 		executionPort,
 		csFeeDistributorImplPort,
 		csFeeDistributorBlockDeployment,
+		csModuleTxReceipt,
 		"DistributionLogUpdatedEventScanner",
 	}
 }
@@ -67,6 +71,17 @@ func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
 
 	if isSyncing {
 		logger.InfoWithPrefix(ds.servicePrefix, "Node is syncing, skipping DistributionLogUpdated scan")
+		return
+	}
+
+	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
+	receiptExists, err := ds.executionPort.GetTransactionReceiptExists(ds.csModuleTxReceipt)
+	if err != nil {
+		logger.ErrorWithPrefix(ds.servicePrefix, "Error checking if transaction receipt exists: %v", err)
+		return
+	}
+	if !receiptExists {
+		logger.WarnWithPrefix(ds.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping DistributionLog event scan")
 		return
 	}
 
