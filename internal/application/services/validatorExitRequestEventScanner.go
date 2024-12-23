@@ -86,16 +86,16 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 		return
 	}
 
-	// Skip if tx receipt not found (nil). This means that the node does not store log receipts and there are no logs at all
-	receipt, err := vs.executionPort.GetTransactionReceipt(vs.csModuleTxReceipt)
+	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
+	receiptExists, err := vs.executionPort.GetTransactionReceiptExists(vs.csModuleTxReceipt)
 	if err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting transaction receipt for csModule deployment: %v", err)
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if transaction receipt exists: %v", err)
 		return
 	}
-	if receipt == nil {
-		logger.WarnWithPrefix(vs.servicePrefix, "Transaction receipt for csModule deployment not found, skipping ValidatorExitRequest event scan. This means that the node does not store log receipts and there are no logs at all")
+	if !receiptExists {
+		logger.WarnWithPrefix(vs.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping ValidatorExitRequests event scan")
 		// notify the user to switch to an execution client that does store the log receipts
-		message := "- 🚨 The node does not store log receipts and there are no logs at all. ValidatorExitRequest events cannot be scanned. We highly recommend switching to a Execution Client that does store the log receipts"
+		message := "- 🚨 Your Execution Client appears to be missing log receipt storage. As a result, ValidatorExitRequest events cannot be scanned. To resolve this issue, consider switching to an Execution Client that supports log receipt storage or updating your node configuration to enable this feature"
 		if err := vs.notifierPort.SendNotification(message); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
 		}

@@ -6,5 +6,5 @@ type ExecutionPort interface {
 	GetMostRecentBlockNumber() (uint64, error)
 	GetBlockTimestampByNumber(blockNumber uint64) (uint64, error)
 	IsSyncing() (bool, error)
-	GetTransactionReceipt(txHash common.Hash) (map[string]interface{}, error)
+	 GetTransactionReceiptExists(txHash common.Hash) (bool, error)
 }

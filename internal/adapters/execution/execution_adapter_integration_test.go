@@ -101,3 +101,22 @@ func TestGetTransactionReceiptIntegration(t *testing.T) {
 	// Log the receipt for debugging
 	t.Logf("Transaction receipt: %+v", receipt)
 }
+
+// TestGetTransactionReceiptExistsIntegration tests checking if a transaction receipt exists
+func TestGetTransactionReceiptExistsIntegration(t *testing.T) {
+	adapter, err := setupExecutionAdapter(t)
+	assert.NoError(t, err)
+
+	// Specify a transaction hash to test
+	txHash := common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26")
+
+	// Call the GetTransactionReceiptExists method
+	exists, err := adapter.GetTransactionReceiptExists(txHash)
+	assert.NoError(t, err)
+
+	// Ensure exists is true
+	assert.True(t, exists, "Expected the transaction receipt to exist")
+
+	// Log the result for debugging
+	t.Logf("Transaction receipt exists for hash %s: %v", txHash.Hex(), exists)
+}

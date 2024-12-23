@@ -202,3 +202,33 @@ func (e *ExecutionAdapter) GetTransactionReceipt(txHash common.Hash) (map[string
 
 	return result.Result, nil
 }
+
+// GetTransactionReceiptExists checks if the transaction receipt exists for a given transaction hash.
+// - Reth running as fullnode returns "result": null if the transaction receipt does not exist in the database. 
+// TODO: test erigon response running it with config not to store receipts
+func (e *ExecutionAdapter) GetTransactionReceiptExists(txHash common.Hash) (bool, error) {
+	receipt, err := e.GetTransactionReceipt(txHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if the receipt is nil
+	if receipt == nil {
+		return false, nil
+	}
+
+	// Check if the receipt is an empty map
+	if len(receipt) == 0 {
+		return false, nil
+	}
+
+	// Check specific fields in the receipt to ensure it is valid
+	if _, ok := receipt["transactionHash"]; !ok {
+		return false, nil
+	}
+	if _, ok := receipt["blockNumber"]; !ok {
+		return false, nil
+	}
+
+	return true, nil
+}
