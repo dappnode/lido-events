@@ -12,6 +12,7 @@ import (
 )
 
 type RelayCronService struct {
+	stakersUiUrl      string
 	relaysAllowedPort ports.RelaysAllowedPort
 	relaysUsedPort    ports.RelaysUsedPort
 	notifierPort      ports.NotifierPort
@@ -19,11 +20,13 @@ type RelayCronService struct {
 }
 
 func NewRelayCronService(
+	stakersUiUrl string,
 	relaysAllowedPort ports.RelaysAllowedPort,
 	relaysUsedPort ports.RelaysUsedPort,
 	notifierPort ports.NotifierPort,
 ) *RelayCronService {
 	return &RelayCronService{
+		stakersUiUrl:      stakersUiUrl,
 		relaysAllowedPort: relaysAllowedPort,
 		relaysUsedPort:    relaysUsedPort,
 		notifierPort:      notifierPort,
@@ -134,6 +137,7 @@ func (rcs *RelayCronService) buildMissingMandatoryNotification(allowedRelays []d
 	for _, relay := range allowedRelays {
 		message += fmt.Sprintf("\n- `%s`", relay.Uri)
 	}
+	message += "\n\nEdit your relays in the Stakers UI to use at least one mandatory relay." + rcs.stakersUiUrl
 	return message
 }
 
@@ -142,6 +146,6 @@ func (rcs *RelayCronService) buildBlacklistNotification(blacklistedRelays []stri
 	for _, relay := range blacklistedRelays {
 		message += fmt.Sprintf("- `%s`\n", relay)
 	}
-	message += "\nPlease review and address these issues promptly."
+	message += "\nPlease edit your relays in the Stakers UI to use only allowed relays." + rcs.stakersUiUrl
 	return message
 }
