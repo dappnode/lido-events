@@ -22,6 +22,7 @@ type Config struct {
 	EtherscanURL       string
 	BeaconchainURL     string
 	CSMUIURL           string
+	StakersUiUrl       string
 	ApiPort            uint64
 
 	CORS []string
@@ -154,6 +155,7 @@ func LoadNetworkConfig() (Config, error) {
 			EtherscanURL:                    "https://holesky.etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
 			CSMUIURL:                        "https://csm.testnet.fi",
+			StakersUiUrl:                    "http://my.dappnode/stakers/holesky",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
 			CSAccountingAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
@@ -192,6 +194,7 @@ func LoadNetworkConfig() (Config, error) {
 			EtherscanURL:                    "https://etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
 			CSMUIURL:                        "https://csm.lido.fi",
+			StakersUiUrl:                    "http://my.dappnode/stakers/ethereum",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
 			CSAccountingAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
