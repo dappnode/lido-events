@@ -8,12 +8,33 @@ import (
 	"lido-events/internal/application/domain"
 	"math/big"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 )
+
+// Test for NewStorageAdapter to ensure it creates the directory if it does not exist
+func TestNewStorageAdapter_CreatesDirectory(t *testing.T) {
+	// Create a temporary directory and remove it to simulate a missing directory
+	tempDir := t.TempDir()
+	os.Remove(tempDir) // Ensure the directory does not exist
+
+	// Initialize the storage adapter
+	adapter, err := storage.NewStorageAdapter(tempDir)
+	assert.NoError(t, err)
+
+	// Check that the directory was created
+	_, err = os.Stat(tempDir)
+	assert.NoError(t, err)
+	assert.True(t, os.IsExist(err) || err == nil, "expected directory to be created")
+
+	// Verify the adapter was initialized with the correct DB file path
+	expectedDBFile := filepath.Join(tempDir, "db.json")
+	assert.Equal(t, expectedDBFile, adapter.DBFile)
+}
 
 // Test for LoadDatabase when the database file is missing
 func TestLoadDatabase_MissingFile(t *testing.T) {

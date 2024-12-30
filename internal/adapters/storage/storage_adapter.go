@@ -6,22 +6,37 @@ import (
 	"lido-events/internal/application/domain"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
 
 // Storage handles file-based storage for configuration and operator data
 type Storage struct {
-	DBFile                  string
-	mu                      sync.RWMutex // RWMutex for concurrent access
-	operatorIdListeners     []chan []*big.Int
-	telegramConfigListeners []chan domain.TelegramConfig
+	DBFile              string
+	mu                  sync.RWMutex // RWMutex for concurrent access
+	operatorIdListeners []chan []*big.Int
 }
 
-func NewStorageAdapter(dbDirectory string) *Storage {
-	return &Storage{
-		DBFile: fmt.Sprintf("%s/db.json", strings.TrimRight(dbDirectory, "/")),
+// NewStorageAdapter creates a new instance of Storage and ensures the DB directory exists
+func NewStorageAdapter(dbDirectory string) (*Storage, error) {
+	// Trim any trailing slash from the directory path
+	dbDirectory = strings.TrimRight(dbDirectory, "/")
+
+	// Check if the directory exists
+	if _, err := os.Stat(dbDirectory); os.IsNotExist(err) {
+		// Attempt to create the directory
+		if err := os.MkdirAll(dbDirectory, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", dbDirectory, err)
+		}
 	}
+
+	// Construct the DB file path
+	dbFile := filepath.Join(dbDirectory, "db.json")
+
+	return &Storage{
+		DBFile: dbFile,
+	}, nil
 }
 
 // Database structure for the new storage format
