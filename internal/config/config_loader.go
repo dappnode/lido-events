@@ -21,6 +21,7 @@ type Config struct {
 	CSMStakingModuleID *big.Int
 	EtherscanURL       string
 	BeaconchainURL     string
+	BeaconchaUrl       string
 	CSMUIURL           string
 	ApiPort            uint64
 
@@ -153,6 +154,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSMStakingModuleID:              big.NewInt(4),
 			EtherscanURL:                    "https://holesky.etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
+			BeaconchaUrl:                    "https://holesky.beaconcha.in",
 			CSMUIURL:                        "https://csm.testnet.fi",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
@@ -191,6 +193,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSMStakingModuleID:              big.NewInt(3),
 			EtherscanURL:                    "https://etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
+			BeaconchaUrl:                    "https://beaconcha.in",
 			CSMUIURL:                        "https://csm.lido.fi",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
