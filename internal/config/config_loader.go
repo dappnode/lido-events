@@ -202,7 +202,7 @@ func LoadNetworkConfig() (Config, error) {
 			VeboBlockDeployment:             uint64(17172556),
 			CsFeeDistributorBlockDeployment: uint64(20935463),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
-			CSModuleTxReceipt:               common.HexToHash("0x85d995eba9763907fdf35cd2034144dd9d53ce32cbec21349d4b12823c6860c5"),
+			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1606824023),
