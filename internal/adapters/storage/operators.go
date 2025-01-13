@@ -23,6 +23,11 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 		db.Operators[operatorID] = OperatorData{
 			Reports:      make(domain.Reports),
 			ExitRequests: make(domain.ExitRequests),
+			NodeOperatorEvents: NodeOperatorEvents{
+				NodeOperatorAdded:                 domain.CsmoduleNodeOperatorAdded{},
+				NodeOperatorManagerAddressChanged: domain.CsmoduleNodeOperatorManagerAddressChanged{},
+				NodeOperatorRewardAddressChanged:  domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			},
 		}
 		if err := fs.SaveDatabase(db); err != nil {
 			return err

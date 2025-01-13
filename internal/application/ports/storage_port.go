@@ -17,6 +17,10 @@ type StoragePort interface {
 	GetPendingHashes() ([]string, error)
 	DeletePendingHash(hash string) error
 
+	// csModule events
+	GetCsModuleLastProcessedBlock() (uint64, error)
+	SaveCsModuletLastProcessedBlock(block uint64) error
+
 	// operator IDs
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error
@@ -33,6 +37,14 @@ type StoragePort interface {
 	SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error
 	UpdateExitRequestStatus(operatorId string, validatorIndex string, status domain.ValidatorStatus) error
 	DeleteExitRequest(operatorID string, validatorIndex string) error
+
+	// node operator events
+	GetNodeOperatorAdded(operatorID string) (domain.CsmoduleNodeOperatorAdded, error)
+	SetNodeOperatorAdded(operatorID string, event domain.CsmoduleNodeOperatorAdded) error
+	GetNodeOperatorManagerAddressChanged(operatorID string) (domain.CsmoduleNodeOperatorManagerAddressChanged, error)
+	SetNodeOperatorManagerAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
+	GetNodeOperatorRewardAddressChanged(operatorID string) (domain.CsmoduleNodeOperatorRewardAddressChanged, error)
+	SetNodeOperatorRewardAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)

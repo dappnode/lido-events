@@ -47,8 +47,15 @@ type Database struct {
 }
 
 type OperatorData struct {
-	Reports      domain.Reports      `json:"reports"`
-	ExitRequests domain.ExitRequests `json:"exitRequests"`
+	Reports            domain.Reports      `json:"reports"`
+	ExitRequests       domain.ExitRequests `json:"exitRequests"`
+	NodeOperatorEvents NodeOperatorEvents  `json:"nodeOperatorEvents"`
+}
+
+type NodeOperatorEvents struct {
+	NodeOperatorAdded                 domain.CsmoduleNodeOperatorAdded                 `json:"nodeOperatorAdded"`
+	NodeOperatorManagerAddressChanged domain.CsmoduleNodeOperatorManagerAddressChanged `json:"nodeOperatorManagerAddressChanged"`
+	NodeOperatorRewardAddressChanged  domain.CsmoduleNodeOperatorRewardAddressChanged  `json:"nodeOperatorRewardAddressChanged"`
 }
 
 type Events struct {
@@ -59,6 +66,9 @@ type Events struct {
 	ValidatorExitRequest struct {
 		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 	} `json:"validatorExitRequest"`
+	CsModule struct {
+		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+	} `json:"csModule"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -78,6 +88,11 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 				PendingHashes:      []string{}, // Initialize as empty slice
 			},
 			ValidatorExitRequest: struct {
+				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
+			}{
+				LastProcessedBlock: 0,
+			},
+			CsModule: struct {
 				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 			}{
 				LastProcessedBlock: 0,

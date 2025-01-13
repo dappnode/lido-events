@@ -6,6 +6,7 @@ import (
 )
 
 type CsModulePort interface {
+	ScanNodeOperatorEvents(ctx context.Context, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged) error) error
 	WatchCsModuleEvents(ctx context.Context, handlers CsModuleHandlers) error
 	ResubscribeSignal() <-chan struct{}
 }
