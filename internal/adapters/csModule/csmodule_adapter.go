@@ -87,7 +87,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, start u
 	// Filter for NodeOperatorAdded events
 	nodeOperatorAddedEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
 	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, end, err)
+		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, *end, err)
 	}
 	for nodeOperatorAddedEvents.Next() {
 		if err := nodeOperatorAddedEvents.Error(); err != nil {
@@ -102,7 +102,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, start u
 	// Filter for NodeOperatorManagerAddressChanged events
 	nodeOperatorManagerAddressChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
 	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, end, err)
+		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, *end, err)
 	}
 	for nodeOperatorManagerAddressChangedEvents.Next() {
 		if err := nodeOperatorManagerAddressChangedEvents.Error(); err != nil {
@@ -117,7 +117,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, start u
 	// Filter for NodeOperatorRewardAddressChanged events
 	nodeOperatorRewardAddressChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
 	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, end, err)
+		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, *end, err)
 	}
 	for nodeOperatorRewardAddressChangedEvents.Next() {
 		if err := nodeOperatorRewardAddressChangedEvents.Error(); err != nil {
