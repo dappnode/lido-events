@@ -151,9 +151,9 @@ func (m *MockStoragePort) SaveCsModuletLastProcessedBlock(block uint64) error {
 }
 
 // GetNodeOperatorAdded returns the NodeOperatorAdded event for a specific operator ID
-func (m *MockStoragePort) GetNodeOperatorAdded(operatorID string) (domain.CsmoduleNodeOperatorAdded, error) {
+func (m *MockStoragePort) GetNodeOperatorAdded(operatorID string) ([]domain.CsmoduleNodeOperatorAdded, error) {
 	args := m.Called(operatorID)
-	return args.Get(0).(domain.CsmoduleNodeOperatorAdded), args.Error(1)
+	return args.Get(0).([]domain.CsmoduleNodeOperatorAdded), args.Error(1)
 }
 
 // SetNodeOperatorAdded simulates saving a NodeOperatorAdded event for a specific operator ID
@@ -163,9 +163,9 @@ func (m *MockStoragePort) SetNodeOperatorAdded(operatorID string, event domain.C
 }
 
 // GetNodeOperatorManagerAddressChanged returns the NodeOperatorManagerAddressChanged event for a specific operator ID
-func (m *MockStoragePort) GetNodeOperatorManagerAddressChanged(operatorID string) (domain.CsmoduleNodeOperatorManagerAddressChanged, error) {
+func (m *MockStoragePort) GetNodeOperatorManagerAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorManagerAddressChanged, error) {
 	args := m.Called(operatorID)
-	return args.Get(0).(domain.CsmoduleNodeOperatorManagerAddressChanged), args.Error(1)
+	return args.Get(0).([]domain.CsmoduleNodeOperatorManagerAddressChanged), args.Error(1)
 }
 
 // SetNodeOperatorManagerAddressChanged simulates saving a NodeOperatorManagerAddressChanged event for a specific operator ID
@@ -175,9 +175,9 @@ func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(operatorID string
 }
 
 // GetNodeOperatorRewardAddressChanged returns the NodeOperatorRewardAddressChanged event for a specific operator ID
-func (m *MockStoragePort) GetNodeOperatorRewardAddressChanged(operatorID string) (domain.CsmoduleNodeOperatorRewardAddressChanged, error) {
+func (m *MockStoragePort) GetNodeOperatorRewardAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorRewardAddressChanged, error) {
 	args := m.Called(operatorID)
-	return args.Get(0).(domain.CsmoduleNodeOperatorRewardAddressChanged), args.Error(1)
+	return args.Get(0).([]domain.CsmoduleNodeOperatorRewardAddressChanged), args.Error(1)
 }
 
 // SetNodeOperatorRewardAddressChanged simulates saving a NodeOperatorRewardAddressChanged event for a specific operator ID
