@@ -47,15 +47,9 @@ type Database struct {
 }
 
 type OperatorData struct {
-	Reports            domain.Reports      `json:"reports"`
-	ExitRequests       domain.ExitRequests `json:"exitRequests"`
-	NodeOperatorEvents NodeOperatorEvents  `json:"nodeOperatorEvents"`
-}
-
-type NodeOperatorEvents struct {
-	NodeOperatorAdded                 []domain.CsmoduleNodeOperatorAdded                 `json:"nodeOperatorAdded"`
-	NodeOperatorManagerAddressChanged []domain.CsmoduleNodeOperatorManagerAddressChanged `json:"nodeOperatorManagerAddressChanged"`
-	NodeOperatorRewardAddressChanged  []domain.CsmoduleNodeOperatorRewardAddressChanged  `json:"nodeOperatorRewardAddressChanged"`
+	Reports            domain.Reports            `json:"reports"`
+	ExitRequests       domain.ExitRequests       `json:"exitRequests"`
+	NodeOperatorEvents domain.NodeOperatorEvents `json:"nodeOperatorEvents"`
 }
 
 type Events struct {

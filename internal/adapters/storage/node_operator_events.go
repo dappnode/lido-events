@@ -5,19 +5,19 @@ import (
 	"lido-events/internal/application/domain"
 )
 
-// GetNodeOperatorAdded retrieves the NodeOperatorAdded event for a specific operator ID.
-func (fs *Storage) GetNodeOperatorAdded(operatorID string) ([]domain.CsmoduleNodeOperatorAdded, error) {
+// GetNodeOperatorEvents retrieves all NodeOperator events for a specific operator ID.
+func (fs *Storage) GetNodeOperatorEvents(operatorID string) (domain.NodeOperatorEvents, error) {
 	db, err := fs.LoadDatabase()
 	if err != nil {
-		return []domain.CsmoduleNodeOperatorAdded{}, err
+		return domain.NodeOperatorEvents{}, err
 	}
 
 	opData, exists := db.Operators[operatorID]
 	if !exists {
-		return []domain.CsmoduleNodeOperatorAdded{}, fmt.Errorf("no data found for operator ID %s", operatorID)
+		return domain.NodeOperatorEvents{}, fmt.Errorf("no data found for operator ID %s", operatorID)
 	}
 
-	return opData.NodeOperatorEvents.NodeOperatorAdded, nil
+	return opData.NodeOperatorEvents, nil
 }
 
 // SetNodeOperatorAdded saves the NodeOperatorAdded event for a specific operator ID.
@@ -38,21 +38,6 @@ func (fs *Storage) SetNodeOperatorAdded(operatorID string, event domain.Csmodule
 	return fs.SaveDatabase(db)
 }
 
-// GetNodeOperatorManagerAddressChanged retrieves the NodeOperatorManagerAddressChanged event for a specific operator ID.
-func (fs *Storage) GetNodeOperatorManagerAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorManagerAddressChanged, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return []domain.CsmoduleNodeOperatorManagerAddressChanged{}, err
-	}
-
-	opData, exists := db.Operators[operatorID]
-	if !exists {
-		return []domain.CsmoduleNodeOperatorManagerAddressChanged{}, fmt.Errorf("no data found for operator ID %s", operatorID)
-	}
-
-	return opData.NodeOperatorEvents.NodeOperatorManagerAddressChanged, nil
-}
-
 // SetNodeOperatorManagerAddressChanged saves the NodeOperatorManagerAddressChanged event for a specific operator ID.
 func (fs *Storage) SetNodeOperatorManagerAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
 	db, err := fs.LoadDatabase()
@@ -69,21 +54,6 @@ func (fs *Storage) SetNodeOperatorManagerAddressChanged(operatorID string, event
 	db.Operators[operatorID] = opData
 
 	return fs.SaveDatabase(db)
-}
-
-// GetNodeOperatorRewardAddressChanged retrieves the NodeOperatorRewardAddressChanged event for a specific operator ID.
-func (fs *Storage) GetNodeOperatorRewardAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorRewardAddressChanged, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return []domain.CsmoduleNodeOperatorRewardAddressChanged{}, err
-	}
-
-	opData, exists := db.Operators[operatorID]
-	if !exists {
-		return []domain.CsmoduleNodeOperatorRewardAddressChanged{}, fmt.Errorf("no data found for operator ID %s", operatorID)
-	}
-
-	return opData.NodeOperatorEvents.NodeOperatorRewardAddressChanged, nil
 }
 
 // SetNodeOperatorRewardAddressChanged saves the NodeOperatorRewardAddressChanged event for a specific operator ID.

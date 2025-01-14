@@ -74,11 +74,42 @@ func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.GetRelaysAllowed).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_used", h.GetRelaysUsed).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/node_operator_events", h.GetNodeOperatorEvents).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK) // Respond to OPTIONS requests with 200 OK
 	})
+}
+
+// GetNodeOperatorEvents retrieves node operator events
+func (h *APIHandler) GetNodeOperatorEvents(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "GetNodeOperatorEvents request received")
+	operatorId := r.URL.Query().Get("operatorId")
+
+	if operatorId == "" {
+		logger.DebugWithPrefix("API", "Missing operatorId in GetNodeOperatorEvents request")
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
+		return
+	}
+
+	// returns
+	nodeOperatorEvents, err := h.StoragePort.GetNodeOperatorEvents(operatorId)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching node operator events: %v", err)
+		writeErrorResponse(w, "Error fetching node operator events", http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(nodeOperatorEvents)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in GetNodeOperatorEvents: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 // GetRelaysAllowed retrieves the list of allowed relays

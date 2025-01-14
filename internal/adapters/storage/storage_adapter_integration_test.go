@@ -97,7 +97,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 						Status: domain.StatusActiveOngoing,
 					},
 				},
-				NodeOperatorEvents: storage.NodeOperatorEvents{
+				NodeOperatorEvents: domain.NodeOperatorEvents{
 					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
@@ -230,7 +230,7 @@ func TestSaveDatabase(t *testing.T) {
 						Status: domain.StatusExitedUnslashed,
 					},
 				},
-				NodeOperatorEvents: storage.NodeOperatorEvents{
+				NodeOperatorEvents: domain.NodeOperatorEvents{
 					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},

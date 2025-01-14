@@ -39,11 +39,9 @@ type StoragePort interface {
 	DeleteExitRequest(operatorID string, validatorIndex string) error
 
 	// node operator events
-	GetNodeOperatorAdded(operatorID string) ([]domain.CsmoduleNodeOperatorAdded, error)
+	GetNodeOperatorEvents(operatorID string) (domain.NodeOperatorEvents, error)
 	SetNodeOperatorAdded(operatorID string, event domain.CsmoduleNodeOperatorAdded) error
-	GetNodeOperatorManagerAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorManagerAddressChanged, error)
 	SetNodeOperatorManagerAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
-	GetNodeOperatorRewardAddressChanged(operatorID string) ([]domain.CsmoduleNodeOperatorRewardAddressChanged, error)
 	SetNodeOperatorRewardAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
 
 	// telegram

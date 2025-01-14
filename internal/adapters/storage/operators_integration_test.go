@@ -39,7 +39,7 @@ func TestSaveOperatorId_ExistingOperator(t *testing.T) {
 			"1": { // operatorID as string
 				Reports:      make(domain.Reports),
 				ExitRequests: make(domain.ExitRequests),
-				NodeOperatorEvents: storage.NodeOperatorEvents{
+				NodeOperatorEvents: domain.NodeOperatorEvents{
 					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},

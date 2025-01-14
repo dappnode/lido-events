@@ -23,7 +23,7 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 		db.Operators[operatorID] = OperatorData{
 			Reports:      make(domain.Reports),
 			ExitRequests: make(domain.ExitRequests),
-			NodeOperatorEvents: NodeOperatorEvents{
+			NodeOperatorEvents: domain.NodeOperatorEvents{
 				NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 				NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 				NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
