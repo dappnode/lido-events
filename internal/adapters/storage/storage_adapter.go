@@ -53,9 +53,9 @@ type OperatorData struct {
 }
 
 type NodeOperatorEvents struct {
-	NodeOperatorAdded                 domain.CsmoduleNodeOperatorAdded                 `json:"nodeOperatorAdded"`
-	NodeOperatorManagerAddressChanged domain.CsmoduleNodeOperatorManagerAddressChanged `json:"nodeOperatorManagerAddressChanged"`
-	NodeOperatorRewardAddressChanged  domain.CsmoduleNodeOperatorRewardAddressChanged  `json:"nodeOperatorRewardAddressChanged"`
+	NodeOperatorAdded                 []domain.CsmoduleNodeOperatorAdded                 `json:"nodeOperatorAdded"`
+	NodeOperatorManagerAddressChanged []domain.CsmoduleNodeOperatorManagerAddressChanged `json:"nodeOperatorManagerAddressChanged"`
+	NodeOperatorRewardAddressChanged  []domain.CsmoduleNodeOperatorRewardAddressChanged  `json:"nodeOperatorRewardAddressChanged"`
 }
 
 type Events struct {
@@ -127,12 +127,24 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 		db.Events.DistributionLogUpdated.PendingHashes = []string{}
 	}
 
-	// Ensure each OperatorData's Reports map is initialized
+	// Ensure each OperatorData's nested fields are initialized
 	for key, operatorData := range db.Operators {
 		if operatorData.Reports == nil {
 			operatorData.Reports = make(domain.Reports)
-			db.Operators[key] = operatorData // Update map with initialized Reports
 		}
+		if operatorData.ExitRequests == nil {
+			operatorData.ExitRequests = make(domain.ExitRequests)
+		}
+		if operatorData.NodeOperatorEvents.NodeOperatorAdded == nil {
+			operatorData.NodeOperatorEvents.NodeOperatorAdded = []domain.CsmoduleNodeOperatorAdded{}
+		}
+		if operatorData.NodeOperatorEvents.NodeOperatorManagerAddressChanged == nil {
+			operatorData.NodeOperatorEvents.NodeOperatorManagerAddressChanged = []domain.CsmoduleNodeOperatorManagerAddressChanged{}
+		}
+		if operatorData.NodeOperatorEvents.NodeOperatorRewardAddressChanged == nil {
+			operatorData.NodeOperatorEvents.NodeOperatorRewardAddressChanged = []domain.CsmoduleNodeOperatorRewardAddressChanged{}
+		}
+		db.Operators[key] = operatorData // Update map with initialized OperatorData
 	}
 
 	return db, nil

@@ -40,9 +40,9 @@ func TestSaveOperatorId_ExistingOperator(t *testing.T) {
 				Reports:      make(domain.Reports),
 				ExitRequests: make(domain.ExitRequests),
 				NodeOperatorEvents: storage.NodeOperatorEvents{
-					NodeOperatorAdded:                 domain.CsmoduleNodeOperatorAdded{},
-					NodeOperatorManagerAddressChanged: domain.CsmoduleNodeOperatorManagerAddressChanged{},
-					NodeOperatorRewardAddressChanged:  domain.CsmoduleNodeOperatorRewardAddressChanged{},
+					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
+					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
 				},
 			},
 		},

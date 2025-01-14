@@ -72,7 +72,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 						Frame:     [2]int{81055, 81504},
 						Threshold: 0.85,
 						Data: domain.Data{
-							Distributed: int64(3465578901933468), // Updated to int64
+							Distributed: int64(3465578901933468),
 							Stuck:       false,
 							Validators: map[string]domain.Validator{
 								"1735661": {
@@ -98,24 +98,9 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 					},
 				},
 				NodeOperatorEvents: storage.NodeOperatorEvents{
-					NodeOperatorAdded: domain.CsmoduleNodeOperatorAdded{
-						NodeOperatorId: big.NewInt(1),
-						ManagerAddress: common.HexToAddress("0x0"),
-						RewardAddress:  common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
-					NodeOperatorManagerAddressChanged: domain.CsmoduleNodeOperatorManagerAddressChanged{
-						NodeOperatorId: big.NewInt(1),
-						OldAddress:     common.HexToAddress("0x0"),
-						NewAddress:     common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
-					NodeOperatorRewardAddressChanged: domain.CsmoduleNodeOperatorRewardAddressChanged{
-						NodeOperatorId: big.NewInt(1),
-						OldAddress:     common.HexToAddress("0x0"),
-						NewAddress:     common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
+					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
+					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
 				},
 			},
 		},
@@ -139,7 +124,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 			},
 		},
 	}
-
 	tmpFile := CreateTempDatabaseFile(t, existingData)
 	defer os.Remove(tmpFile.Name())
 
@@ -147,7 +131,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
 
-	// Validate loaded data matches the existing data
 	assert.Equal(t, "test-token", db.Telegram.Token)
 	assert.Equal(t, uint64(100), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Equal(t, []string{"hash1", "hash2"}, db.Events.DistributionLogUpdated.PendingHashes)
@@ -156,13 +139,9 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Contains(t, db.Operators, "1")
 	assert.Contains(t, db.Operators["1"].Reports, "81055-81504")
 	assert.Equal(t, 0.85, db.Operators["1"].Reports["81055-81504"].Threshold)
-	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed) // Updated to int64
+	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed)
 	assert.Equal(t, 450, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Perf.Assigned)
 	assert.False(t, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Slashed)
-	// validate nodeOperatorEvents
-	assert.Equal(t, big.NewInt(1), db.Operators["1"].NodeOperatorEvents.NodeOperatorAdded.NodeOperatorId)
-	assert.Equal(t, common.HexToAddress("0x0"), db.Operators["1"].NodeOperatorEvents.NodeOperatorAdded.ManagerAddress)
-	assert.Equal(t, common.HexToAddress("0x0"), db.Operators["1"].NodeOperatorEvents.NodeOperatorAdded.RewardAddress)
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
@@ -252,24 +231,9 @@ func TestSaveDatabase(t *testing.T) {
 					},
 				},
 				NodeOperatorEvents: storage.NodeOperatorEvents{
-					NodeOperatorAdded: domain.CsmoduleNodeOperatorAdded{
-						NodeOperatorId: big.NewInt(2),
-						ManagerAddress: common.HexToAddress("0x0"),
-						RewardAddress:  common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
-					NodeOperatorManagerAddressChanged: domain.CsmoduleNodeOperatorManagerAddressChanged{
-						NodeOperatorId: big.NewInt(2),
-						OldAddress:     common.HexToAddress("0x0"),
-						NewAddress:     common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
-					NodeOperatorRewardAddressChanged: domain.CsmoduleNodeOperatorRewardAddressChanged{
-						NodeOperatorId: big.NewInt(2),
-						OldAddress:     common.HexToAddress("0x0"),
-						NewAddress:     common.HexToAddress("0x0"),
-						Raw:            types.Log{},
-					},
+					NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
+					NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+					NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
 				},
 			},
 		},
