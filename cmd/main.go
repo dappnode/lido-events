@@ -101,7 +101,7 @@ func main() {
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
-	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter)
+	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CSModuleTxReceipt)
 	// relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
 	// Start domain services
