@@ -32,6 +32,19 @@ func (fs *Storage) SetNodeOperatorAdded(operatorID string, event domain.Csmodule
 	}
 
 	opData := db.Operators[operatorID]
+
+	// Use transaction hash from the event's Raw log for comparison
+	txHash := event.Raw.TxHash.Hex()
+
+	// Check if the transaction hash already exists in the event array
+	for _, existingEvent := range opData.NodeOperatorEvents.NodeOperatorAdded {
+		if existingEvent.Raw.TxHash.Hex() == txHash {
+			// Event already exists; no need to add it
+			return nil
+		}
+	}
+
+	// Add the new event to the array
 	opData.NodeOperatorEvents.NodeOperatorAdded = append(opData.NodeOperatorEvents.NodeOperatorAdded, event)
 	db.Operators[operatorID] = opData
 
@@ -50,6 +63,19 @@ func (fs *Storage) SetNodeOperatorManagerAddressChanged(operatorID string, event
 	}
 
 	opData := db.Operators[operatorID]
+
+	// Use transaction hash from the event's Raw log for comparison
+	txHash := event.Raw.TxHash.Hex()
+
+	// Check if the transaction hash already exists in the event array
+	for _, existingEvent := range opData.NodeOperatorEvents.NodeOperatorManagerAddressChanged {
+		if existingEvent.Raw.TxHash.Hex() == txHash {
+			// Event already exists; no need to add it
+			return nil
+		}
+	}
+
+	// Add the new event to the array
 	opData.NodeOperatorEvents.NodeOperatorManagerAddressChanged = append(opData.NodeOperatorEvents.NodeOperatorManagerAddressChanged, event)
 	db.Operators[operatorID] = opData
 
@@ -68,6 +94,19 @@ func (fs *Storage) SetNodeOperatorRewardAddressChanged(operatorID string, event 
 	}
 
 	opData := db.Operators[operatorID]
+
+	// Use transaction hash from the event's Raw log for comparison
+	txHash := event.Raw.TxHash.Hex()
+
+	// Check if the transaction hash already exists in the event array
+	for _, existingEvent := range opData.NodeOperatorEvents.NodeOperatorRewardAddressChanged {
+		if existingEvent.Raw.TxHash.Hex() == txHash {
+			// Event already exists; no need to add it
+			return nil
+		}
+	}
+
+	// Add the new event to the array
 	opData.NodeOperatorEvents.NodeOperatorRewardAddressChanged = append(opData.NodeOperatorEvents.NodeOperatorRewardAddressChanged, event)
 	db.Operators[operatorID] = opData
 

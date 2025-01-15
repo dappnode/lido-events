@@ -41,6 +41,66 @@ func TestSetNodeOperatorAdded(t *testing.T) {
 	assert.Contains(t, db.Operators[operatorID].NodeOperatorEvents.NodeOperatorAdded, event)
 }
 
+func TestSetNodeOperatorAdded_DuplicateEvent(t *testing.T) {
+	tmpFile := CreateTempDatabaseFile(t, nil)
+	defer os.Remove(tmpFile.Name())
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	operatorID := "1"
+	event := domain.CsmoduleNodeOperatorAdded{
+		NodeOperatorId: big.NewInt(1),
+		ManagerAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
+		RewardAddress:  common.HexToAddress("0x2222222222222222222222222222222222222222"),
+		Raw: types.Log{
+			TxHash: common.HexToHash("0x1234567890abcdef"),
+			Topics: []common.Hash{},
+		},
+	}
+
+	// Add the event the first time
+	err := storageAdapter.SetNodeOperatorAdded(operatorID, event)
+	assert.NoError(t, err)
+
+	// Add the same event again
+	err = storageAdapter.SetNodeOperatorAdded(operatorID, event)
+	assert.NoError(t, err)
+
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+
+	// Ensure only one instance of the event exists
+	assert.Len(t, db.Operators[operatorID].NodeOperatorEvents.NodeOperatorAdded, 1)
+}
+
+func TestSetNodeOperatorAdded_UninitializedStructures(t *testing.T) {
+	initialData := &storage.Database{}
+	tmpFile := CreateTempDatabaseFile(t, initialData)
+	defer os.Remove(tmpFile.Name())
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	operatorID := "1"
+	event := domain.CsmoduleNodeOperatorAdded{
+		NodeOperatorId: big.NewInt(1),
+		ManagerAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
+		RewardAddress:  common.HexToAddress("0x2222222222222222222222222222222222222222"),
+		Raw: types.Log{
+			TxHash: common.HexToHash("0xabcdef1234567890"),
+			Topics: []common.Hash{},
+		},
+	}
+
+	err := storageAdapter.SetNodeOperatorAdded(operatorID, event)
+	assert.NoError(t, err)
+
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+
+	// Ensure the structures were initialized
+	assert.Contains(t, db.Operators, operatorID)
+	assert.NotNil(t, db.Operators[operatorID].NodeOperatorEvents.NodeOperatorAdded)
+	assert.Len(t, db.Operators[operatorID].NodeOperatorEvents.NodeOperatorAdded, 1)
+}
+
 // TestSetNodeOperatorManagerAddressChanged tests saving a NodeOperatorManagerAddressChanged event.
 func TestSetNodeOperatorManagerAddressChanged(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil)
