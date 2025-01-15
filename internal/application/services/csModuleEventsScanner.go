@@ -25,14 +25,13 @@ func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports
 	}
 }
 
-func (cs *CsModuleEventsScanner) ScanCsModuleEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
+func (cs *CsModuleEventsScanner) ScanCsModuleEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done()
 	wg.Add(1)
 
 	cs.runScan(ctx)
 
-	logger.DebugWithPrefix(cs.servicePrefix, "First execution complete, sending signal to start periodic cron for CsModule events")
-	close(firstExecutionComplete)
+	logger.DebugWithPrefix(cs.servicePrefix, "First execution complete of CsModule events scanner")
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()

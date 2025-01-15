@@ -115,7 +115,7 @@ func main() {
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
 
-	go csModuleEventsScannerService.ScanCsModuleEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
+	go csModuleEventsScannerService.ScanCsModuleEventsCron(ctx, 384*time.Second, &wg)
 
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 

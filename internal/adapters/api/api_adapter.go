@@ -326,6 +326,11 @@ func (h *APIHandler) AddOperator(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError, err)
 		return
 	}
+	if err := h.StoragePort.SaveCsModuletLastProcessedBlock(0); err != nil {
+		logger.ErrorWithPrefix("API", "Failed to update CsModuleLastProcessedBlock: %v", err)
+		writeErrorResponse(w, "Failed to reset CsModuleLastProcessedBlock", http.StatusInternalServerError, err)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
