@@ -7,21 +7,25 @@ import (
 	"lido-events/internal/logger"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type CsModuleEventsScanner struct {
-	storagePort   ports.StoragePort
-	executionPort ports.ExecutionPort
-	csModulePort  ports.CsModulePort
-	servicePrefix string
+	storagePort       ports.StoragePort
+	executionPort     ports.ExecutionPort
+	csModulePort      ports.CsModulePort
+	csModuleTxReceipt common.Hash
+	servicePrefix     string
 }
 
-func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort) *CsModuleEventsScanner {
+func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort, csModuleTxReceipt common.Hash) *CsModuleEventsScanner {
 	return &CsModuleEventsScanner{
-		storagePort:   storagePort,
-		executionPort: executionPort,
-		csModulePort:  csModulePort,
-		servicePrefix: "CsModuleEventsScanner",
+		storagePort:       storagePort,
+		executionPort:     executionPort,
+		csModulePort:      csModulePort,
+		csModuleTxReceipt: csModuleTxReceipt,
+		servicePrefix:     "CsModuleEventsScanner",
 	}
 }
 
@@ -56,6 +60,17 @@ func (cs *CsModuleEventsScanner) runScan(ctx context.Context) {
 
 	if isSyncing {
 		logger.InfoWithPrefix(cs.servicePrefix, "Node is syncing, skipping CsModule events scan")
+		return
+	}
+
+	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
+	receiptExists, err := cs.executionPort.GetTransactionReceiptExists(cs.csModuleTxReceipt)
+	if err != nil {
+		logger.ErrorWithPrefix(cs.servicePrefix, "Error checking if transaction receipt exists: %v", err)
+		return
+	}
+	if !receiptExists {
+		logger.WarnWithPrefix(cs.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping CsModule events scan")
 		return
 	}
 
