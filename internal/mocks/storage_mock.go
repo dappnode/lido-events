@@ -151,25 +151,25 @@ func (m *MockStoragePort) SaveCsModuletLastProcessedBlock(block uint64) error {
 }
 
 // SetNodeOperatorAdded simulates saving a NodeOperatorAdded event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorAdded(operatorID string, event domain.CsmoduleNodeOperatorAdded) error {
-	args := m.Called(operatorID, event)
+func (m *MockStoragePort) SetNodeOperatorAdded(address string, event domain.CsmoduleNodeOperatorAdded) error {
+	args := m.Called(address, event)
 	return args.Error(0)
 }
 
 // SetNodeOperatorManagerAddressChanged simulates saving a NodeOperatorManagerAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
-	args := m.Called(operatorID, event)
+func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+	args := m.Called(address, event)
 	return args.Error(0)
 }
 
 // SetNodeOperatorRewardAddressChanged simulates saving a NodeOperatorRewardAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
-	args := m.Called(operatorID, event)
+func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+	args := m.Called(address, event)
 	return args.Error(0)
 }
 
-// GetNodeOperatorEvents returns a map of NodeOperator events for a specific operator ID
-func (m *MockStoragePort) GetNodeOperatorEvents(operatorID string) (domain.NodeOperatorEvents, error) {
-	args := m.Called(operatorID)
-	return args.Get(0).(domain.NodeOperatorEvents), args.Error(1)
+// GetAddressEvents returns a map of address events for a specific address
+func (m *MockStoragePort) GetAddressEvents(address string) (domain.AddressEvents, error) {
+	args := m.Called(address)
+	return args.Get(0).(domain.AddressEvents), args.Error(1)
 }

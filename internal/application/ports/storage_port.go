@@ -38,11 +38,11 @@ type StoragePort interface {
 	UpdateExitRequestStatus(operatorId string, validatorIndex string, status domain.ValidatorStatus) error
 	DeleteExitRequest(operatorID string, validatorIndex string) error
 
-	// node operator events
-	GetNodeOperatorEvents(operatorID string) (domain.NodeOperatorEvents, error)
-	SetNodeOperatorAdded(operatorID string, event domain.CsmoduleNodeOperatorAdded) error
-	SetNodeOperatorManagerAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
-	SetNodeOperatorRewardAddressChanged(operatorID string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
+	// csmodule events associated with an eth address
+	GetAddressEvents(address string) (domain.AddressEvents, error)
+	SetNodeOperatorAdded(address string, event domain.CsmoduleNodeOperatorAdded) error
+	SetNodeOperatorManagerAddressChanged(address string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
+	SetNodeOperatorRewardAddressChanged(address string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)

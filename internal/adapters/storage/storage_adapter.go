@@ -41,15 +41,15 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 
 // Database structure for the new storage format
 type Database struct {
-	Telegram  domain.TelegramConfig   `json:"telegram"`
-	Operators map[string]OperatorData `json:"operators"` // indexed by operator ID
-	Events    Events                  `json:"events"`
+	Telegram  domain.TelegramConfig           `json:"telegram"`
+	Operators map[string]OperatorData         `json:"operators"` // indexed by operator ID
+	Addresses map[string]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
+	Events    Events                          `json:"events"`
 }
 
 type OperatorData struct {
-	Reports            domain.Reports            `json:"reports"`
-	ExitRequests       domain.ExitRequests       `json:"exitRequests"`
-	NodeOperatorEvents domain.NodeOperatorEvents `json:"nodeOperatorEvents"`
+	Reports      domain.Reports      `json:"reports"`
+	ExitRequests domain.ExitRequests `json:"exitRequests"`
 }
 
 type Events struct {
@@ -72,14 +72,15 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Initialize an empty Database with default values
 	db := Database{
 		Telegram:  domain.TelegramConfig{},
-		Operators: make(map[string]OperatorData), // Initialize Operators as an empty map
+		Operators: make(map[string]OperatorData),
+		Addresses: make(map[string]domain.AddressEvents),
 		Events: Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
 				PendingHashes      []string `json:"pendingHashes"`
 			}{
 				LastProcessedBlock: 0,
-				PendingHashes:      []string{}, // Initialize as empty slice
+				PendingHashes:      []string{},
 			},
 			ValidatorExitRequest: struct {
 				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
@@ -117,28 +118,11 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	if db.Operators == nil {
 		db.Operators = make(map[string]OperatorData)
 	}
+	if db.Addresses == nil {
+		db.Addresses = make(map[string]domain.AddressEvents)
+	}
 	if db.Events.DistributionLogUpdated.PendingHashes == nil {
 		db.Events.DistributionLogUpdated.PendingHashes = []string{}
-	}
-
-	// Ensure each OperatorData's nested fields are initialized
-	for key, operatorData := range db.Operators {
-		if operatorData.Reports == nil {
-			operatorData.Reports = make(domain.Reports)
-		}
-		if operatorData.ExitRequests == nil {
-			operatorData.ExitRequests = make(domain.ExitRequests)
-		}
-		if operatorData.NodeOperatorEvents.NodeOperatorAdded == nil {
-			operatorData.NodeOperatorEvents.NodeOperatorAdded = []domain.CsmoduleNodeOperatorAdded{}
-		}
-		if operatorData.NodeOperatorEvents.NodeOperatorManagerAddressChanged == nil {
-			operatorData.NodeOperatorEvents.NodeOperatorManagerAddressChanged = []domain.CsmoduleNodeOperatorManagerAddressChanged{}
-		}
-		if operatorData.NodeOperatorEvents.NodeOperatorRewardAddressChanged == nil {
-			operatorData.NodeOperatorEvents.NodeOperatorRewardAddressChanged = []domain.CsmoduleNodeOperatorRewardAddressChanged{}
-		}
-		db.Operators[key] = operatorData // Update map with initialized OperatorData
 	}
 
 	return db, nil
