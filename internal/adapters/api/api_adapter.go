@@ -74,7 +74,7 @@ func (h *APIHandler) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/exit_requests", h.GetExitRequests).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.GetRelaysAllowed).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_used", h.GetRelaysUsed).Methods("GET", "OPTIONS")
-	h.Router.HandleFunc("/api/v0/events_indexer/node_operator_events", h.GetNodeOperatorEvents).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/address_events", h.GetAddressEvents).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -82,28 +82,28 @@ func (h *APIHandler) SetupRoutes() {
 	})
 }
 
-// GetNodeOperatorEvents retrieves node operator events
-func (h *APIHandler) GetNodeOperatorEvents(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "GetNodeOperatorEvents request received")
-	operatorId := r.URL.Query().Get("operatorId")
+// GetAddressEvents retrieves node operator events
+func (h *APIHandler) GetAddressEvents(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "GetAddressEvents request received")
+	address := r.URL.Query().Get("address")
 
-	if operatorId == "" {
-		logger.DebugWithPrefix("API", "Missing operatorId in GetNodeOperatorEvents request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
+	if address == "" {
+		logger.DebugWithPrefix("API", "Missing address in GetAddressEvents request")
+		writeErrorResponse(w, "address is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	// returns
-	nodeOperatorEvents, err := h.StoragePort.GetNodeOperatorEvents(operatorId)
+	addressEvents, err := h.StoragePort.GetAddressEvents(address)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching node operator events: %v", err)
 		writeErrorResponse(w, "Error fetching node operator events", http.StatusInternalServerError, err)
 		return
 	}
 
-	jsonResponse, err := json.Marshal(nodeOperatorEvents)
+	jsonResponse, err := json.Marshal(addressEvents)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in GetNodeOperatorEvents: %v", err)
+		logger.ErrorWithPrefix("API", "Error generating JSON response in GetAddressEvents: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
