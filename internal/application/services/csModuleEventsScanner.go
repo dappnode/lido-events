@@ -10,20 +10,22 @@ import (
 )
 
 type CsModuleEventsScanner struct {
-	storagePort       ports.StoragePort
-	executionPort     ports.ExecutionPort
-	csModulePort      ports.CsModulePort
-	csModuleTxReceipt common.Hash
-	servicePrefix     string
+	storagePort                     ports.StoragePort
+	executionPort                   ports.ExecutionPort
+	csModulePort                    ports.CsModulePort
+	csFeeDistributorBlockDeployment uint64
+	csModuleTxReceipt               common.Hash
+	servicePrefix                   string
 }
 
-func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort, csModuleTxReceipt common.Hash) *CsModuleEventsScanner {
+func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash) *CsModuleEventsScanner {
 	return &CsModuleEventsScanner{
-		storagePort:       storagePort,
-		executionPort:     executionPort,
-		csModulePort:      csModulePort,
-		csModuleTxReceipt: csModuleTxReceipt,
-		servicePrefix:     "CsModuleEventsScanner",
+		storagePort:                     storagePort,
+		executionPort:                   executionPort,
+		csModulePort:                    csModulePort,
+		csFeeDistributorBlockDeployment: csFeeDistributorBlockDeployment,
+		csModuleTxReceipt:               csModuleTxReceipt,
+		servicePrefix:                   "CsModuleEventsScanner",
 	}
 }
 
@@ -53,7 +55,12 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 	start, err := cs.storagePort.GetAddressLastProcessedBlock(address)
 	if err != nil {
 		logger.WarnWithPrefix(cs.servicePrefix, "Failed to get last processed block, using deployment block: %v", err)
-		start = 0 // Default to block 0 if no value is set
+		start = cs.csFeeDistributorBlockDeployment
+	}
+
+	if start == 0 {
+		logger.InfoWithPrefix(cs.servicePrefix, "No last processed block found, using deployment block")
+		start = cs.csFeeDistributorBlockDeployment
 	}
 
 	end, err := cs.executionPort.GetMostRecentBlockNumber()

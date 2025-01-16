@@ -74,7 +74,7 @@ func main() {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
 
-	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CSModuleTxReceipt)
+	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
 
 	// Initialize API services
 	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csModuleEventsScannerService, networkConfig.CORS)
