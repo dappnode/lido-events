@@ -72,59 +72,98 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 }
 
 // ScanNodeOperatorEvents scans the CsModule contract for NodeOperator events. The CsModule events tracked are: NodeOperatorAdded, NodeOperatorManagerAddressChanged, NodeOperatorRewardAddressChanged
-func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged) error) error {
+func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, address common.Address, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.client)
 	if err != nil {
 		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
 	}
 
-	// Get operator ids
-	operatorIds, err := csma.storageAdapter.GetOperatorIds()
-	if err != nil {
-		return fmt.Errorf("failed to retrieve operator IDs from storage: %w", err)
-	}
-
-	// Filter for NodeOperatorAdded events
-	nodeOperatorAddedEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
+	// Filter for NodeOperatorAdded events qith the address as manager
+	operatorAddedManagerEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
 	if err != nil {
 		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, *end, err)
 	}
-	for nodeOperatorAddedEvents.Next() {
-		if err := nodeOperatorAddedEvents.Error(); err != nil {
+	for operatorAddedManagerEvents.Next() {
+		if err := operatorAddedManagerEvents.Error(); err != nil {
 			return err
 		}
 
-		if err := handleNodeOperatorAddedEvent(nodeOperatorAddedEvents.Event); err != nil {
+		if err := handleNodeOperatorAddedEvent(operatorAddedManagerEvents.Event, address); err != nil {
 			return err
 		}
 	}
 
-	// Filter for NodeOperatorManagerAddressChanged events
-	nodeOperatorManagerAddressChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
+	// Filter for NodeOperatorAdded events with the address as reward
+	operatorAddedRewardEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
+	if err != nil {
+		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, *end, err)
+	}
+	for operatorAddedRewardEvents.Next() {
+		if err := operatorAddedRewardEvents.Error(); err != nil {
+			return err
+		}
+
+		if err := handleNodeOperatorAddedEvent(operatorAddedRewardEvents.Event, address); err != nil {
+			return err
+		}
+	}
+
+	// Filter for NodeOperatorManagerAddressChanged events with the address as manager
+	operatorManagerManagerChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
 	if err != nil {
 		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, *end, err)
 	}
-	for nodeOperatorManagerAddressChangedEvents.Next() {
-		if err := nodeOperatorManagerAddressChangedEvents.Error(); err != nil {
+	for operatorManagerManagerChangedEvents.Next() {
+		if err := operatorManagerManagerChangedEvents.Error(); err != nil {
 			return err
 		}
 
-		if err := handleNodeOperatorManagerAddressChangedEvent(nodeOperatorManagerAddressChangedEvents.Event); err != nil {
+		if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerManagerChangedEvents.Event, address); err != nil {
 			return err
 		}
 	}
 
-	// Filter for NodeOperatorRewardAddressChanged events
-	nodeOperatorRewardAddressChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, operatorIds, []common.Address{}, []common.Address{})
+	// Filter for NodeOperatorManagerAddressChanged events with the address as reward
+	operatorManagerRewardChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
+	if err != nil {
+		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, *end, err)
+	}
+	for operatorManagerRewardChangedEvents.Next() {
+		if err := operatorManagerRewardChangedEvents.Error(); err != nil {
+			return err
+		}
+
+		if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerRewardChangedEvents.Event, address); err != nil {
+			return err
+		}
+	}
+
+	// Filter for NodeOperatorRewardAddressChanged events with the address as manager
+	operatorRewardManagerChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
 	if err != nil {
 		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, *end, err)
 	}
-	for nodeOperatorRewardAddressChangedEvents.Next() {
-		if err := nodeOperatorRewardAddressChangedEvents.Error(); err != nil {
+	for operatorRewardManagerChangedEvents.Next() {
+		if err := operatorRewardManagerChangedEvents.Error(); err != nil {
 			return err
 		}
 
-		if err := handleNodeOperatorRewardAddressChangedEvent(nodeOperatorRewardAddressChangedEvents.Event); err != nil {
+		if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardManagerChangedEvents.Event, address); err != nil {
+			return err
+		}
+	}
+
+	// Filter for NodeOperatorRewardAddressChanged events with the address as manager
+	operatorRewardRewardChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
+	if err != nil {
+		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, *end, err)
+	}
+	for operatorRewardRewardChangedEvents.Next() {
+		if err := operatorRewardRewardChangedEvents.Error(); err != nil {
+			return err
+		}
+
+		if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardRewardChangedEvents.Event, address); err != nil {
 			return err
 		}
 	}

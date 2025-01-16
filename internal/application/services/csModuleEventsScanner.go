@@ -5,8 +5,6 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
-	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -29,29 +27,7 @@ func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports
 	}
 }
 
-func (cs *CsModuleEventsScanner) ScanCsModuleEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
-	defer wg.Done()
-	wg.Add(1)
-
-	cs.runScan(ctx)
-
-	logger.DebugWithPrefix(cs.servicePrefix, "First execution complete of CsModule events scanner")
-
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			cs.runScan(ctx)
-		case <-ctx.Done():
-			logger.InfoWithPrefix(cs.servicePrefix, "Stopping CsModule events cron scan")
-			return
-		}
-	}
-}
-
-func (cs *CsModuleEventsScanner) runScan(ctx context.Context) {
+func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address common.Address) {
 	isSyncing, err := cs.executionPort.IsSyncing()
 	if err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error checking if node is syncing: %v", err)
@@ -74,7 +50,7 @@ func (cs *CsModuleEventsScanner) runScan(ctx context.Context) {
 		return
 	}
 
-	start, err := cs.storagePort.GetCsModuleLastProcessedBlock()
+	start, err := cs.storagePort.GetAddressLastProcessedBlock(address)
 	if err != nil {
 		logger.WarnWithPrefix(cs.servicePrefix, "Failed to get last processed block, using deployment block: %v", err)
 		start = 0 // Default to block 0 if no value is set
@@ -88,6 +64,7 @@ func (cs *CsModuleEventsScanner) runScan(ctx context.Context) {
 
 	if err := cs.csModulePort.ScanNodeOperatorEvents(
 		ctx,
+		address,
 		start,
 		&end,
 		cs.HandleNodeOperatorAddedEvent,
@@ -98,36 +75,36 @@ func (cs *CsModuleEventsScanner) runScan(ctx context.Context) {
 		return
 	}
 
-	if err := cs.storagePort.SaveCsModuletLastProcessedBlock(end); err != nil {
+	if err := cs.storagePort.SaveAddressLastProcessedBlock(address, end); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving last processed block: %v", err)
 		return
 	}
 }
 
-func (cs *CsModuleEventsScanner) HandleNodeOperatorAddedEvent(event *domain.CsmoduleNodeOperatorAdded) error {
+func (cs *CsModuleEventsScanner) HandleNodeOperatorAddedEvent(event *domain.CsmoduleNodeOperatorAdded, address common.Address) error {
 	logger.DebugWithPrefix(cs.servicePrefix, "Handling NodeOperatorAdded event: %+v", event)
 
-	if err := cs.storagePort.SetNodeOperatorAdded(event.NodeOperatorId.String(), *event); err != nil {
+	if err := cs.storagePort.SetNodeOperatorAdded(address, *event); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorAdded event: %v", err)
 		return err
 	}
 	return nil
 }
 
-func (cs *CsModuleEventsScanner) HandleNodeOperatorManagerAddressChangedEvent(event *domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+func (cs *CsModuleEventsScanner) HandleNodeOperatorManagerAddressChangedEvent(event *domain.CsmoduleNodeOperatorManagerAddressChanged, address common.Address) error {
 	logger.DebugWithPrefix(cs.servicePrefix, "Handling NodeOperatorManagerAddressChanged event: %+v", event)
 
-	if err := cs.storagePort.SetNodeOperatorManagerAddressChanged(event.NodeOperatorId.String(), *event); err != nil {
+	if err := cs.storagePort.SetNodeOperatorManagerAddressChanged(address, *event); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorManagerAddressChanged event: %v", err)
 		return err
 	}
 	return nil
 }
 
-func (cs *CsModuleEventsScanner) HandleNodeOperatorRewardAddressChangedEvent(event *domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+func (cs *CsModuleEventsScanner) HandleNodeOperatorRewardAddressChangedEvent(event *domain.CsmoduleNodeOperatorRewardAddressChanged, address common.Address) error {
 	logger.DebugWithPrefix(cs.servicePrefix, "Handling NodeOperatorRewardAddressChanged event: %+v", event)
 
-	if err := cs.storagePort.SetNodeOperatorRewardAddressChanged(event.NodeOperatorId.String(), *event); err != nil {
+	if err := cs.storagePort.SetNodeOperatorRewardAddressChanged(address, *event); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorRewardAddressChanged event: %v", err)
 		return err
 	}

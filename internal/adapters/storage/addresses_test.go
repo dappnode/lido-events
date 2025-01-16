@@ -15,13 +15,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestSetNodeOperatorAdded tests saving a NodeOperatorAdded event.
+func TestGetAddressLastProcessedBlock(t *testing.T) {
+
+	initialData := &storage.Database{
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x1111111111111111111111111111111111111111"): {
+				LastProcessedBlock: 12345,
+			},
+		},
+	}
+	tmpFile := CreateTempDatabaseFile(t, initialData)
+	defer os.Remove(tmpFile.Name())
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+
+	block, err := storageAdapter.GetAddressLastProcessedBlock(address)
+	assert.NoError(t, err)
+	assert.Equal(t, initialData.Addresses[address].LastProcessedBlock, block)
+}
+
+func TestSaveAddressLastProcessedBlock(t *testing.T) {
+	tmpFile := CreateTempDatabaseFile(t, nil)
+	defer os.Remove(tmpFile.Name())
+
+	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+
+	err := storageAdapter.SaveAddressLastProcessedBlock(address, 12345)
+	assert.NoError(t, err)
+
+	db, err := storageAdapter.LoadDatabase()
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(12345), db.Addresses[address].LastProcessedBlock)
+}
+
 func TestSetNodeOperatorAdded(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil)
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	event := domain.CsmoduleNodeOperatorAdded{
 		NodeOperatorId: big.NewInt(1),
 		ManagerAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
@@ -46,7 +80,7 @@ func TestSetNodeOperatorAdded_DuplicateEvent(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	event := domain.CsmoduleNodeOperatorAdded{
 		NodeOperatorId: big.NewInt(1),
 		ManagerAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
@@ -57,18 +91,15 @@ func TestSetNodeOperatorAdded_DuplicateEvent(t *testing.T) {
 		},
 	}
 
-	// Add the event the first time
 	err := storageAdapter.SetNodeOperatorAdded(address, event)
 	assert.NoError(t, err)
 
-	// Add the same event again
 	err = storageAdapter.SetNodeOperatorAdded(address, event)
 	assert.NoError(t, err)
 
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
 
-	// Ensure only one instance of the event exists
 	assert.Len(t, db.Addresses[address].NodeOperatorAdded, 1)
 }
 
@@ -78,7 +109,7 @@ func TestSetNodeOperatorAdded_UninitializedStructures(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	event := domain.CsmoduleNodeOperatorAdded{
 		NodeOperatorId: big.NewInt(1),
 		ManagerAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
@@ -95,19 +126,17 @@ func TestSetNodeOperatorAdded_UninitializedStructures(t *testing.T) {
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
 
-	// Ensure the structures were initialized
 	assert.Contains(t, db.Addresses, address)
 	assert.NotNil(t, db.Addresses[address].NodeOperatorAdded)
 	assert.Len(t, db.Addresses[address].NodeOperatorAdded, 1)
 }
 
-// TestSetNodeOperatorManagerAddressChanged tests saving a NodeOperatorManagerAddressChanged event.
 func TestSetNodeOperatorManagerAddressChanged(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil)
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	event := domain.CsmoduleNodeOperatorManagerAddressChanged{
 		NodeOperatorId: big.NewInt(1),
 		OldAddress:     common.HexToAddress("0x3333333333333333333333333333333333333333"),
@@ -127,13 +156,12 @@ func TestSetNodeOperatorManagerAddressChanged(t *testing.T) {
 	assert.Contains(t, db.Addresses[address].NodeOperatorManagerAddressChanged, event)
 }
 
-// TestSetNodeOperatorRewardAddressChanged tests saving a NodeOperatorRewardAddressChanged event.
 func TestSetNodeOperatorRewardAddressChanged(t *testing.T) {
 	tmpFile := CreateTempDatabaseFile(t, nil)
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	event := domain.CsmoduleNodeOperatorRewardAddressChanged{
 		NodeOperatorId: big.NewInt(1),
 		OldAddress:     common.HexToAddress("0x5555555555555555555555555555555555555555"),
@@ -153,11 +181,10 @@ func TestSetNodeOperatorRewardAddressChanged(t *testing.T) {
 	assert.Contains(t, db.Addresses[address].NodeOperatorRewardAddressChanged, event)
 }
 
-// GetAddressEvents tests retrieving all Address events.
 func TestGetAddressEvents(t *testing.T) {
 	initialData := &storage.Database{
-		Addresses: map[string]domain.AddressEvents{
-			"0x1111111111111111111111111111111111111111": {
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x1111111111111111111111111111111111111111"): {
 				NodeOperatorAdded: []domain.CsmoduleNodeOperatorAdded{
 					{
 						NodeOperatorId: big.NewInt(1),
@@ -201,7 +228,7 @@ func TestGetAddressEvents(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
-	address := "0x1111111111111111111111111111111111111111"
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 
 	events, err := storageAdapter.GetAddressEvents(address)
 	assert.NoError(t, err)

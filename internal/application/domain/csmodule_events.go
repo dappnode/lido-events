@@ -11,6 +11,7 @@ import (
 // DO NOT EDIT
 
 type AddressEvents struct {
+	LastProcessedBlock				   uint64 									  `json:"lastProcessedBlock"`
 	NodeOperatorAdded                 []CsmoduleNodeOperatorAdded                 `json:"nodeOperatorAdded"`
 	NodeOperatorManagerAddressChanged []CsmoduleNodeOperatorManagerAddressChanged `json:"nodeOperatorManagerAddressChanged"`
 	NodeOperatorRewardAddressChanged  []CsmoduleNodeOperatorRewardAddressChanged  `json:"nodeOperatorRewardAddressChanged"`

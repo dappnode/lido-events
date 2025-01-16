@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"lido-events/internal/adapters/api"
 	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
@@ -17,7 +16,6 @@ import (
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
-	proxyapi "lido-events/internal/adapters/proxyApi"
 	relaysallowed "lido-events/internal/adapters/relaysAllowed"
 	relaysused "lido-events/internal/adapters/relaysUsed"
 	"lido-events/internal/adapters/storage"
@@ -42,7 +40,6 @@ func main() {
 	}
 	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
-	// Initialize adapters
 	storageAdapter, err := storage.NewStorageAdapter(networkConfig.DBDirectory)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
@@ -56,24 +53,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
 	}
-
-	apiAdapter := api.NewAPIAdapter(ctx, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, networkConfig.CORS)
-	proxyApiAdapter := proxyapi.NewProxyAPIAdapter(networkConfig.CORS, networkConfig.LidoKeysApiUrl)
-
-	// Initialize API services
-	apiService := services.NewAPIServerService(apiAdapter, networkConfig.ApiPort)
-	proxyService := services.NewProxyAPIServerService(proxyApiAdapter, networkConfig.ProxyApiPort)
-
-	// Start API services
-	apiService.Start(&wg)
-	proxyService.Start(&wg)
-
-	// Wait for and validate initial configuration
-	if err := waitForConfig(ctx, storageAdapter); err != nil {
-		logger.FatalWithPrefix(logPrefix, "Application shutting down due to configuration validation failure: %v", err)
-	}
-
-	// Initialize domain adapters
 	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
@@ -95,13 +74,27 @@ func main() {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
 
+	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CSModuleTxReceipt)
+
+	// Initialize API services
+	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csModuleEventsScannerService, networkConfig.CORS)
+	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
+
+	// Start API services
+	apiService.Start(&wg)
+	proxyService.Start(&wg)
+
+	// Wait for and validate initial configuration
+	if err := waitForConfig(ctx, storageAdapter); err != nil {
+		logger.FatalWithPrefix(logPrefix, "Application shutting down due to configuration validation failure: %v", err)
+	}
+
 	// Initialize domain services
 	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
 	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
-	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CSModuleTxReceipt)
 	// relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
 	// Start domain services
@@ -114,8 +107,6 @@ func main() {
 	exitRequestExecutionComplete := make(chan struct{})
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
-
-	go csModuleEventsScannerService.ScanCsModuleEventsCron(ctx, 384*time.Second, &wg)
 
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 

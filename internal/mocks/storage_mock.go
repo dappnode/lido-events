@@ -4,6 +4,7 @@ import (
 	"lido-events/internal/application/domain"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -138,38 +139,38 @@ func (m *MockStoragePort) GetPendingHashes() ([]string, error) {
 	return args.Get(0).([]string), args.Error(1)
 }
 
-// GetCsModuleLastProcessedBlock returns the last processed block for CsModule events
-func (m *MockStoragePort) GetCsModuleLastProcessedBlock() (uint64, error) {
-	args := m.Called()
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-// SaveCsModuletLastProcessedBlock simulates saving the last processed block for CsModule events
-func (m *MockStoragePort) SaveCsModuletLastProcessedBlock(block uint64) error {
-	args := m.Called(block)
-	return args.Error(0)
-}
-
 // SetNodeOperatorAdded simulates saving a NodeOperatorAdded event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorAdded(address string, event domain.CsmoduleNodeOperatorAdded) error {
+func (m *MockStoragePort) SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error {
 	args := m.Called(address, event)
 	return args.Error(0)
 }
 
 // SetNodeOperatorManagerAddressChanged simulates saving a NodeOperatorManagerAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
 	args := m.Called(address, event)
 	return args.Error(0)
 }
 
 // SetNodeOperatorRewardAddressChanged simulates saving a NodeOperatorRewardAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
 	args := m.Called(address, event)
 	return args.Error(0)
 }
 
 // GetAddressEvents returns a map of address events for a specific address
-func (m *MockStoragePort) GetAddressEvents(address string) (domain.AddressEvents, error) {
+func (m *MockStoragePort) GetAddressEvents(address common.Address) (domain.AddressEvents, error) {
 	args := m.Called(address)
 	return args.Get(0).(domain.AddressEvents), args.Error(1)
+}
+
+// GetAddressLastProcessedBlock returns the last processed block for a specific address
+func (m *MockStoragePort) GetAddressLastProcessedBlock(address common.Address) (uint64, error) {
+	args := m.Called(address)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+// SaveAddressLastProcessedBlock simulates saving the last processed block for a specific address
+func (m *MockStoragePort) SaveAddressLastProcessedBlock(address common.Address, block uint64) error {
+	args := m.Called(address, block)
+	return args.Error(0)
 }

@@ -3,6 +3,8 @@ package ports
 import (
 	"lido-events/internal/application/domain"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type StoragePort interface {
@@ -16,10 +18,6 @@ type StoragePort interface {
 	AddPendingHash(hash string) error
 	GetPendingHashes() ([]string, error)
 	DeletePendingHash(hash string) error
-
-	// csModule events
-	GetCsModuleLastProcessedBlock() (uint64, error)
-	SaveCsModuletLastProcessedBlock(block uint64) error
 
 	// operator IDs
 	GetOperatorIds() ([]*big.Int, error)
@@ -39,10 +37,12 @@ type StoragePort interface {
 	DeleteExitRequest(operatorID string, validatorIndex string) error
 
 	// csmodule events associated with an eth address
-	GetAddressEvents(address string) (domain.AddressEvents, error)
-	SetNodeOperatorAdded(address string, event domain.CsmoduleNodeOperatorAdded) error
-	SetNodeOperatorManagerAddressChanged(address string, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
-	SetNodeOperatorRewardAddressChanged(address string, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
+	GetAddressLastProcessedBlock(address common.Address) (uint64, error)
+	SaveAddressLastProcessedBlock(address common.Address, block uint64) error
+	GetAddressEvents(address common.Address) (domain.AddressEvents, error)
+	SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error
+	SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
+	SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)

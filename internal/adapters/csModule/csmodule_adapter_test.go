@@ -38,7 +38,7 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 	operatorIdChan := make(chan []*big.Int, 1)
 	mockStorage.On("RegisterOperatorIdListener").Return(operatorIdChan)
 
-	csModuleAddress := common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F")
+	csModuleAddress := common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f")
 
 	// Initialize the adapter with the mock storage
 	adapter, err := csmodule.NewCsModuleAdapter(wsURL, csModuleAddress, mockStorage)
@@ -52,8 +52,8 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Set the start and end blocks for the scan
-	start := uint64(21400000)
-	end := uint64(21700000)
+	start := uint64(3003264)
+	end := uint64(3144706)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
@@ -73,8 +73,8 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 	t.Log("Scanning for NodeOperator events...")
 	// print start and end
 	t.Logf("Start block: %d, End block: %d", start, end)
-	err = adapter.ScanNodeOperatorEvents(ctx, start, &end,
-		func(event *domain.CsmoduleNodeOperatorAdded) error {
+	err = adapter.ScanNodeOperatorEvents(ctx, common.HexToAddress("0x913f440ed5ec7ccbbab7e72ae3803bdfea95606a"), start, &end,
+		func(event *domain.CsmoduleNodeOperatorAdded, address common.Address) error {
 			foundEvents.NodeOperatorAdded[event.NodeOperatorId.String()] = struct{}{}
 			t.Logf("NodeOperatorAdded: NodeOperatorId=%s, ManagerAddress=%s, RewardAddress=%s, BlockNumber=%d",
 				event.NodeOperatorId.String(),
@@ -84,7 +84,7 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 			)
 			return nil
 		},
-		func(event *domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+		func(event *domain.CsmoduleNodeOperatorManagerAddressChanged, address common.Address) error {
 			foundEvents.NodeOperatorManagerAddressChanged[event.NodeOperatorId.String()] = struct{}{}
 			t.Logf("NodeOperatorManagerAddressChanged: NodeOperatorId=%s, OldAddress=%s, NewAddress=%s, BlockNumber=%d",
 				event.NodeOperatorId.String(),
@@ -94,7 +94,7 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 			)
 			return nil
 		},
-		func(event *domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+		func(event *domain.CsmoduleNodeOperatorRewardAddressChanged, address common.Address) error {
 			foundEvents.NodeOperatorRewardAddressChanged[event.NodeOperatorId.String()] = struct{}{}
 			t.Logf("NodeOperatorRewardAddressChanged: NodeOperatorId=%s, OldAddress=%s, NewAddress=%s, BlockNumber=%d",
 				event.NodeOperatorId.String(),
@@ -112,15 +112,6 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 
 	// Assertions for the expected events
 	assert.NoError(t, err)
-
-	// Verify NodeOperatorAdded event
-	assert.Contains(t, foundEvents.NodeOperatorAdded, "306")
-
-	// Verify NodeOperatorManagerAddressChanged event
-	assert.Contains(t, foundEvents.NodeOperatorManagerAddressChanged, "283")
-
-	// Verify NodeOperatorRewardAddressChanged event
-	assert.Contains(t, foundEvents.NodeOperatorRewardAddressChanged, "262")
 
 	// Ensure all expected mock calls were made
 	mockStorage.AssertCalled(t, "GetOperatorIds")

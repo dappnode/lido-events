@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Storage handles file-based storage for configuration and operator data
@@ -41,10 +43,10 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 
 // Database structure for the new storage format
 type Database struct {
-	Telegram  domain.TelegramConfig           `json:"telegram"`
-	Operators map[string]OperatorData         `json:"operators"` // indexed by operator ID
-	Addresses map[string]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
-	Events    Events                          `json:"events"`
+	Telegram  domain.TelegramConfig                   `json:"telegram"`
+	Operators map[string]OperatorData                 `json:"operators"` // indexed by operator ID
+	Addresses map[common.Address]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
+	Events    Events                                  `json:"events"`
 }
 
 type OperatorData struct {
@@ -60,9 +62,6 @@ type Events struct {
 	ValidatorExitRequest struct {
 		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 	} `json:"validatorExitRequest"`
-	CsModule struct {
-		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-	} `json:"csModule"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -73,7 +72,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	db := Database{
 		Telegram:  domain.TelegramConfig{},
 		Operators: make(map[string]OperatorData),
-		Addresses: make(map[string]domain.AddressEvents),
+		Addresses: make(map[common.Address]domain.AddressEvents),
 		Events: Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
@@ -83,11 +82,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 				PendingHashes:      []string{},
 			},
 			ValidatorExitRequest: struct {
-				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-			}{
-				LastProcessedBlock: 0,
-			},
-			CsModule: struct {
 				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 			}{
 				LastProcessedBlock: 0,
@@ -119,7 +113,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 		db.Operators = make(map[string]OperatorData)
 	}
 	if db.Addresses == nil {
-		db.Addresses = make(map[string]domain.AddressEvents)
+		db.Addresses = make(map[common.Address]domain.AddressEvents)
 	}
 	if db.Events.DistributionLogUpdated.PendingHashes == nil {
 		db.Events.DistributionLogUpdated.PendingHashes = []string{}

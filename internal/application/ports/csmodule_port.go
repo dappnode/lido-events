@@ -3,10 +3,12 @@ package ports
 import (
 	"context"
 	"lido-events/internal/application/domain"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type CsModulePort interface {
-	ScanNodeOperatorEvents(ctx context.Context, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged) error) error
+	ScanNodeOperatorEvents(ctx context.Context, address common.Address, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error) error
 	WatchCsModuleEvents(ctx context.Context, handlers CsModuleHandlers) error
 	ResubscribeSignal() <-chan struct{}
 }

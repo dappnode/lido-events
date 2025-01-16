@@ -56,7 +56,6 @@ func TestLoadDatabase_MissingFile(t *testing.T) {
 	assert.Equal(t, uint64(0), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Empty(t, db.Events.DistributionLogUpdated.PendingHashes)
 	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
-	assert.Equal(t, uint64(0), db.Events.CsModule.LastProcessedBlock)
 }
 
 // Test for LoadDatabase when the database file has existing data
@@ -101,8 +100,8 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 				},
 			},
 		},
-		Addresses: map[string]domain.AddressEvents{
-			"0x12345": {
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x12345"): {
 				NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 				NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 				NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
@@ -121,11 +120,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 			}{
 				LastProcessedBlock: 200,
 			},
-			CsModule: struct {
-				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-			}{
-				LastProcessedBlock: 300,
-			},
 		},
 	}
 	tmpFile := CreateTempDatabaseFile(t, existingData)
@@ -139,7 +133,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Equal(t, uint64(100), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Equal(t, []string{"hash1", "hash2"}, db.Events.DistributionLogUpdated.PendingHashes)
 	assert.Equal(t, uint64(200), db.Events.ValidatorExitRequest.LastProcessedBlock)
-	assert.Equal(t, uint64(300), db.Events.CsModule.LastProcessedBlock)
 	assert.Contains(t, db.Operators, "1")
 	assert.Contains(t, db.Operators["1"].Reports, "81055-81504")
 	assert.Equal(t, 0.85, db.Operators["1"].Reports["81055-81504"].Threshold)
@@ -158,7 +151,7 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 			UserID: 12345,
 		},
 		Operators: make(map[string]storage.OperatorData), // Empty Operators
-		Addresses: make(map[string]domain.AddressEvents),
+		Addresses: make(map[common.Address]domain.AddressEvents),
 		Events: storage.Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
@@ -181,7 +174,6 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 	assert.Equal(t, uint64(0), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Empty(t, db.Events.DistributionLogUpdated.PendingHashes)
 	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
-	assert.Equal(t, uint64(0), db.Events.CsModule.LastProcessedBlock)
 	assert.NotNil(t, db.Operators)
 	assert.Empty(t, db.Operators)
 	assert.NotNil(t, db.Addresses)
@@ -239,8 +231,8 @@ func TestSaveDatabase(t *testing.T) {
 				},
 			},
 		},
-		Addresses: map[string]domain.AddressEvents{
-			"0x67890": {
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x54321"): {
 				NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
 				NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
 				NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
@@ -258,11 +250,6 @@ func TestSaveDatabase(t *testing.T) {
 				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
 			}{
 				LastProcessedBlock: 400,
-			},
-			CsModule: struct {
-				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-			}{
-				LastProcessedBlock: 500,
 			},
 		},
 	}
