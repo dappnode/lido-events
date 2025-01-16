@@ -139,7 +139,8 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed)
 	assert.Equal(t, 450, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Perf.Assigned)
 	assert.False(t, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Slashed)
-	assert.Contains(t, db.Addresses, "0x12345")
+	// check address is in the database
+	assert.Contains(t, db.Addresses, common.HexToAddress("0x12345"))
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
