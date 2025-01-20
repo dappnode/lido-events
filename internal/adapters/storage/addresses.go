@@ -35,6 +35,15 @@ func (fs *Storage) SaveAddressLastProcessedBlock(address common.Address, block u
 
 	addressData := db.Addresses[address]
 	addressData.LastProcessedBlock = block
+	if addressData.NodeOperatorAdded == nil {
+		addressData.NodeOperatorAdded = []domain.CsmoduleNodeOperatorAdded{}
+	}
+	if addressData.NodeOperatorManagerAddressChanged == nil {
+		addressData.NodeOperatorManagerAddressChanged = []domain.CsmoduleNodeOperatorManagerAddressChanged{}
+	}
+	if addressData.NodeOperatorRewardAddressChanged == nil {
+		addressData.NodeOperatorRewardAddressChanged = []domain.CsmoduleNodeOperatorRewardAddressChanged{}
+	}
 	db.Addresses[address] = addressData
 
 	return fs.SaveDatabase(db)
@@ -53,6 +62,7 @@ func (fs *Storage) GetAddressEvents(address common.Address) (domain.AddressEvent
 	}
 
 	return domain.AddressEvents{
+		LastProcessedBlock:                addressData.LastProcessedBlock,
 		NodeOperatorAdded:                 addressData.NodeOperatorAdded,
 		NodeOperatorManagerAddressChanged: addressData.NodeOperatorManagerAddressChanged,
 		NodeOperatorRewardAddressChanged:  addressData.NodeOperatorRewardAddressChanged,
