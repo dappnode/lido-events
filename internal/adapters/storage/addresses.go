@@ -35,9 +35,15 @@ func (fs *Storage) SaveAddressLastProcessedBlock(address common.Address, block u
 
 	addressData := db.Addresses[address]
 	addressData.LastProcessedBlock = block
-	addressData.NodeOperatorAdded = []domain.CsmoduleNodeOperatorAdded{}
-	addressData.NodeOperatorManagerAddressChanged = []domain.CsmoduleNodeOperatorManagerAddressChanged{}
-	addressData.NodeOperatorRewardAddressChanged = []domain.CsmoduleNodeOperatorRewardAddressChanged{}
+	if addressData.NodeOperatorAdded == nil {
+		addressData.NodeOperatorAdded = []domain.CsmoduleNodeOperatorAdded{}
+	}
+	if addressData.NodeOperatorManagerAddressChanged == nil {
+		addressData.NodeOperatorManagerAddressChanged = []domain.CsmoduleNodeOperatorManagerAddressChanged{}
+	}
+	if addressData.NodeOperatorRewardAddressChanged == nil {
+		addressData.NodeOperatorRewardAddressChanged = []domain.CsmoduleNodeOperatorRewardAddressChanged{}
+	}
 	db.Addresses[address] = addressData
 
 	return fs.SaveDatabase(db)
