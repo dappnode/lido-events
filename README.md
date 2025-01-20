@@ -46,6 +46,10 @@
     - `GET /api/v0/event_indexer/operator_performance`: Retrieves the operator performance.
       - query params:
         - `operatorId`: Operator ID to get performance data.
+  - **Node Operator events**: Retrieves the events associated to a node operator.
+    - `GET /api/v0/event_indexer/address_events`: Retrieves the eventes associated to an EA
+      - query params:
+        - `address`: Address to get events.
 - Proxy API: a proxy API that redirect requests to the [Lico API keys](https://github.com/lidofinance/lido-keys-api). Its main functionality is to avoid the cors issues when the Lido CSM UI tries to fetch the API.
 
 ## Environment Variables

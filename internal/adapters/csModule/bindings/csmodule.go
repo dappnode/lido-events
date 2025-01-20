@@ -4856,7 +4856,7 @@ func (_Csmodule *CsmoduleFilterer) ParseKeyRemovalChargeSet(log types.Log) (*Csm
 
 // CsmoduleNodeOperatorAddedIterator is returned from FilterNodeOperatorAdded and is used to iterate over the raw logs and unpacked data for NodeOperatorAdded events raised by the Csmodule contract.
 type CsmoduleNodeOperatorAddedIterator struct {
-	Event *CsmoduleNodeOperatorAdded // Event containing the contract specifics and raw log
+	Event *domain.CsmoduleNodeOperatorAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -4879,7 +4879,7 @@ func (it *CsmoduleNodeOperatorAddedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(CsmoduleNodeOperatorAdded)
+			it.Event = new(domain.CsmoduleNodeOperatorAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -4894,7 +4894,7 @@ func (it *CsmoduleNodeOperatorAddedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(CsmoduleNodeOperatorAdded)
+		it.Event = new(domain.CsmoduleNodeOperatorAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -4922,12 +4922,12 @@ func (it *CsmoduleNodeOperatorAddedIterator) Close() error {
 }
 
 // CsmoduleNodeOperatorAdded represents a NodeOperatorAdded event raised by the Csmodule contract.
-type CsmoduleNodeOperatorAdded struct {
-	NodeOperatorId *big.Int
-	ManagerAddress common.Address
-	RewardAddress  common.Address
-	Raw            types.Log // Blockchain specific contextual infos
-}
+// type CsmoduleNodeOperatorAdded struct {
+// 	NodeOperatorId *big.Int
+// 	ManagerAddress common.Address
+// 	RewardAddress  common.Address
+// 	Raw            types.Log // Blockchain specific contextual infos
+// }
 
 // FilterNodeOperatorAdded is a free log retrieval operation binding the contract event 0xf35982c84fdc94f58d48e901c54c615804cf7d7939b9b8f76ce4d459354e6363.
 //
@@ -4957,7 +4957,7 @@ func (_Csmodule *CsmoduleFilterer) FilterNodeOperatorAdded(opts *bind.FilterOpts
 // WatchNodeOperatorAdded is a free log subscription operation binding the contract event 0xf35982c84fdc94f58d48e901c54c615804cf7d7939b9b8f76ce4d459354e6363.
 //
 // Solidity: event NodeOperatorAdded(uint256 indexed nodeOperatorId, address indexed managerAddress, address indexed rewardAddress)
-func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorAdded(opts *bind.WatchOpts, sink chan<- *CsmoduleNodeOperatorAdded, nodeOperatorId []*big.Int, managerAddress []common.Address, rewardAddress []common.Address) (event.Subscription, error) {
+func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorAdded(opts *bind.WatchOpts, sink chan<- *domain.CsmoduleNodeOperatorAdded, nodeOperatorId []*big.Int, managerAddress []common.Address, rewardAddress []common.Address) (event.Subscription, error) {
 
 	var nodeOperatorIdRule []interface{}
 	for _, nodeOperatorIdItem := range nodeOperatorId {
@@ -4982,7 +4982,7 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorAdded(opts *bind.WatchOpts, 
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(CsmoduleNodeOperatorAdded)
+				event := new(domain.CsmoduleNodeOperatorAdded)
 				if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorAdded", log); err != nil {
 					return err
 				}
@@ -5007,8 +5007,8 @@ func (_Csmodule *CsmoduleFilterer) WatchNodeOperatorAdded(opts *bind.WatchOpts, 
 // ParseNodeOperatorAdded is a log parse operation binding the contract event 0xf35982c84fdc94f58d48e901c54c615804cf7d7939b9b8f76ce4d459354e6363.
 //
 // Solidity: event NodeOperatorAdded(uint256 indexed nodeOperatorId, address indexed managerAddress, address indexed rewardAddress)
-func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorAdded(log types.Log) (*CsmoduleNodeOperatorAdded, error) {
-	event := new(CsmoduleNodeOperatorAdded)
+func (_Csmodule *CsmoduleFilterer) ParseNodeOperatorAdded(log types.Log) (*domain.CsmoduleNodeOperatorAdded, error) {
+	event := new(domain.CsmoduleNodeOperatorAdded)
 	if err := _Csmodule.contract.UnpackLog(event, "NodeOperatorAdded", log); err != nil {
 		return nil, err
 	}

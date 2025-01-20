@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Storage handles file-based storage for configuration and operator data
@@ -41,9 +43,10 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 
 // Database structure for the new storage format
 type Database struct {
-	Telegram  domain.TelegramConfig   `json:"telegram"`
-	Operators map[string]OperatorData `json:"operators"` // indexed by operator ID
-	Events    Events                  `json:"events"`
+	Telegram  domain.TelegramConfig                   `json:"telegram"`
+	Operators map[string]OperatorData                 `json:"operators"` // indexed by operator ID
+	Addresses map[common.Address]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
+	Events    Events                                  `json:"events"`
 }
 
 type OperatorData struct {
@@ -68,14 +71,15 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Initialize an empty Database with default values
 	db := Database{
 		Telegram:  domain.TelegramConfig{},
-		Operators: make(map[string]OperatorData), // Initialize Operators as an empty map
+		Operators: make(map[string]OperatorData),
+		Addresses: make(map[common.Address]domain.AddressEvents),
 		Events: Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
 				PendingHashes      []string `json:"pendingHashes"`
 			}{
 				LastProcessedBlock: 0,
-				PendingHashes:      []string{}, // Initialize as empty slice
+				PendingHashes:      []string{},
 			},
 			ValidatorExitRequest: struct {
 				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
@@ -108,16 +112,11 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	if db.Operators == nil {
 		db.Operators = make(map[string]OperatorData)
 	}
+	if db.Addresses == nil {
+		db.Addresses = make(map[common.Address]domain.AddressEvents)
+	}
 	if db.Events.DistributionLogUpdated.PendingHashes == nil {
 		db.Events.DistributionLogUpdated.PendingHashes = []string{}
-	}
-
-	// Ensure each OperatorData's Reports map is initialized
-	for key, operatorData := range db.Operators {
-		if operatorData.Reports == nil {
-			operatorData.Reports = make(domain.Reports)
-			db.Operators[key] = operatorData // Update map with initialized Reports
-		}
 	}
 
 	return db, nil

@@ -51,6 +51,8 @@ func TestLoadDatabase_MissingFile(t *testing.T) {
 	assert.Equal(t, domain.TelegramConfig{}, db.Telegram)
 	assert.NotNil(t, db.Operators)
 	assert.Empty(t, db.Operators)
+	assert.NotNil(t, db.Addresses)
+	assert.Empty(t, db.Addresses)
 	assert.Equal(t, uint64(0), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Empty(t, db.Events.DistributionLogUpdated.PendingHashes)
 	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
@@ -71,7 +73,7 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 						Frame:     [2]int{81055, 81504},
 						Threshold: 0.85,
 						Data: domain.Data{
-							Distributed: int64(3465578901933468), // Updated to int64
+							Distributed: int64(3465578901933468),
 							Stuck:       false,
 							Validators: map[string]domain.Validator{
 								"1735661": {
@@ -98,6 +100,13 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 				},
 			},
 		},
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x12345"): {
+				NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
+				NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+				NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			},
+		},
 		Events: storage.Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
@@ -113,7 +122,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 			},
 		},
 	}
-
 	tmpFile := CreateTempDatabaseFile(t, existingData)
 	defer os.Remove(tmpFile.Name())
 
@@ -121,7 +129,6 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	db, err := storageAdapter.LoadDatabase()
 	assert.NoError(t, err)
 
-	// Validate loaded data matches the existing data
 	assert.Equal(t, "test-token", db.Telegram.Token)
 	assert.Equal(t, uint64(100), db.Events.DistributionLogUpdated.LastProcessedBlock)
 	assert.Equal(t, []string{"hash1", "hash2"}, db.Events.DistributionLogUpdated.PendingHashes)
@@ -129,9 +136,11 @@ func TestLoadDatabase_WithExistingData(t *testing.T) {
 	assert.Contains(t, db.Operators, "1")
 	assert.Contains(t, db.Operators["1"].Reports, "81055-81504")
 	assert.Equal(t, 0.85, db.Operators["1"].Reports["81055-81504"].Threshold)
-	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed) // Updated to int64
+	assert.Equal(t, int64(3465578901933468), db.Operators["1"].Reports["81055-81504"].Data.Distributed)
 	assert.Equal(t, 450, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Perf.Assigned)
 	assert.False(t, db.Operators["1"].Reports["81055-81504"].Data.Validators["1735661"].Slashed)
+	// check address is in the database
+	assert.Contains(t, db.Addresses, common.HexToAddress("0x12345"))
 }
 
 // Test for LoadDatabase to check initialization of missing fields in an existing file
@@ -143,6 +152,7 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 			UserID: 12345,
 		},
 		Operators: make(map[string]storage.OperatorData), // Empty Operators
+		Addresses: make(map[common.Address]domain.AddressEvents),
 		Events: storage.Events{
 			DistributionLogUpdated: struct {
 				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
@@ -153,7 +163,6 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 			}{},
 		},
 	}
-
 	tmpFile := CreateTempDatabaseFile(t, missingFieldsData)
 	defer os.Remove(tmpFile.Name())
 
@@ -168,6 +177,8 @@ func TestLoadDatabase_MissingFields(t *testing.T) {
 	assert.Equal(t, uint64(0), db.Events.ValidatorExitRequest.LastProcessedBlock)
 	assert.NotNil(t, db.Operators)
 	assert.Empty(t, db.Operators)
+	assert.NotNil(t, db.Addresses)
+	assert.Empty(t, db.Addresses)
 }
 
 func TestSaveDatabase(t *testing.T) {
@@ -219,6 +230,13 @@ func TestSaveDatabase(t *testing.T) {
 						Status: domain.StatusExitedUnslashed,
 					},
 				},
+			},
+		},
+		Addresses: map[common.Address]domain.AddressEvents{
+			common.HexToAddress("0x54321"): {
+				NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
+				NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+				NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
 			},
 		},
 		Events: storage.Events{

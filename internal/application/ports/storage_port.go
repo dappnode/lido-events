@@ -3,6 +3,8 @@ package ports
 import (
 	"lido-events/internal/application/domain"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type StoragePort interface {
@@ -33,6 +35,14 @@ type StoragePort interface {
 	SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error
 	UpdateExitRequestStatus(operatorId string, validatorIndex string, status domain.ValidatorStatus) error
 	DeleteExitRequest(operatorID string, validatorIndex string) error
+
+	// csmodule events associated with an eth address
+	GetAddressLastProcessedBlock(address common.Address) (uint64, error)
+	SaveAddressLastProcessedBlock(address common.Address, block uint64) error
+	GetAddressEvents(address common.Address) (domain.AddressEvents, error)
+	SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error
+	SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
+	SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)
