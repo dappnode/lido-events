@@ -53,6 +53,7 @@ func (fs *Storage) GetAddressEvents(address common.Address) (domain.AddressEvent
 	}
 
 	return domain.AddressEvents{
+		LastProcessedBlock:                addressData.LastProcessedBlock,
 		NodeOperatorAdded:                 addressData.NodeOperatorAdded,
 		NodeOperatorManagerAddressChanged: addressData.NodeOperatorManagerAddressChanged,
 		NodeOperatorRewardAddressChanged:  addressData.NodeOperatorRewardAddressChanged,
