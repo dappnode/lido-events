@@ -61,8 +61,6 @@ func (fs *Storage) GetAddressEvents(address common.Address) (domain.AddressEvent
 		return domain.AddressEvents{}, fmt.Errorf("no data found for address %s", address)
 	}
 
-	// if any array es null return empty array
-
 	return domain.AddressEvents{
 		LastProcessedBlock:                addressData.LastProcessedBlock,
 		NodeOperatorAdded:                 addressData.NodeOperatorAdded,
