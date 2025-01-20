@@ -25,8 +25,10 @@ func setupCsFeeDistributorImplAdapter(t *testing.T) (*csfeedistributorimpl.CsFee
 
 	csfeedistributorimplAddress := common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED")
 
+	blockChunkSize := uint64(10000)
+
 	// Initialize the adapter with the mock storage
-	adapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(wsURL, csfeedistributorimplAddress)
+	adapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(wsURL, csfeedistributorimplAddress, blockChunkSize)
 	return adapter, err
 }
 

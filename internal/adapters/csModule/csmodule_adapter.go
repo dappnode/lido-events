@@ -21,12 +21,14 @@ type CsModuleAdapter struct {
 	nodeOperatorIds   []*big.Int
 	mu                sync.RWMutex
 	resubscribeSignal chan struct{}
+	blockChunkSize    uint64
 }
 
 func NewCsModuleAdapter(
 	wsURL string,
 	csModuleAddress common.Address,
 	storageAdapter ports.StoragePort,
+	blockChunkSize uint64,
 ) (*CsModuleAdapter, error) {
 	client, err := ethclient.Dial(wsURL)
 	if err != nil {
@@ -44,6 +46,7 @@ func NewCsModuleAdapter(
 		storageAdapter:    storageAdapter,
 		nodeOperatorIds:   initialOperatorIds,
 		resubscribeSignal: make(chan struct{}, 1),
+		blockChunkSize:    blockChunkSize,
 	}
 
 	operatorIdUpdates := storageAdapter.RegisterOperatorIdListener()
@@ -71,100 +74,154 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 	return csma.resubscribeSignal
 }
 
-// ScanNodeOperatorEvents scans the CsModule contract for NodeOperator events. The CsModule events tracked are: NodeOperatorAdded, NodeOperatorManagerAddressChanged, NodeOperatorRewardAddressChanged
-func (csma *CsModuleAdapter) ScanNodeOperatorEvents(ctx context.Context, address common.Address, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error) error {
+// ScanNodeOperatorEvents scans the CsModule contract for NodeOperator events in chunks of blocks.
+func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
+	ctx context.Context,
+	address common.Address,
+	start uint64,
+	end *uint64,
+	handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error,
+	handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error,
+	handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error,
+) error {
+	if end == nil {
+		return fmt.Errorf("end block cannot be nil")
+	}
+
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.client)
 	if err != nil {
 		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
 	}
 
-	// Filter for NodeOperatorAdded events qith the address as manager
-	operatorAddedManagerEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorAddedManagerEvents.Next() {
-		if err := operatorAddedManagerEvents.Error(); err != nil {
-			return err
+	// Helper function to scan a chunk
+	scanChunk := func(chunkStart, chunkEnd uint64) error {
+		// Filter for NodeOperatorAdded events with the address as manager
+		operatorAddedManagerEvents, err := csModuleContract.FilterNodeOperatorAdded(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{address}, // Address as manager
+			[]common.Address{},        // No filter for rewardAddress
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorAdded (manager) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorAddedManagerEvents.Next() {
+			if err := operatorAddedManagerEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorAddedEvent(operatorAddedManagerEvents.Event, address); err != nil {
+				return err
+			}
 		}
 
-		if err := handleNodeOperatorAddedEvent(operatorAddedManagerEvents.Event, address); err != nil {
-			return err
+		// Filter for NodeOperatorAdded events with the address as reward
+		operatorAddedRewardEvents, err := csModuleContract.FilterNodeOperatorAdded(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{},        // No filter for managerAddress
+			[]common.Address{address}, // Address as reward
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorAdded (reward) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
 		}
-	}
-
-	// Filter for NodeOperatorAdded events with the address as reward
-	operatorAddedRewardEvents, err := csModuleContract.FilterNodeOperatorAdded(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorAdded events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorAddedRewardEvents.Next() {
-		if err := operatorAddedRewardEvents.Error(); err != nil {
-			return err
-		}
-
-		if err := handleNodeOperatorAddedEvent(operatorAddedRewardEvents.Event, address); err != nil {
-			return err
-		}
-	}
-
-	// Filter for NodeOperatorManagerAddressChanged events with the address as manager
-	operatorManagerManagerChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorManagerManagerChangedEvents.Next() {
-		if err := operatorManagerManagerChangedEvents.Error(); err != nil {
-			return err
+		for operatorAddedRewardEvents.Next() {
+			if err := operatorAddedRewardEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorAddedEvent(operatorAddedRewardEvents.Event, address); err != nil {
+				return err
+			}
 		}
 
-		if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerManagerChangedEvents.Event, address); err != nil {
-			return err
+		// Filter for NodeOperatorManagerAddressChanged events with the address as manager
+		operatorManagerChangedManagerEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{address}, // Address as manager
+			[]common.Address{},        // No filter for rewardAddress
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged (manager) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
 		}
-	}
-
-	// Filter for NodeOperatorManagerAddressChanged events with the address as reward
-	operatorManagerRewardChangedEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorManagerRewardChangedEvents.Next() {
-		if err := operatorManagerRewardChangedEvents.Error(); err != nil {
-			return err
-		}
-
-		if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerRewardChangedEvents.Event, address); err != nil {
-			return err
-		}
-	}
-
-	// Filter for NodeOperatorRewardAddressChanged events with the address as manager
-	operatorRewardManagerChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{address}, []common.Address{})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorRewardManagerChangedEvents.Next() {
-		if err := operatorRewardManagerChangedEvents.Error(); err != nil {
-			return err
+		for operatorManagerChangedManagerEvents.Next() {
+			if err := operatorManagerChangedManagerEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerChangedManagerEvents.Event, address); err != nil {
+				return err
+			}
 		}
 
-		if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardManagerChangedEvents.Event, address); err != nil {
-			return err
+		// Filter for NodeOperatorManagerAddressChanged events with the address as reward
+		operatorManagerChangedRewardEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChanged(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{},        // No filter for managerAddress
+			[]common.Address{address}, // Address as reward
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorManagerAddressChanged (reward) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
 		}
+		for operatorManagerChangedRewardEvents.Next() {
+			if err := operatorManagerChangedRewardEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorManagerAddressChangedEvent(operatorManagerChangedRewardEvents.Event, address); err != nil {
+				return err
+			}
+		}
+
+		// Filter for NodeOperatorRewardAddressChanged events with the address as manager
+		operatorRewardChangedManagerEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{address}, // Address as manager
+			[]common.Address{},        // No filter for rewardAddress
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged (manager) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorRewardChangedManagerEvents.Next() {
+			if err := operatorRewardChangedManagerEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardChangedManagerEvents.Event, address); err != nil {
+				return err
+			}
+		}
+
+		// Filter for NodeOperatorRewardAddressChanged events with the address as reward
+		operatorRewardChangedRewardEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{},        // No filter for managerAddress
+			[]common.Address{address}, // Address as reward
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged (reward) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorRewardChangedRewardEvents.Next() {
+			if err := operatorRewardChangedRewardEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardChangedRewardEvents.Event, address); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
-	// Filter for NodeOperatorRewardAddressChanged events with the address as manager
-	operatorRewardRewardChangedEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChanged(&bind.FilterOpts{Context: ctx, Start: start, End: end}, []*big.Int{}, []common.Address{}, []common.Address{address})
-	if err != nil {
-		return fmt.Errorf("failed to filter NodeOperatorRewardAddressChanged events for block range %d to %v: %w", start, *end, err)
-	}
-	for operatorRewardRewardChangedEvents.Next() {
-		if err := operatorRewardRewardChangedEvents.Error(); err != nil {
-			return err
+	// Iterate through block ranges in chunks
+	for current := start; current <= *end; current += csma.blockChunkSize {
+		// print start and end
+		chunkEnd := current + csma.blockChunkSize - 1
+		if chunkEnd > *end {
+			chunkEnd = *end
 		}
 
-		if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardRewardChangedEvents.Event, address); err != nil {
-			return err
+		if err := scanChunk(current, chunkEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", current, chunkEnd, err)
 		}
 	}
 

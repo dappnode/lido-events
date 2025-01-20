@@ -33,8 +33,10 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 
 	veboAddress := common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb")
 
+	blockChunkSize := uint64(10000)
+
 	// Initialize the adapter with the mock storage
-	adapter, err := vebo.NewVeboAdapter(wsURL, veboAddress, mockStorage)
+	adapter, err := vebo.NewVeboAdapter(wsURL, veboAddress, mockStorage, blockChunkSize)
 	return adapter, mockStorage, err
 }
 

@@ -38,10 +38,11 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 	operatorIdChan := make(chan []*big.Int, 1)
 	mockStorage.On("RegisterOperatorIdListener").Return(operatorIdChan)
 
-	csModuleAddress := common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f")
+	csModuleAddress := common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F")
+	blockChunkSize := uint64(10000)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := csmodule.NewCsModuleAdapter(wsURL, csModuleAddress, mockStorage)
+	adapter, err := csmodule.NewCsModuleAdapter(wsURL, csModuleAddress, mockStorage, blockChunkSize)
 	return adapter, mockStorage, err
 }
 
@@ -52,10 +53,10 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Set the start and end blocks for the scan
-	start := uint64(3003264)
-	end := uint64(3144706)
+	start := uint64(20935463)
+	end := uint64(21657327)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 260*time.Second)
 	defer cancel()
 
 	// Map to store and verify events found during the scan
@@ -73,7 +74,7 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 	t.Log("Scanning for NodeOperator events...")
 	// print start and end
 	t.Logf("Start block: %d, End block: %d", start, end)
-	err = adapter.ScanNodeOperatorEvents(ctx, common.HexToAddress("0x913f440ed5ec7ccbbab7e72ae3803bdfea95606a"), start, &end,
+	err = adapter.ScanNodeOperatorEvents(ctx, common.HexToAddress("0x18a2869554df268828bc366fb5333df89c9c2b7b"), start, &end,
 		func(event *domain.CsmoduleNodeOperatorAdded, address common.Address) error {
 			foundEvents.NodeOperatorAdded[event.NodeOperatorId.String()] = struct{}{}
 			t.Logf("NodeOperatorAdded: NodeOperatorId=%s, ManagerAddress=%s, RewardAddress=%s, BlockNumber=%d",
