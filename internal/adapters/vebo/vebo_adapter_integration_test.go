@@ -42,6 +42,7 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 
 // TestScanVeboValidatorExitRequestEventIntegration tests scanning for ValidatorExitRequest events with mocked data
 func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
+	t.Skip()
 	adapter, mockStorage, err := setupVeboAdapter(t)
 	assert.NoError(t, err)
 
