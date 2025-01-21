@@ -227,7 +227,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 		}
 
 		// Ensure chunkEnd is not less than current
-		if chunkEnd < current {
+		if chunkEnd <= current {
 			break // Exit the loop to avoid invalid block ranges
 		}
 
