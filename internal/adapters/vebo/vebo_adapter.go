@@ -18,7 +18,7 @@ type VeboAdapter struct {
 	RpcClient      *ethclient.Client
 	VeboAddress    common.Address
 	StorageAdapter ports.StoragePort
-	BlockChunkSize uint64
+	blockChunkSize uint64
 }
 
 func NewVeboAdapter(
@@ -33,7 +33,7 @@ func NewVeboAdapter(
 		RpcClient:      rpcClient,
 		VeboAddress:    veboAddress,
 		StorageAdapter: storageAdapter,
-		BlockChunkSize: blockChunkSize,
+		blockChunkSize: blockChunkSize,
 	}, nil
 }
 
@@ -84,20 +84,17 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 		return nil
 	}
 
-	// Iterate through the block range in chunks
-	for current := start; current <= *end; current += va.BlockChunkSize {
-		chunkEnd := current + va.BlockChunkSize - 1
-		if chunkEnd > *end {
-			chunkEnd = *end
+	// Iterate through block ranges in chunks
+	for currentStart := start; currentStart <= *end; currentStart += va.blockChunkSize {
+		// Determine the end of the current chunk
+		currentEnd := currentStart + va.blockChunkSize - 1
+		if currentEnd > *end {
+			currentEnd = *end
 		}
 
-		// Ensure chunkEnd is not less than current
-		if chunkEnd <= current {
-			break // Exit the loop to avoid invalid block ranges
-		}
-
-		if err := scanChunk(current, chunkEnd); err != nil {
-			return fmt.Errorf("error scanning block range %d to %d: %w", current, chunkEnd, err)
+		// Scan the current chunk
+		if err := scanChunk(currentStart, currentEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
 

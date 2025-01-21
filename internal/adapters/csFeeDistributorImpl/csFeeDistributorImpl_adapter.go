@@ -14,7 +14,7 @@ import (
 type CsFeeDistributorImplAdapter struct {
 	rpcClient               *ethclient.Client
 	CsFeeDistributorAddress common.Address
-	BlockChunkSize          uint64 // Configurable block chunk size
+	blockChunkSize          uint64 // Configurable block chunk size
 }
 
 func NewCsFeeDistributorImplAdapter(
@@ -26,7 +26,7 @@ func NewCsFeeDistributorImplAdapter(
 	return &CsFeeDistributorImplAdapter{
 		rpcClient:               rpcClient,
 		CsFeeDistributorAddress: csFeeDistributorAddress,
-		BlockChunkSize:          blockChunkSize,
+		blockChunkSize:          blockChunkSize,
 	}, nil
 }
 
@@ -69,19 +69,16 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
 	}
 
 	// Iterate through block ranges in chunks
-	for current := start; current <= *end; current += cs.BlockChunkSize {
-		chunkEnd := current + cs.BlockChunkSize - 1
-		if chunkEnd > *end {
-			chunkEnd = *end
+	for currentStart := start; currentStart <= *end; currentStart += cs.blockChunkSize {
+		// Determine the end of the current chunk
+		currentEnd := currentStart + cs.blockChunkSize - 1
+		if currentEnd > *end {
+			currentEnd = *end
 		}
 
-		// Ensure chunkEnd is not less than current
-		if chunkEnd <= current {
-			break // Exit the loop to avoid invalid block ranges
-		}
-
-		if err := scanChunk(current, chunkEnd); err != nil {
-			return fmt.Errorf("error scanning block range %d to %d: %w", current, chunkEnd, err)
+		// Scan the current chunk
+		if err := scanChunk(currentStart, currentEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
 

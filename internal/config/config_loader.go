@@ -223,7 +223,8 @@ func LoadNetworkConfig() (Config, error) {
 			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  blockChunkSize,
+			MinGenesisTime:                  uint64(1606824023),
+			BlockChunkSize:                  blockChunkSize,
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)
