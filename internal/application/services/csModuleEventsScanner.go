@@ -69,6 +69,12 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		return
 	}
 
+	// return if start block is greater than end block
+	if start > end {
+		logger.WarnWithPrefix(cs.servicePrefix, "Start block is greater than end block, skipping CsModule events scan")
+		return
+	}
+
 	if err := cs.csModulePort.ScanNodeOperatorEvents(
 		ctx,
 		address,
