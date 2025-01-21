@@ -79,6 +79,11 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
 			chunkEnd = *end
 		}
 
+		// Ensure chunkEnd is not less than current
+		if chunkEnd <= current {
+			break // Exit the loop to avoid invalid block ranges
+		}
+
 		if err := scanChunk(current, chunkEnd); err != nil {
 			return fmt.Errorf("error scanning block range %d to %d: %w", current, chunkEnd, err)
 		}
