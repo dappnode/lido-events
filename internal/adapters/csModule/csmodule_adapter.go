@@ -221,10 +221,14 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 
 	// Iterate through block ranges in chunks
 	for current := start; current <= *end; current += csma.blockChunkSize {
-		// print start and end
 		chunkEnd := current + csma.blockChunkSize - 1
 		if chunkEnd > *end {
 			chunkEnd = *end
+		}
+
+		// Ensure chunkEnd is not less than current
+		if chunkEnd < current {
+			break // Exit the loop to avoid invalid block ranges
 		}
 
 		if err := scanChunk(current, chunkEnd); err != nil {
