@@ -65,7 +65,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.RpcUrl, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
 	}
