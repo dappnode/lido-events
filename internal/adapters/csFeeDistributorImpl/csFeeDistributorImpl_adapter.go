@@ -12,45 +12,73 @@ import (
 )
 
 type CsFeeDistributorImplAdapter struct {
-	client                  *ethclient.Client
+	rpcClient               *ethclient.Client
 	CsFeeDistributorAddress common.Address
+	blockChunkSize          uint64 // Configurable block chunk size
 }
 
 func NewCsFeeDistributorImplAdapter(
-	wsURL string,
+	rpcClient *ethclient.Client,
 	csFeeDistributorAddress common.Address,
+	blockChunkSize uint64,
 ) (*CsFeeDistributorImplAdapter, error) {
-	client, err := ethclient.Dial(wsURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
-	}
 
 	return &CsFeeDistributorImplAdapter{
-		client:                  client,
+		rpcClient:               rpcClient,
 		CsFeeDistributorAddress: csFeeDistributorAddress,
+		blockChunkSize:          blockChunkSize,
 	}, nil
 }
 
-// ScanDistributionLogUpdatedEvents scans the CsFeeDistributor contract for DistributionLogUpdated events.
-func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(ctx context.Context, start uint64, end *uint64, handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated) error) error {
-	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.client)
+// ScanDistributionLogUpdatedEvents scans the CsFeeDistributor contract for DistributionLogUpdated events in chunks.
+func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
+	ctx context.Context,
+	start uint64,
+	end *uint64,
+	handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated) error,
+) error {
+	if end == nil {
+		return fmt.Errorf("end block cannot be nil")
+	}
+
+	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.rpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create CsFeeDistributor contract instance: %w", err)
 	}
 
-	// Retrieve DistributionLogUpdated events from the specified block range
-	distributionLogUpdated, err := csFeeDistributorContract.FilterDistributionLogUpdated(&bind.FilterOpts{Context: ctx, Start: start, End: end})
-	if err != nil {
-		return fmt.Errorf("failed to filter DistributionLogUpdated events for block range %d to %v: %w", start, end, err)
-	}
-
-	for distributionLogUpdated.Next() {
-		if err := distributionLogUpdated.Error(); err != nil {
-			return fmt.Errorf("error reading DistributionLogUpdated event: %w", err)
+	// Helper function to scan a chunk
+	scanChunk := func(chunkStart, chunkEnd uint64) error {
+		distributionLogUpdated, err := csFeeDistributorContract.FilterDistributionLogUpdated(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter DistributionLogUpdated events for block range %d to %d: %w", chunkStart, chunkEnd, err)
 		}
 
-		if err := handleDistributionLogUpdated(distributionLogUpdated.Event); err != nil {
-			return fmt.Errorf("failed to handle DistributionLogUpdated event: %w", err)
+		for distributionLogUpdated.Next() {
+			if err := distributionLogUpdated.Error(); err != nil {
+				return fmt.Errorf("error reading DistributionLogUpdated event: %w", err)
+			}
+
+			if err := handleDistributionLogUpdated(distributionLogUpdated.Event); err != nil {
+				return fmt.Errorf("failed to handle DistributionLogUpdated event: %w", err)
+			}
+		}
+
+		return nil
+	}
+
+	// Iterate through block ranges in chunks
+	for currentStart := start; currentStart <= *end; currentStart += cs.blockChunkSize {
+		// Determine the end of the current chunk
+		currentEnd := currentStart + cs.blockChunkSize - 1
+		if currentEnd > *end {
+			currentEnd = *end
+		}
+
+		// Scan the current chunk
+		if err := scanChunk(currentStart, currentEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
 

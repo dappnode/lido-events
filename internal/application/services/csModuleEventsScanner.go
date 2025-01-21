@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
@@ -29,27 +30,23 @@ func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports
 	}
 }
 
-func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address common.Address) {
+func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address common.Address) error {
 	isSyncing, err := cs.executionPort.IsSyncing()
 	if err != nil {
-		logger.ErrorWithPrefix(cs.servicePrefix, "Error checking if node is syncing: %v", err)
-		return
+		return fmt.Errorf("error checking if node is syncing: %w", err)
 	}
 
 	if isSyncing {
-		logger.InfoWithPrefix(cs.servicePrefix, "Node is syncing, skipping CsModule events scan")
-		return
+		return fmt.Errorf("node is syncing")
 	}
 
 	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
 	receiptExists, err := cs.executionPort.GetTransactionReceiptExists(cs.csModuleTxReceipt)
 	if err != nil {
-		logger.ErrorWithPrefix(cs.servicePrefix, "Error checking if transaction receipt exists: %v", err)
-		return
+		return fmt.Errorf("error checking if transaction receipt exists: %w", err)
 	}
 	if !receiptExists {
-		logger.WarnWithPrefix(cs.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping CsModule events scan")
-		return
+		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
 	start, err := cs.storagePort.GetAddressLastProcessedBlock(address)
@@ -65,8 +62,12 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 
 	end, err := cs.executionPort.GetMostRecentBlockNumber()
 	if err != nil {
-		logger.ErrorWithPrefix(cs.servicePrefix, "Failed to get most recent block number: %v", err)
-		return
+		return fmt.Errorf("error getting most recent block number: %w", err)
+	}
+
+	// return if start block is greater than end block
+	if start > end {
+		return fmt.Errorf("start block is greater than end block")
 	}
 
 	if err := cs.csModulePort.ScanNodeOperatorEvents(
@@ -78,14 +79,15 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		cs.HandleNodeOperatorManagerAddressChangedEvent,
 		cs.HandleNodeOperatorRewardAddressChangedEvent,
 	); err != nil {
-		logger.ErrorWithPrefix(cs.servicePrefix, "Error scanning NodeOperator events: %v", err)
-		return
+		return fmt.Errorf("error scanning NodeOperator events: %w", err)
 	}
 
 	if err := cs.storagePort.SaveAddressLastProcessedBlock(address, end); err != nil {
-		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving last processed block: %v", err)
-		return
+		return fmt.Errorf("error saving last processed block: %w", err)
 	}
+
+	logger.DebugWithPrefix(cs.servicePrefix, "Address events scan completed")
+	return nil
 }
 
 func (cs *CsModuleEventsScanner) HandleNodeOperatorAddedEvent(event *domain.CsmoduleNodeOperatorAdded, address common.Address) error {

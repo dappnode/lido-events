@@ -49,6 +49,7 @@ type Config struct {
 
 	// Blockchain
 	MinGenesisTime uint64
+	BlockChunkSize uint64
 }
 
 // Helper function to parse and validate CORS from environment variable
@@ -128,6 +129,16 @@ func LoadNetworkConfig() (Config, error) {
 	if logLevel == "" {
 		logLevel = "INFO" // Default log level
 	}
+	blockChunkSize := uint64(100000)
+	blockChunkSizeStr := os.Getenv("BLOCK_CHUNK_SIZE")
+	if blockChunkSizeStr != "" {
+		// Try to parse the block chunk size as uint64
+		if size, err := strconv.ParseUint(blockChunkSizeStr, 10, 64); err == nil {
+			blockChunkSize = size
+		} else {
+			logger.Fatal("Invalid BLOCK_CHUNK_SIZE value: %s", blockChunkSizeStr)
+		}
+	}
 
 	corsEnv := os.Getenv("CORS")
 	var config Config
@@ -172,6 +183,7 @@ func LoadNetworkConfig() (Config, error) {
 			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1695902400),
+			BlockChunkSize:                  blockChunkSize,
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
@@ -212,6 +224,7 @@ func LoadNetworkConfig() (Config, error) {
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1606824023),
+			BlockChunkSize:                  blockChunkSize,
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)

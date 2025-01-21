@@ -28,6 +28,7 @@ type APIServerService struct {
 	RelaysAllowedPort     ports.RelaysAllowedPort
 	CsModuleEventsScanner *CsModuleEventsScanner
 	Router                *mux.Router
+	processingAddresses   sync.Map // To track addresses being processed
 }
 
 // NewAPIServerService initializes the API server
@@ -107,20 +108,34 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// parse to address
-	isHexAddress := common.IsHexAddress(address)
-	if !isHexAddress {
+	// Validate address
+	if !common.IsHexAddress(address) {
 		logger.ErrorWithPrefix("API", "Invalid address format in getAddressEvents: %s", address)
 		writeErrorResponse(w, "Invalid address format", http.StatusBadRequest, nil)
 		return
 	}
-
 	addressValidated := common.HexToAddress(address)
 
-	// Scan for address events
-	// If its the first scan, this scan can take several minutes
-	h.CsModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated)
+	// Check if the address is already being processed
+	if _, exists := h.processingAddresses.Load(addressValidated.Hex()); exists {
+		// If processing, return a 202 response
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte("Request is being processed"))
+		return
+	}
 
+	// Mark the address as being processed
+	h.processingAddresses.Store(addressValidated.Hex(), struct{}{})
+	defer h.processingAddresses.Delete(addressValidated.Hex()) // Clear address when done
+
+	// Perform the scanning (synchronously)
+	if err := h.CsModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated); err != nil {
+		logger.ErrorWithPrefix("API", "Error scanning address events: %v", err)
+		writeErrorResponse(w, "Error scanning address events", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Fetch the updated events for the address
 	addressEvents, err := h.StoragePort.GetAddressEvents(addressValidated)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching address events: %v", err)
@@ -128,14 +143,16 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Respond with the scanned and fetched data
 	jsonResponse, err := json.Marshal(addressEvents)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in GetAddressEvents: %v", err)
+		logger.ErrorWithPrefix("API", "Error generating JSON response in getAddressEvents: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
 }
 
