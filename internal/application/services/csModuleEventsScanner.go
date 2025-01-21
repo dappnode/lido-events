@@ -92,6 +92,8 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving last processed block: %v", err)
 		return
 	}
+
+	logger.DebugWithPrefix(cs.servicePrefix, "Address events scan completed")
 }
 
 func (cs *CsModuleEventsScanner) HandleNodeOperatorAddedEvent(event *domain.CsmoduleNodeOperatorAdded, address common.Address) error {
