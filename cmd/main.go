@@ -57,11 +57,11 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
+	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.RpcUrl, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize)
+	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.RpcUrl, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}

@@ -18,13 +18,13 @@ type CsFeeDistributorImplAdapter struct {
 }
 
 func NewCsFeeDistributorImplAdapter(
-	wsURL string,
+	rpcURL string,
 	csFeeDistributorAddress common.Address,
 	blockChunkSize uint64,
 ) (*CsFeeDistributorImplAdapter, error) {
-	client, err := ethclient.Dial(wsURL)
+	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
+		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", rpcURL, err)
 	}
 
 	return &CsFeeDistributorImplAdapter{

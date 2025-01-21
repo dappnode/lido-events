@@ -14,7 +14,8 @@ import (
 )
 
 type VeboAdapter struct {
-	Client         *ethclient.Client
+	RpcClient      *ethclient.Client
+	WsClient       *ethclient.Client
 	VeboAddress    common.Address
 	StorageAdapter ports.StoragePort
 	BlockChunkSize uint64
@@ -22,17 +23,23 @@ type VeboAdapter struct {
 
 func NewVeboAdapter(
 	wsURL string,
+	rpcURL string,
 	veboAddress common.Address,
 	storageAdapter ports.StoragePort,
 	blockChunkSize uint64,
 ) (*VeboAdapter, error) {
-	client, err := ethclient.Dial(wsURL)
+	wsClient, err := ethclient.Dial(wsURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
 	}
+	rpcClient, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", rpcURL, err)
+	}
 
 	return &VeboAdapter{
-		Client:         client,
+		WsClient:       wsClient,
+		RpcClient:      rpcClient,
 		VeboAddress:    veboAddress,
 		StorageAdapter: storageAdapter,
 		BlockChunkSize: blockChunkSize,
@@ -50,7 +57,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 		return fmt.Errorf("end block cannot be nil")
 	}
 
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.RpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
 	}
@@ -103,7 +110,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 
 // WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
 func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.Client)
+	veboContract, err := bindings.NewVebo(va.VeboAddress, va.WsClient)
 	if err != nil {
 		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
 	}
