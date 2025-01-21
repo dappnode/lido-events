@@ -13,25 +13,21 @@ import (
 )
 
 type RelaysAllowedAdapter struct {
-	Client                         *ethclient.Client
+	RpcClient                      *ethclient.Client
 	MevBoostRelaysAllowListAddress common.Address
 	DappmanagerUrl                 string
 	MevBoostDnpName                string
 }
 
 func NewRelaysAllowedAdapter(
-	wsURL string,
+	rpcClient *ethclient.Client,
 	mevBoostRelaysAllowListAddress common.Address,
 	dappmanagerUrl string,
 	mevBoostDnpName string,
 ) (*RelaysAllowedAdapter, error) {
-	client, err := ethclient.Dial(wsURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
-	}
 
 	return &RelaysAllowedAdapter{
-		client,
+		rpcClient,
 		mevBoostRelaysAllowListAddress,
 		dappmanagerUrl,
 		mevBoostDnpName,
@@ -40,7 +36,7 @@ func NewRelaysAllowedAdapter(
 
 // getRelaysAllowList fetches relays allow list from the SC
 func (mev *RelaysAllowedAdapter) GetRelaysAllowList(ctx context.Context) ([]domain.RelayAllowed, error) {
-	relaysAllowListContract, err := bindings.NewBindings(mev.MevBoostRelaysAllowListAddress, mev.Client)
+	relaysAllowListContract, err := bindings.NewBindings(mev.MevBoostRelaysAllowListAddress, mev.RpcClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create MevBoostRelaysAllowList contract instance: %w", err)
 	}

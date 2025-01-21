@@ -12,23 +12,19 @@ import (
 )
 
 type CsFeeDistributorImplAdapter struct {
-	client                  *ethclient.Client
+	rpcClient               *ethclient.Client
 	CsFeeDistributorAddress common.Address
 	BlockChunkSize          uint64 // Configurable block chunk size
 }
 
 func NewCsFeeDistributorImplAdapter(
-	rpcURL string,
+	rpcClient *ethclient.Client,
 	csFeeDistributorAddress common.Address,
 	blockChunkSize uint64,
 ) (*CsFeeDistributorImplAdapter, error) {
-	client, err := ethclient.Dial(rpcURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", rpcURL, err)
-	}
 
 	return &CsFeeDistributorImplAdapter{
-		client:                  client,
+		rpcClient:               rpcClient,
 		CsFeeDistributorAddress: csFeeDistributorAddress,
 		BlockChunkSize:          blockChunkSize,
 	}, nil
@@ -45,7 +41,7 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
 		return fmt.Errorf("end block cannot be nil")
 	}
 
-	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.client)
+	csFeeDistributorContract, err := bindings.NewBindings(cs.CsFeeDistributorAddress, cs.rpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create CsFeeDistributor contract instance: %w", err)
 	}

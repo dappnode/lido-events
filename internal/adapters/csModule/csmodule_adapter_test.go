@@ -5,6 +5,7 @@ package csmodule_test
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"os"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"lido-events/internal/mocks"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,6 +29,16 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
+	}
+
+	// Initiate the clients
+	rpcClient, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", rpcURL, err)
+	}
+	wsClient, err := ethclient.Dial(wsURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
 	}
 
 	// Create the mock StoragePort
@@ -47,7 +59,7 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 	blockChunkSize := uint64(10000)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := csmodule.NewCsModuleAdapter(wsURL, rpcURL, csModuleAddress, mockStorage, blockChunkSize)
+	adapter, err := csmodule.NewCsModuleAdapter(wsClient, rpcClient, csModuleAddress, mockStorage, blockChunkSize)
 	return adapter, mockStorage, err
 }
 

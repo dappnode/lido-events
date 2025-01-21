@@ -26,21 +26,12 @@ type CsModuleAdapter struct {
 }
 
 func NewCsModuleAdapter(
-	wsURL string,
-	rpcURL string,
+	websocketClient *ethclient.Client,
+	rpcClient *ethclient.Client,
 	csModuleAddress common.Address,
 	storageAdapter ports.StoragePort,
 	blockChunkSize uint64,
 ) (*CsModuleAdapter, error) {
-	websocketClient, err := ethclient.Dial(wsURL)
-	if err != nil {
-		return nil, err
-	}
-	rpcClient, err := ethclient.Dial(rpcURL)
-	if err != nil {
-		return nil, err
-	}
-
 	initialOperatorIds, err := storageAdapter.GetOperatorIds()
 	if err != nil {
 		return nil, err

@@ -15,6 +15,7 @@ import (
 	"lido-events/internal/mocks"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,10 +25,18 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 	if wsURL == "" {
 		t.Fatal("WS_URL environment variable not set")
 	}
+	wsClient, err := ethclient.Dial(wsURL)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
+	}
+	rpcClient, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Create the mock StoragePort
@@ -41,7 +50,7 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 	blockChunkSize := uint64(10000)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := vebo.NewVeboAdapter(wsURL, rpcURL, veboAddress, mockStorage, blockChunkSize)
+	adapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, veboAddress, mockStorage, blockChunkSize)
 	return adapter, mockStorage, err
 }
 

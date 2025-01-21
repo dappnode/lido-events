@@ -14,29 +14,20 @@ import (
 )
 
 type VeboAdapter struct {
-	RpcClient      *ethclient.Client
 	WsClient       *ethclient.Client
+	RpcClient      *ethclient.Client
 	VeboAddress    common.Address
 	StorageAdapter ports.StoragePort
 	BlockChunkSize uint64
 }
 
 func NewVeboAdapter(
-	wsURL string,
-	rpcURL string,
+	wsClient *ethclient.Client,
+	rpcClient *ethclient.Client,
 	veboAddress common.Address,
 	storageAdapter ports.StoragePort,
 	blockChunkSize uint64,
 ) (*VeboAdapter, error) {
-	wsClient, err := ethclient.Dial(wsURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", wsURL, err)
-	}
-	rpcClient, err := ethclient.Dial(rpcURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Ethereum client at %s: %w", rpcURL, err)
-	}
-
 	return &VeboAdapter{
 		WsClient:       wsClient,
 		RpcClient:      rpcClient,

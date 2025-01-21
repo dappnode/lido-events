@@ -13,6 +13,7 @@ import (
 	"lido-events/internal/application/domain"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,13 +23,17 @@ func setupCsFeeDistributorImplAdapter(t *testing.T) (*csfeedistributorimpl.CsFee
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
 	}
+	rpcClient, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		return nil, err
+	}
 
 	csfeedistributorimplAddress := common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED")
 
 	blockChunkSize := uint64(10000)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(rpcURL, csfeedistributorimplAddress, blockChunkSize)
+	adapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(rpcClient, csfeedistributorimplAddress, blockChunkSize)
 	return adapter, err
 }
 

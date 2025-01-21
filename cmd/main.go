@@ -23,6 +23,8 @@ import (
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
 	"lido-events/internal/logger"
+
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 var logPrefix = "MAIN"
@@ -40,6 +42,16 @@ func main() {
 	}
 	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
+	// Initiate RPC and Ws Ethereum clients
+	rpcClient, err := ethclient.Dial(networkConfig.RpcUrl)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize RPC client: %v", err)
+	}
+	wsClient, err := ethclient.Dial(networkConfig.WsURL)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize WS client: %v", err)
+	}
+
 	storageAdapter, err := storage.NewStorageAdapter(networkConfig.DBDirectory)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
@@ -49,7 +61,7 @@ func main() {
 		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)
 	}
 	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
-	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(networkConfig.WsURL, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	if err != nil {
 		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
 	}
@@ -57,15 +69,15 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(networkConfig.RpcUrl, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
+	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(rpcClient, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(networkConfig.WsURL, networkConfig.RpcUrl, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize)
+	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(networkConfig.WsURL, networkConfig.RpcUrl, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
+	csModuleAdapter, err := csmodule.NewCsModuleAdapter(wsClient, rpcClient, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
 	}
