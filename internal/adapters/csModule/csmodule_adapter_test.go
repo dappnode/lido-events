@@ -24,6 +24,11 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 		t.Fatal("WS_URL environment variable not set")
 	}
 
+	rpcURL := os.Getenv("RPC_URL")
+	if rpcURL == "" {
+		t.Fatal("RPC_URL environment variable not set")
+	}
+
 	// Create the mock StoragePort
 	mockStorage := new(mocks.MockStoragePort)
 
@@ -42,7 +47,7 @@ func setupCsModuleAdapter(t *testing.T) (*csmodule.CsModuleAdapter, *mocks.MockS
 	blockChunkSize := uint64(10000)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := csmodule.NewCsModuleAdapter(wsURL, csModuleAddress, mockStorage, blockChunkSize)
+	adapter, err := csmodule.NewCsModuleAdapter(wsURL, rpcURL, csModuleAddress, mockStorage, blockChunkSize)
 	return adapter, mockStorage, err
 }
 

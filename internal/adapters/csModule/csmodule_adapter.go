@@ -15,7 +15,8 @@ import (
 )
 
 type CsModuleAdapter struct {
-	client            *ethclient.Client
+	websocketClient   *ethclient.Client
+	rpcClient         *ethclient.Client
 	csModuleAddress   common.Address
 	storageAdapter    ports.StoragePort
 	nodeOperatorIds   []*big.Int
@@ -26,11 +27,16 @@ type CsModuleAdapter struct {
 
 func NewCsModuleAdapter(
 	wsURL string,
+	rpcURL string,
 	csModuleAddress common.Address,
 	storageAdapter ports.StoragePort,
 	blockChunkSize uint64,
 ) (*CsModuleAdapter, error) {
-	client, err := ethclient.Dial(wsURL)
+	websocketClient, err := ethclient.Dial(wsURL)
+	if err != nil {
+		return nil, err
+	}
+	rpcClient, err := ethclient.Dial(rpcURL)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +47,8 @@ func NewCsModuleAdapter(
 	}
 
 	adapter := &CsModuleAdapter{
-		client:            client,
+		websocketClient:   websocketClient,
+		rpcClient:         rpcClient,
 		csModuleAddress:   csModuleAddress,
 		storageAdapter:    storageAdapter,
 		nodeOperatorIds:   initialOperatorIds,
@@ -88,7 +95,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 		return fmt.Errorf("end block cannot be nil")
 	}
 
-	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.client)
+	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
 	}
@@ -230,7 +237,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 
 // WatchCsModuleEvents watches for events emitted by the CsModule contract and calls the appropriate handler functions. Not required to log errors since it will be initialized from main
 func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers ports.CsModuleHandlers) error {
-	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.client)
+	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.websocketClient)
 	if err != nil {
 		return err
 	}
