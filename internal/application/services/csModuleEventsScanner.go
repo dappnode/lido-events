@@ -65,14 +65,9 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		return fmt.Errorf("error getting most recent block number: %w", err)
 	}
 
-	// return if start block is greater than end block
-	if start > end {
-		return fmt.Errorf("start block is greater than end block")
-	}
-
-	// to avoid spamming the node with requests, only scan if the distance is less than 500 blocks | 100 minutes | 1.67 hours
-	if end-start > 500 {
-		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is greater than 500, skipping scan to avoid spamming the node")
+	// return if start block is greater or equal to end block
+	if start >= end {
+		logger.InfoWithPrefix(cs.servicePrefix, "Start block is greater or equal to end block, skipping scan")
 		return nil
 	}
 
