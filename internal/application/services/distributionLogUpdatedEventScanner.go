@@ -103,6 +103,12 @@ func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
 		return
 	}
 
+	// return if distance is less than 10 epoch = 10 * 32 blocks
+	if end-start < 320 {
+		logger.InfoWithPrefix(ds.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
+		return
+	}
+
 	// Perform the scan
 	if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, ds.HandleDistributionLogUpdatedEvent); err != nil {
 		logger.ErrorWithPrefix(ds.servicePrefix, "Error scanning DistributionLogUpdated events: %v", err)
