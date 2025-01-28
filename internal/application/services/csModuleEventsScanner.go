@@ -71,6 +71,12 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		return nil
 	}
 
+	// return if distance is less than 10 epoch = 10 * 32 blocks
+	if end-start < 320 {
+		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
+		return nil
+	}
+
 	if err := cs.csModulePort.ScanNodeOperatorEvents(
 		ctx,
 		address,
