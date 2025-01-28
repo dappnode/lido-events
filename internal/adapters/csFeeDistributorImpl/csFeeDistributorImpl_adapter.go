@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"lido-events/internal/adapters/csFeeDistributorImpl/bindings"
 	"lido-events/internal/application/domain"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -35,7 +36,8 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
 	ctx context.Context,
 	start uint64,
 	end *uint64,
-	handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated) error,
+	operatorId *big.Int,
+	handleDistributionLogUpdated func(*domain.BindingsDistributionLogUpdated, *big.Int) error,
 ) error {
 	if end == nil {
 		return fmt.Errorf("end block cannot be nil")
@@ -60,7 +62,7 @@ func (cs *CsFeeDistributorImplAdapter) ScanDistributionLogUpdatedEvents(
 				return fmt.Errorf("error reading DistributionLogUpdated event: %w", err)
 			}
 
-			if err := handleDistributionLogUpdated(distributionLogUpdated.Event); err != nil {
+			if err := handleDistributionLogUpdated(distributionLogUpdated.Event, operatorId); err != nil {
 				return fmt.Errorf("failed to handle DistributionLogUpdated event: %w", err)
 			}
 		}

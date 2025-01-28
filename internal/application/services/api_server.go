@@ -358,19 +358,6 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set last block processed to 0, this will trigger the events scanner to start from the beginning
-	// and look for events for the new operator ID
-	if err := h.StoragePort.SaveDistributionLogLastProcessedBlock(0); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to update DistributionLogLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to reset DistributionLogLastProcessedBlock", http.StatusInternalServerError, err)
-		return
-	}
-	if err := h.StoragePort.SaveValidatorExitRequestLastProcessedBlock(0); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to update ValidatorExitRequestLastProcessedBlock: %v", err)
-		writeErrorResponse(w, "Failed to reset ValidatorExitRequestLastProcessedBlock", http.StatusInternalServerError, err)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -420,7 +407,14 @@ func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	exitRequests, err := h.StoragePort.GetExitRequests(operatorId)
+	operatorIdNum := new(big.Int)
+	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
+		logger.ErrorWithPrefix("API", "Invalid operatorId format in getExitRequests")
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
+		return
+	}
+
+	exitRequests, err := h.StoragePort.GetExitRequests(operatorIdNum)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching exit requests: %v", err)
 		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError, err)

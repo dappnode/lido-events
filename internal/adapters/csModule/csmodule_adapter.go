@@ -72,6 +72,71 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 	return csma.resubscribeSignal
 }
 
+// Scan ElRewardsStealingPenaltyReported events emitted by the CsModule contract
+func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
+	ctx context.Context,
+	handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported, *big.Int) error,
+) error {
+	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
+	if err != nil {
+		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
+	}
+
+	// Filter for ELRewardsStealingPenaltyReported events
+	elRewardsStealingPenaltyReportedEvents, err := csModuleContract.FilterELRewardsStealingPenaltyReported(
+		&bind.FilterOpts{Context: ctx},
+		csma.nodeOperatorIds,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to filter ELRewardsStealingPenaltyReported events: %w", err)
+	}
+
+	for elRewardsStealingPenaltyReportedEvents.Next() {
+		if err := elRewardsStealingPenaltyReportedEvents.Error(); err != nil {
+			return err
+
+		}
+		if err := handleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReportedEvents.Event, elRewardsStealingPenaltyReportedEvents.Event.NodeOperatorId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Scan WithdrawalSubmitted events emitted by the CsModule contract
+func (csma *CsModuleAdapter) ScanWithdrawalSubmitted(
+	ctx context.Context,
+	handleWithdrawalSubmitted func(*domain.CsmoduleWithdrawalSubmitted, *big.Int) error,
+) error {
+	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
+	if err != nil {
+		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
+	}
+
+	// Filter for WithdrawalSubmitted events
+	withdrawalSubmittedEvents, err := csModuleContract.FilterWithdrawalSubmitted(
+		&bind.FilterOpts{Context: ctx},
+		csma.nodeOperatorIds,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to filter WithdrawalSubmitted events: %w", err)
+	}
+
+	for withdrawalSubmittedEvents.Next() {
+		if err := withdrawalSubmittedEvents.Error(); err != nil {
+			return err
+		}
+		if err := handleWithdrawalSubmitted(withdrawalSubmittedEvents.Event, withdrawalSubmittedEvents.Event.NodeOperatorId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ScanNodeOperatorEvents scans the CsModule contract for NodeOperator events in chunks of blocks.
 func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 	ctx context.Context,
@@ -302,7 +367,7 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 }
 
 // WatchCsModuleEvents watches for events emitted by the CsModule contract and calls the appropriate handler functions. Not required to log errors since it will be initialized from main
-func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers ports.CsModuleHandlers) error {
+func (csma *CsModuleAdapter) WatchCsModuleEvents(ctx context.Context, handlers ports.CsModuleWatcherHandlers) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.websocketClient)
 	if err != nil {
 		return err

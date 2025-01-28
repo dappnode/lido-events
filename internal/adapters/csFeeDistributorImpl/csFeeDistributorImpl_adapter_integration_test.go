@@ -5,6 +5,7 @@ package csfeedistributorimpl_test
 
 import (
 	"context"
+	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -46,6 +47,7 @@ func TestScanDistributionLogUpdatedEventsIntegration(t *testing.T) {
 	// Set the start and end blocks for the scan
 	start := uint64(30701)
 	end := uint64(2733678)
+	operatorId := big.NewInt(1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -54,7 +56,7 @@ func TestScanDistributionLogUpdatedEventsIntegration(t *testing.T) {
 	foundLogCids := make([]string, 0)
 
 	// Execute the scan and handle each found event
-	err = adapter.ScanDistributionLogUpdatedEvents(ctx, start, &end, func(event *domain.BindingsDistributionLogUpdated) error {
+	err = adapter.ScanDistributionLogUpdatedEvents(ctx, start, &end, operatorId, func(event *domain.BindingsDistributionLogUpdated, operatorId *big.Int) error {
 		foundLogCids = append(foundLogCids, event.LogCid)
 
 		// Log event details for debugging

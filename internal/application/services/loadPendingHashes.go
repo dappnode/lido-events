@@ -74,28 +74,30 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 		return nil
 	}
 
-	// Get all pending hashes
-	pendingHashes, err := phl.storagePort.GetPendingHashes()
-	if err != nil {
-		logger.ErrorWithPrefix(phl.servicePrefix, "Failed to get pending hashes", err)
-		return err
-	}
-	if len(pendingHashes) == 0 {
-		logger.InfoWithPrefix(phl.servicePrefix, "No pending hashes found; skipping loading pending hashes")
-		return nil
-	}
+	// Iterate through the operator IDs
+	for _, operatorID := range operatorIDs {
 
-	// Process each pending hash
-	for _, pendingHash := range pendingHashes {
-		logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
-
-		originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
+		// Get all pending hashes
+		pendingHashes, err := phl.storagePort.GetPendingHashes(operatorID)
 		if err != nil {
-			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
-			continue
+			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to get pending hashes", err)
+			return err
+		}
+		if len(pendingHashes) == 0 {
+			logger.InfoWithPrefix(phl.servicePrefix, "No pending hashes found; skipping loading pending hashes")
+			return nil
 		}
 
-		for _, operatorID := range operatorIDs {
+		// Process each pending hash
+		for _, pendingHash := range pendingHashes {
+			logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
+
+			originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
+			if err != nil {
+				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
+				continue
+			}
+
 			logger.DebugWithPrefix(phl.servicePrefix, "Processing data for operator ID %s", operatorID.String())
 
 			data, exists := originalReport.Operators[operatorID.String()]
@@ -118,11 +120,11 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to save report for operator ID %s: %v", operatorID.String(), err)
 				continue
 			}
-		}
 
-		// Remove the pending hash
-		if err := phl.storagePort.DeletePendingHash(pendingHash); err != nil {
-			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to delete pending hash %s: %v", pendingHash, err)
+			// Remove the pending hash
+			if err := phl.storagePort.DeletePendingHash(operatorID, pendingHash); err != nil {
+				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to delete pending hash %s: %v", pendingHash, err)
+			}
 		}
 	}
 

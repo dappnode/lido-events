@@ -102,34 +102,44 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 		return
 	}
 
-	// Retrieve start and end blocks for scanning
-	start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock()
+	// Iterrate over operator ids
+	operatorIDs, err := vs.storagePort.GetOperatorIds()
 	if err != nil {
-		logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using deployment block %d: %v", vs.veboBlockDeployment, err)
-		start = vs.veboBlockDeployment
-	}
-
-	if start == 0 {
-		logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using deployment block %d", vs.veboBlockDeployment)
-		start = vs.veboBlockDeployment
-	}
-
-	end, err := vs.executionPort.GetMostRecentBlockNumber()
-	if err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Failed to get most recent block number, cannot continue with cron execution, waiting for next iteration: %v", err)
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting operator ids: %v", err)
 		return
 	}
 
-	// Perform the scan
-	if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
-		return
-	}
+	for _, operatorID := range operatorIDs {
 
-	// Save the last processed block if successful
-	if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(end); err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error saving last processed block, next cron execution will run from previous processed: %v", err)
-		return
+		// Retrieve start and end blocks for scanning
+		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
+		if err != nil {
+			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using deployment block %d: %v", vs.veboBlockDeployment, err)
+			start = vs.veboBlockDeployment
+		}
+
+		if start == 0 {
+			logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using deployment block %d", vs.veboBlockDeployment)
+			start = vs.veboBlockDeployment
+		}
+
+		end, err := vs.executionPort.GetMostRecentBlockNumber()
+		if err != nil {
+			logger.ErrorWithPrefix(vs.servicePrefix, "Failed to get most recent block number, cannot continue with cron execution, waiting for next iteration: %v", err)
+			return
+		}
+
+		// Perform the scan
+		if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
+			logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
+			return
+		}
+
+		// Save the last processed block if successful
+		if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(operatorID, end); err != nil {
+			logger.ErrorWithPrefix(vs.servicePrefix, "Error saving last processed block, next cron execution will run from previous processed: %v", err)
+			return
+		}
 	}
 }
 

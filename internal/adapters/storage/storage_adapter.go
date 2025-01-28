@@ -46,23 +46,34 @@ type Database struct {
 	Telegram  domain.TelegramConfig                   `json:"telegram"`
 	Operators map[string]OperatorData                 `json:"operators"` // indexed by operator ID
 	Addresses map[common.Address]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
-	Events    Events                                  `json:"events"`
+}
+
+type DistributionLogsUpdated struct {
+	LastProcessedBlock uint64   `json:"lastProcessedBlock"`
+	PendingHashes      []string `json:"pendingHashes"`
+	Reports            domain.Reports
+}
+
+type ExitsRequests struct {
+	LastProcessedBlock uint64
+	Exits              domain.ExitRequests
+}
+
+type WithdrawalsSubmitted struct {
+	LastProcessedBlock uint64
+	Withdrawals        []domain.CsmoduleWithdrawalSubmitted
+}
+
+type ElRewardsStealingPenaltiesReported struct {
+	LastProcessedBlock uint64
+	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported
 }
 
 type OperatorData struct {
-	Reports             domain.Reports                     `json:"reports"`
-	ExitRequests        domain.ExitRequests                `json:"exitRequests"`
-	WithdrawalSubmitted domain.CsmoduleWithdrawalSubmitted `json:"withdrawalSubmitted"`
-}
-
-type Events struct {
-	DistributionLogUpdated struct {
-		LastProcessedBlock uint64   `json:"lastProcessedBlock"`
-		PendingHashes      []string `json:"pendingHashes"`
-	} `json:"distributionLogUpdated"`
-	ValidatorExitRequest struct {
-		LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-	} `json:"validatorExitRequest"`
+	DistributionLogsUpdated            DistributionLogsUpdated            `json:"distributionLogsUpdated"`
+	ExitsRequests                      ExitsRequests                      `json:"exitsRequests"`
+	WithdrawalsSubmitted               WithdrawalsSubmitted               `json:"withdrawalsSubmitted"`
+	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported `json:"elRewardsStealingPenaltiesReported"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -74,20 +85,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 		Telegram:  domain.TelegramConfig{},
 		Operators: make(map[string]OperatorData),
 		Addresses: make(map[common.Address]domain.AddressEvents),
-		Events: Events{
-			DistributionLogUpdated: struct {
-				LastProcessedBlock uint64   `json:"lastProcessedBlock"`
-				PendingHashes      []string `json:"pendingHashes"`
-			}{
-				LastProcessedBlock: 0,
-				PendingHashes:      []string{},
-			},
-			ValidatorExitRequest: struct {
-				LastProcessedBlock uint64 `json:"lastProcessedBlock"`
-			}{
-				LastProcessedBlock: 0,
-			},
-		},
 	}
 
 	file, err := os.ReadFile(fs.DBFile)
@@ -115,9 +112,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	}
 	if db.Addresses == nil {
 		db.Addresses = make(map[common.Address]domain.AddressEvents)
-	}
-	if db.Events.DistributionLogUpdated.PendingHashes == nil {
-		db.Events.DistributionLogUpdated.PendingHashes = []string{}
 	}
 
 	return db, nil

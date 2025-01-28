@@ -86,6 +86,8 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		cs.HandleNodeOperatorAddedEvent,
 		cs.HandleNodeOperatorManagerAddressChangedEvent,
 		cs.HandleNodeOperatorRewardAddressChangedEvent,
+		cs.HandleNodeOperatorRewardAddressChangeProposedEvent,
+		cs.HandleNodeOperatorManagerAddressChangeProposedEvent,
 	); err != nil {
 		return fmt.Errorf("error scanning NodeOperator events: %w", err)
 	}
@@ -123,6 +125,26 @@ func (cs *CsModuleEventsScanner) HandleNodeOperatorRewardAddressChangedEvent(eve
 
 	if err := cs.storagePort.SetNodeOperatorRewardAddressChanged(address, *event); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorRewardAddressChanged event: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (cs *CsModuleEventsScanner) HandleNodeOperatorRewardAddressChangeProposedEvent(event *domain.CsmoduleNodeOperatorRewardAddressChangeProposed, address common.Address) error {
+	logger.DebugWithPrefix(cs.servicePrefix, "Handling NodeOperatorRewardAddressChangeProposed event: %+v", event)
+
+	if err := cs.storagePort.SetNodeOperatorRewardAddressChangeProposed(address, *event); err != nil {
+		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorRewardAddressChangeProposed event: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (cs *CsModuleEventsScanner) HandleNodeOperatorManagerAddressChangeProposedEvent(event *domain.CsmoduleNodeOperatorManagerAddressChangeProposed, address common.Address) error {
+	logger.DebugWithPrefix(cs.servicePrefix, "Handling NodeOperatorManagerAddressChangeProposed event: %+v", event)
+
+	if err := cs.storagePort.SetNodeOperatorManagerAddressChangeProposed(address, *event); err != nil {
+		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving NodeOperatorManagerAddressChangeProposed event: %v", err)
 		return err
 	}
 	return nil
