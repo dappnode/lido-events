@@ -77,6 +77,7 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		return nil
 	}
 
+	logger.DebugWithPrefix(cs.servicePrefix, "Scanning events for address %s from block %d to %d", address.Hex(), start, end)
 	if err := cs.csModulePort.ScanNodeOperatorEvents(
 		ctx,
 		address,
