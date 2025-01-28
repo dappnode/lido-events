@@ -75,6 +75,9 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 // Scan ElRewardsStealingPenaltyReported events emitted by the CsModule contract
 func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 	ctx context.Context,
+	operatorId *big.Int,
+	start uint64,
+	end *uint64,
 	handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported, *big.Int) error,
 ) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
@@ -84,8 +87,8 @@ func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 
 	// Filter for ELRewardsStealingPenaltyReported events
 	elRewardsStealingPenaltyReportedEvents, err := csModuleContract.FilterELRewardsStealingPenaltyReported(
-		&bind.FilterOpts{Context: ctx},
-		csma.nodeOperatorIds,
+		&bind.FilterOpts{Context: ctx, Start: start, End: end},
+		[]*big.Int{operatorId},
 	)
 
 	if err != nil {
@@ -108,6 +111,9 @@ func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 // Scan WithdrawalSubmitted events emitted by the CsModule contract
 func (csma *CsModuleAdapter) ScanWithdrawalSubmitted(
 	ctx context.Context,
+	operatorId *big.Int,
+	start uint64,
+	end *uint64,
 	handleWithdrawalSubmitted func(*domain.CsmoduleWithdrawalSubmitted, *big.Int) error,
 ) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
@@ -117,8 +123,8 @@ func (csma *CsModuleAdapter) ScanWithdrawalSubmitted(
 
 	// Filter for WithdrawalSubmitted events
 	withdrawalSubmittedEvents, err := csModuleContract.FilterWithdrawalSubmitted(
-		&bind.FilterOpts{Context: ctx},
-		csma.nodeOperatorIds,
+		&bind.FilterOpts{Context: ctx, Start: start, End: end},
+		[]*big.Int{operatorId},
 	)
 
 	if err != nil {

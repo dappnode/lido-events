@@ -29,6 +29,8 @@ type APIServerService struct {
 	CsModuleEventsScanner *CsModuleEventsScanner
 	Router                *mux.Router
 	processingAddresses   sync.Map // To track addresses being processed
+	processingWithdrawals sync.Map // To track withdrawals being processed
+	processingPenalties   sync.Map // To track penalties being processed
 }
 
 // NewAPIServerService initializes the API server
@@ -118,6 +120,26 @@ func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.Response
 		return
 	}
 
+	// Check if the operator ID is already being processed
+	if _, exists := h.processingPenalties.Load(operatorIdNum.String()); exists {
+		logger.DebugWithPrefix("API", "Operator ID %s is already being processed", operatorIdNum.String())
+		// If processing, return a 202 response
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte("Request is being processed"))
+		return
+	}
+
+	// Mark the operator ID as being processed
+	h.processingPenalties.Store(operatorIdNum.String(), struct{}{})
+	defer h.processingPenalties.Delete(operatorIdNum.String()) // Clear operator ID when done
+
+	// Perform the scanning (synchronously)
+	if err := h.CsModuleEventsScanner.ScanElRewardsStealingPenaltyReported(h.ctx, operatorIdNum); err != nil {
+		logger.ErrorWithPrefix("API", "Error scanning EL rewards stealing penalties reported: %v", err)
+		writeErrorResponse(w, "Error scanning EL rewards stealing penalties reported", http.StatusInternalServerError, err)
+		return
+	}
+
 	penalties, err := h.StoragePort.GetElRewardsStealingPenaltiesReported(operatorIdNum)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching EL rewards stealing penalties reported: %v", err)
@@ -152,6 +174,26 @@ func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *htt
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
 		logger.ErrorWithPrefix("API", "Invalid operatorId format in getWithdrawalsSubmitted")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
+		return
+	}
+
+	// Check if the operator ID is already being processed
+	if _, exists := h.processingWithdrawals.Load(operatorIdNum.String()); exists {
+		logger.DebugWithPrefix("API", "Operator ID %s is already being processed", operatorIdNum.String())
+		// If processing, return a 202 response
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte("Request is being processed"))
+		return
+	}
+
+	// Mark the operator ID as being processed
+	h.processingWithdrawals.Store(operatorIdNum.String(), struct{}{})
+	defer h.processingWithdrawals.Delete(operatorIdNum.String()) // Clear operator ID when done
+
+	// Perform the scanning (synchronously)
+	if err := h.CsModuleEventsScanner.ScanWithdrawalsSubmittedEvents(h.ctx, operatorIdNum); err != nil {
+		logger.ErrorWithPrefix("API", "Error scanning withdrawals submitted: %v", err)
+		writeErrorResponse(w, "Error scanning withdrawals submitted", http.StatusInternalServerError, err)
 		return
 	}
 
