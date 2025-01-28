@@ -89,6 +89,8 @@ func (h *APIServerService) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.getRelaysAllowed).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/relays_used", h.getRelaysUsed).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/address_events", h.getAddressEvents).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/withdrawals_submitted", h.getWithdrawalsSubmitted).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/el_rewards_stealing_penalties_reported", h.getElRewardsStealingPenaltiesReported).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +99,79 @@ func (h *APIServerService) SetupRoutes() {
 }
 
 // Handlers
+
+// getElRewardsStealingPenaltiesReported retrieves the list of EL rewards stealing penalties reported
+func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "getElRewardsStealingPenaltiesReported request received")
+
+	operatorId := r.URL.Query().Get("operatorId")
+	if operatorId == "" {
+		logger.ErrorWithPrefix("API", "Missing operatorId in getElRewardsStealingPenaltiesReported request")
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
+		return
+	}
+
+	operatorIdNum := new(big.Int)
+	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
+		logger.ErrorWithPrefix("API", "Invalid operatorId format in getElRewardsStealingPenaltiesReported")
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
+		return
+	}
+
+	penalties, err := h.StoragePort.GetElRewardsStealingPenaltiesReported(operatorIdNum)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching EL rewards stealing penalties reported: %v", err)
+		writeErrorResponse(w, "Error fetching EL rewards stealing penalties reported", http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(penalties)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in getElRewardsStealingPenaltiesReported: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+
+}
+
+// getWithdrawalsSubmitted retrieves the list of withdrawals submitted
+func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix("API", "getWithdrawalsSubmitted request received")
+
+	operatorId := r.URL.Query().Get("operatorId")
+	if operatorId == "" {
+		logger.ErrorWithPrefix("API", "Missing operatorId in getWithdrawalsSubmitted request")
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
+		return
+	}
+
+	operatorIdNum := new(big.Int)
+	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
+		logger.ErrorWithPrefix("API", "Invalid operatorId format in getWithdrawalsSubmitted")
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
+		return
+	}
+
+	withdrawals, err := h.StoragePort.GetWithdrawals(operatorIdNum)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error fetching withdrawals submitted: %v", err)
+		writeErrorResponse(w, "Error fetching withdrawals submitted", http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(withdrawals)
+	if err != nil {
+		logger.ErrorWithPrefix("API", "Error generating JSON response in getWithdrawalsSubmitted: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
 
 // getAddressEvents retrieves events for a given address
 func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Request) {
