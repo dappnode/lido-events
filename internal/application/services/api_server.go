@@ -118,6 +118,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 
 	// Check if the address is already being processed
 	if _, exists := h.processingAddresses.Load(addressValidated.Hex()); exists {
+		logger.DebugWithPrefix("API", "Address %s is already being processed", addressValidated.Hex())
 		// If processing, return a 202 response
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("Request is being processed"))
