@@ -62,10 +62,12 @@ func (fs *Storage) GetAddressEvents(address common.Address) (domain.AddressEvent
 	}
 
 	return domain.AddressEvents{
-		LastProcessedBlock:                addressData.LastProcessedBlock,
-		NodeOperatorAdded:                 addressData.NodeOperatorAdded,
-		NodeOperatorManagerAddressChanged: addressData.NodeOperatorManagerAddressChanged,
-		NodeOperatorRewardAddressChanged:  addressData.NodeOperatorRewardAddressChanged,
+		LastProcessedBlock:                       addressData.LastProcessedBlock,
+		NodeOperatorAdded:                        addressData.NodeOperatorAdded,
+		NodeOperatorManagerAddressChanged:        addressData.NodeOperatorManagerAddressChanged,
+		NodeOperatorRewardAddressChanged:         addressData.NodeOperatorRewardAddressChanged,
+		NodeOperatorRewardAddressChangeProposed:  addressData.NodeOperatorRewardAddressChangeProposed,
+		NodeOperatorManagerAddressChangeProposed: addressData.NodeOperatorManagerAddressChangeProposed,
 	}, nil
 }
 
@@ -83,10 +85,12 @@ func (fs *Storage) SetNodeOperatorAdded(address common.Address, event domain.Csm
 	// Initialize address if it does not exist
 	if _, exists := db.Addresses[address]; !exists {
 		db.Addresses[address] = domain.AddressEvents{
-			LastProcessedBlock:                0,
-			NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
-			NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
-			NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			LastProcessedBlock:                       0,
+			NodeOperatorAdded:                        []domain.CsmoduleNodeOperatorAdded{},
+			NodeOperatorManagerAddressChanged:        []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+			NodeOperatorRewardAddressChanged:         []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			NodeOperatorRewardAddressChangeProposed:  []domain.CsmoduleNodeOperatorRewardAddressChangeProposed{},
+			NodeOperatorManagerAddressChangeProposed: []domain.CsmoduleNodeOperatorManagerAddressChangeProposed{},
 		}
 	}
 
@@ -121,10 +125,12 @@ func (fs *Storage) SetNodeOperatorManagerAddressChanged(address common.Address, 
 	// Initialize address if it does not exist
 	if _, exists := db.Addresses[address]; !exists {
 		db.Addresses[address] = domain.AddressEvents{
-			LastProcessedBlock:                0,
-			NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
-			NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
-			NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			LastProcessedBlock:                       0,
+			NodeOperatorAdded:                        []domain.CsmoduleNodeOperatorAdded{},
+			NodeOperatorManagerAddressChanged:        []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+			NodeOperatorRewardAddressChanged:         []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			NodeOperatorRewardAddressChangeProposed:  []domain.CsmoduleNodeOperatorRewardAddressChangeProposed{},
+			NodeOperatorManagerAddressChangeProposed: []domain.CsmoduleNodeOperatorManagerAddressChangeProposed{},
 		}
 	}
 
@@ -159,10 +165,12 @@ func (fs *Storage) SetNodeOperatorRewardAddressChanged(address common.Address, e
 	// Initialize address if it does not exist
 	if _, exists := db.Addresses[address]; !exists {
 		db.Addresses[address] = domain.AddressEvents{
-			LastProcessedBlock:                0,
-			NodeOperatorAdded:                 []domain.CsmoduleNodeOperatorAdded{},
-			NodeOperatorManagerAddressChanged: []domain.CsmoduleNodeOperatorManagerAddressChanged{},
-			NodeOperatorRewardAddressChanged:  []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			LastProcessedBlock:                       0,
+			NodeOperatorAdded:                        []domain.CsmoduleNodeOperatorAdded{},
+			NodeOperatorManagerAddressChanged:        []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+			NodeOperatorRewardAddressChanged:         []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			NodeOperatorRewardAddressChangeProposed:  []domain.CsmoduleNodeOperatorRewardAddressChangeProposed{},
+			NodeOperatorManagerAddressChangeProposed: []domain.CsmoduleNodeOperatorManagerAddressChangeProposed{},
 		}
 	}
 
@@ -178,6 +186,86 @@ func (fs *Storage) SetNodeOperatorRewardAddressChanged(address common.Address, e
 
 	// Add the new event
 	addressData.NodeOperatorRewardAddressChanged = append(addressData.NodeOperatorRewardAddressChanged, event)
+	db.Addresses[address] = addressData
+
+	return fs.SaveDatabase(db)
+}
+
+// SetNodeOperatorRewardAddressChangeProposed saves the NodeOperatorRewardAddressChangeProposed event for a specific Ethereum address.
+func (fs *Storage) SetNodeOperatorRewardAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error {
+	db, err := fs.LoadDatabase()
+	if err != nil {
+		return err
+	}
+
+	if db.Addresses == nil {
+		db.Addresses = make(map[common.Address]domain.AddressEvents)
+	}
+
+	// Initialize address if it does not exist
+	if _, exists := db.Addresses[address]; !exists {
+		db.Addresses[address] = domain.AddressEvents{
+			LastProcessedBlock:                       0,
+			NodeOperatorAdded:                        []domain.CsmoduleNodeOperatorAdded{},
+			NodeOperatorManagerAddressChanged:        []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+			NodeOperatorRewardAddressChanged:         []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			NodeOperatorRewardAddressChangeProposed:  []domain.CsmoduleNodeOperatorRewardAddressChangeProposed{},
+			NodeOperatorManagerAddressChangeProposed: []domain.CsmoduleNodeOperatorManagerAddressChangeProposed{},
+		}
+	}
+
+	addressData := db.Addresses[address]
+	txHash := event.Raw.TxHash.Hex()
+
+	// Check if the transaction hash already exists
+	for _, existingEvent := range addressData.NodeOperatorRewardAddressChangeProposed {
+		if existingEvent.Raw.TxHash.Hex() == txHash {
+			return nil // Event already exists
+		}
+	}
+
+	// Add the new event
+	addressData.NodeOperatorRewardAddressChangeProposed = append(addressData.NodeOperatorRewardAddressChangeProposed, event)
+	db.Addresses[address] = addressData
+
+	return fs.SaveDatabase(db)
+}
+
+// SetNodeOperatorManagerAddressChangeProposed saves the NodeOperatorManagerAddressChangeProposed event for a specific Ethereum address.
+func (fs *Storage) SetNodeOperatorManagerAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error {
+	db, err := fs.LoadDatabase()
+	if err != nil {
+		return err
+	}
+
+	if db.Addresses == nil {
+		db.Addresses = make(map[common.Address]domain.AddressEvents)
+	}
+
+	// Initialize address if it does not exist
+	if _, exists := db.Addresses[address]; !exists {
+		db.Addresses[address] = domain.AddressEvents{
+			LastProcessedBlock:                       0,
+			NodeOperatorAdded:                        []domain.CsmoduleNodeOperatorAdded{},
+			NodeOperatorManagerAddressChanged:        []domain.CsmoduleNodeOperatorManagerAddressChanged{},
+			NodeOperatorRewardAddressChanged:         []domain.CsmoduleNodeOperatorRewardAddressChanged{},
+			NodeOperatorRewardAddressChangeProposed:  []domain.CsmoduleNodeOperatorRewardAddressChangeProposed{},
+			NodeOperatorManagerAddressChangeProposed: []domain.CsmoduleNodeOperatorManagerAddressChangeProposed{},
+		}
+	}
+
+	addressData := db.Addresses[address]
+	txHash := event.Raw.TxHash.Hex()
+
+	// Check if the transaction hash already exists
+	for _, existingEvent := range addressData.NodeOperatorManagerAddressChangeProposed {
+		if existingEvent.Raw.TxHash.Hex() == txHash {
+			return nil // Event already exists
+		}
+	}
+
+	// Add the new event
+	addressData.NodeOperatorManagerAddressChangeProposed = append(addressData.NodeOperatorManagerAddressChangeProposed, event)
 	db.Addresses[address] = addressData
 
 	return fs.SaveDatabase(db)

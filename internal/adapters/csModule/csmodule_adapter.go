@@ -81,6 +81,8 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 	handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error,
 	handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error,
 	handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error,
+	handleNodeOperatorRewardAddressChangeProposedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChangeProposed, common.Address) error,
+	handleNodeOperatorManagerAddressChangeProposedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChangeProposed, common.Address) error,
 ) error {
 	if end == nil {
 		return fmt.Errorf("end block cannot be nil")
@@ -205,6 +207,78 @@ func (csma *CsModuleAdapter) ScanNodeOperatorEvents(
 			if err := handleNodeOperatorRewardAddressChangedEvent(operatorRewardChangedRewardEvents.Event, address); err != nil {
 				return err
 			}
+		}
+
+		// Filter NodeOperatorRewardAddressChangeProposed events with the address as old address
+		operatorRewardChangeProposedManagerEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChangeProposed(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{address}, // Address as old address
+			[]common.Address{},        // No filter for rewardAddress
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorRewardAddressChangeProposed (manager) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorRewardChangeProposedManagerEvents.Next() {
+			if err := operatorRewardChangeProposedManagerEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorRewardAddressChangeProposedEvent(operatorRewardChangeProposedManagerEvents.Event, address); err != nil {
+				return err
+			}
+		}
+
+		// Filter NodeOperatorRewardAddressChangeProposed events with the address as new address
+		operatorRewardChangeProposedRewardEvents, err := csModuleContract.FilterNodeOperatorRewardAddressChangeProposed(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{},        // No filter for managerAddress
+			[]common.Address{address}, // Address as new address
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorRewardAddressChangeProposed (reward) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorRewardChangeProposedRewardEvents.Next() {
+			if err := operatorRewardChangeProposedRewardEvents.Error(); err != nil {
+				return err
+			}
+			if err := handleNodeOperatorRewardAddressChangeProposedEvent(operatorRewardChangeProposedRewardEvents.Event, address); err != nil {
+				return err
+			}
+		}
+
+		// Filter NodeOperatorManagerAddressChangeProposed events with the address as old address
+		operatorManagerChangeProposedManagerEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChangeProposed(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{address}, // Address as old address
+			[]common.Address{},        // No filter for rewardAddress
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorManagerAddressChangeProposed (manager) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorManagerChangeProposedManagerEvents.Next() {
+			if err := operatorManagerChangeProposedManagerEvents.Error(); err != nil {
+				return err
+			}
+			// Handle the event
+		}
+
+		// Filter NodeOperatorManagerAddressChangeProposed events with the address as new address
+		operatorManagerChangeProposedRewardEvents, err := csModuleContract.FilterNodeOperatorManagerAddressChangeProposed(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},              // No filter for `nodeOperatorId`
+			[]common.Address{},        // No filter for managerAddress
+			[]common.Address{address}, // Address as new address
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter NodeOperatorManagerAddressChangeProposed (reward) events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for operatorManagerChangeProposedRewardEvents.Next() {
+			if err := operatorManagerChangeProposedRewardEvents.Error(); err != nil {
+				return err
+			}
+			// Handle the event
 		}
 
 		return nil

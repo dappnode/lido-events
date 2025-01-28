@@ -50,8 +50,9 @@ type Database struct {
 }
 
 type OperatorData struct {
-	Reports      domain.Reports      `json:"reports"`
-	ExitRequests domain.ExitRequests `json:"exitRequests"`
+	Reports             domain.Reports                     `json:"reports"`
+	ExitRequests        domain.ExitRequests                `json:"exitRequests"`
+	WithdrawalSubmitted domain.CsmoduleWithdrawalSubmitted `json:"withdrawalSubmitted"`
 }
 
 type Events struct {
