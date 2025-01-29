@@ -49,8 +49,10 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 
 	blockChunkSize := uint64(10000)
 
+	moduleId := big.NewInt(4)
+
 	// Initialize the adapter with the mock storage
-	adapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, veboAddress, mockStorage, blockChunkSize)
+	adapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, veboAddress, mockStorage, blockChunkSize, moduleId)
 	return adapter, mockStorage, err
 }
 
@@ -59,6 +61,7 @@ func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
 	t.Skip()
 	adapter, mockStorage, err := setupVeboAdapter(t)
 	assert.NoError(t, err)
+	operatorId := big.NewInt(2535)
 
 	// Set the start and end blocks for the scan
 	start := uint64(2689810)
@@ -74,7 +77,7 @@ func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
 	}{}
 
 	// Execute the scan and handle each found event
-	err = adapter.ScanVeboValidatorExitRequestEvent(ctx, start, &end, func(event *domain.VeboValidatorExitRequest) error {
+	err = adapter.ScanVeboValidatorExitRequestEvent(ctx, operatorId, start, &end, func(event *domain.VeboValidatorExitRequest) error {
 		foundEvents[event.ValidatorIndex.String()] = struct {
 			ValidatorPubkey string
 			BlockNumber     uint64

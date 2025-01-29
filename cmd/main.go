@@ -73,7 +73,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize)
+	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
