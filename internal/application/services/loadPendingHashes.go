@@ -76,7 +76,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 
 	// Iterate through the operator IDs
 	for _, operatorID := range operatorIDs {
-
+		logger.DebugWithPrefix(phl.servicePrefix, "Processing operator ID %s", operatorID.String())
 		// Get all pending hashes
 		pendingHashes, err := phl.storagePort.GetPendingHashes(operatorID)
 		if err != nil {
@@ -85,7 +85,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 		}
 		if len(pendingHashes) == 0 {
 			logger.InfoWithPrefix(phl.servicePrefix, "No pending hashes found; skipping loading pending hashes")
-			return nil
+			continue
 		}
 
 		// Process each pending hash
