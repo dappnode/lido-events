@@ -104,11 +104,11 @@ func (h *APIServerService) SetupRoutes() {
 
 // getElRewardsStealingPenaltiesReported retrieves the list of EL rewards stealing penalties reported
 func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getElRewardsStealingPenaltiesReported request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getElRewardsStealingPenaltiesReported request received")
 
 	// Check if the penalties are already being processed
 	if h.processingPenalties {
-		logger.DebugWithPrefix("API", "EL rewards stealing penalties are already being processed")
+		logger.DebugWithPrefix(h.servicePrefix, "EL rewards stealing penalties are already being processed")
 		// If processing, return a 202 response
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("Request is being processed"))
@@ -123,21 +123,21 @@ func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.Response
 
 	// Perform the scanning (synchronously)
 	if err := h.CsModuleEventsScanner.ScanElRewardsStealingPenaltyReported(h.ctx); err != nil {
-		logger.ErrorWithPrefix("API", "Error scanning EL rewards stealing penalties reported: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning EL rewards stealing penalties reported: %v", err)
 		writeErrorResponse(w, "Error scanning EL rewards stealing penalties reported", http.StatusInternalServerError, err)
 		return
 	}
 
 	penalties, err := h.StoragePort.GetElRewardsStealingPenaltiesReported()
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching EL rewards stealing penalties reported: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching EL rewards stealing penalties reported: %v", err)
 		writeErrorResponse(w, "Error fetching EL rewards stealing penalties reported", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(penalties)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in getElRewardsStealingPenaltiesReported: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getElRewardsStealingPenaltiesReported: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -148,25 +148,25 @@ func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.Response
 
 // getWithdrawalsSubmitted retrieves the list of withdrawals submitted
 func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getWithdrawalsSubmitted request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getWithdrawalsSubmitted request received")
 
 	operatorId := r.URL.Query().Get("operatorId")
 	if operatorId == "" {
-		logger.ErrorWithPrefix("API", "Missing operatorId in getWithdrawalsSubmitted request")
+		logger.ErrorWithPrefix(h.servicePrefix, "Missing operatorId in getWithdrawalsSubmitted request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	operatorIdNum := new(big.Int)
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix("API", "Invalid operatorId format in getWithdrawalsSubmitted")
+		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getWithdrawalsSubmitted")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
 	// Check if the operator ID is already being processed
 	if _, exists := h.processingWithdrawals.Load(operatorIdNum.String()); exists {
-		logger.DebugWithPrefix("API", "Operator ID %s is already being processed", operatorIdNum.String())
+		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s is already being processed", operatorIdNum.String())
 		// If processing, return a 202 response
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("Request is being processed"))
@@ -179,21 +179,21 @@ func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *htt
 
 	// Perform the scanning (synchronously)
 	if err := h.CsModuleEventsScanner.ScanWithdrawalsSubmittedEvents(h.ctx, operatorIdNum); err != nil {
-		logger.ErrorWithPrefix("API", "Error scanning withdrawals submitted: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning withdrawals submitted: %v", err)
 		writeErrorResponse(w, "Error scanning withdrawals submitted", http.StatusInternalServerError, err)
 		return
 	}
 
 	withdrawals, err := h.StoragePort.GetWithdrawals(operatorIdNum)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching withdrawals submitted: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching withdrawals submitted: %v", err)
 		writeErrorResponse(w, "Error fetching withdrawals submitted", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(withdrawals)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in getWithdrawalsSubmitted: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getWithdrawalsSubmitted: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -204,7 +204,7 @@ func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *htt
 
 // getAddressEvents retrieves events for a given address
 func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getAddressEvents request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getAddressEvents request received")
 
 	address := r.URL.Query().Get("address")
 	if address == "" {
@@ -214,7 +214,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 
 	// Validate address
 	if !common.IsHexAddress(address) {
-		logger.ErrorWithPrefix("API", "Invalid address format in getAddressEvents: %s", address)
+		logger.ErrorWithPrefix(h.servicePrefix, "Invalid address format in getAddressEvents: %s", address)
 		writeErrorResponse(w, "Invalid address format", http.StatusBadRequest, nil)
 		return
 	}
@@ -222,7 +222,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 
 	// Check if the address is already being processed
 	if _, exists := h.processingAddresses.Load(addressValidated.Hex()); exists {
-		logger.DebugWithPrefix("API", "Address %s is already being processed", addressValidated.Hex())
+		logger.DebugWithPrefix(h.servicePrefix, "Address %s is already being processed", addressValidated.Hex())
 		// If processing, return a 202 response
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("Request is being processed"))
@@ -235,7 +235,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 
 	// Perform the scanning (synchronously)
 	if err := h.CsModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated); err != nil {
-		logger.ErrorWithPrefix("API", "Error scanning address events: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning address events: %v", err)
 		writeErrorResponse(w, "Error scanning address events", http.StatusInternalServerError, err)
 		return
 	}
@@ -243,7 +243,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 	// Fetch the updated events for the address
 	addressEvents, err := h.StoragePort.GetAddressEvents(addressValidated)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching address events: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching address events: %v", err)
 		writeErrorResponse(w, "Error fetching address events", http.StatusInternalServerError, err)
 		return
 	}
@@ -251,7 +251,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 	// Respond with the scanned and fetched data
 	jsonResponse, err := json.Marshal(addressEvents)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in getAddressEvents: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getAddressEvents: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -263,17 +263,17 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 
 // getRelaysAllowed retrieves the list of allowed relays
 func (h *APIServerService) getRelaysAllowed(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getRelaysAllowed request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getRelaysAllowed request received")
 	relays, err := h.RelaysAllowedPort.GetRelaysAllowList(h.ctx)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching allowed relays: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching allowed relays: %v", err)
 		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(relays)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysAllowed: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in GetRelaysAllowed: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -284,17 +284,17 @@ func (h *APIServerService) getRelaysAllowed(w http.ResponseWriter, r *http.Reque
 
 // getRelaysUsed retrieves the list of used relays
 func (h *APIServerService) getRelaysUsed(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getRelaysUsed request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getRelaysUsed request received")
 	relays, err := h.RelaysUsedPort.GetRelaysUsed(h.ctx)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching used relays: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching used relays: %v", err)
 		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(relays)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in GetRelaysUsed: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in GetRelaysUsed: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -305,17 +305,17 @@ func (h *APIServerService) getRelaysUsed(w http.ResponseWriter, r *http.Request)
 
 // getTelegramConfig retrieves the Telegram configuration
 func (h *APIServerService) getTelegramConfig(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getTelegramConfig request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getTelegramConfig request received")
 	config, err := h.StoragePort.GetTelegramConfig()
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching Telegram configuration: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching Telegram configuration: %v", err)
 		writeErrorResponse(w, "Error fetching Telegram configuration", http.StatusInternalServerError, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(config)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in GetTelegramConfig: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in GetTelegramConfig: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -326,34 +326,34 @@ func (h *APIServerService) getTelegramConfig(w http.ResponseWriter, r *http.Requ
 
 // updateTelegramConfig handles updates to the Telegram configuration
 func (h *APIServerService) updateTelegramConfig(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "updateTelegramConfig request received")
+	logger.DebugWithPrefix(h.servicePrefix, "updateTelegramConfig request received")
 	var req struct {
 		Token  string `json:"token"`
 		UserID int64  `json:"userId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnWithPrefix("API", "Invalid request body in updateTelegramConfig: %v", err)
+		logger.WarnWithPrefix(h.servicePrefix, "Invalid request body in updateTelegramConfig: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest, err)
 		return
 	}
 
 	if req.Token == "" && req.UserID == 0 {
-		logger.DebugWithPrefix("API", "Missing token and userId in updateTelegramConfig request")
+		logger.DebugWithPrefix(h.servicePrefix, "Missing token and userId in updateTelegramConfig request")
 		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest, nil)
 		return
 	}
 
 	// Update storage
 	if err := h.StoragePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to update Telegram configuration: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Telegram configuration: %v", err)
 		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError, err)
 		return
 	}
 
 	// Synchronously update the Telegram bot configuration
 	if err := h.NotifierPort.UpdateBotConfig(); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to update Telegram bot configuration: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Telegram bot configuration: %v", err)
 		writeErrorResponse(w, "Failed to update Telegram bot configuration", http.StatusInternalServerError, err)
 		return
 	}
@@ -363,17 +363,17 @@ func (h *APIServerService) updateTelegramConfig(w http.ResponseWriter, r *http.R
 
 // deleteOperator handles deletion of an operator ID
 func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "deleteOperator request received")
+	logger.DebugWithPrefix(h.servicePrefix, "deleteOperator request received")
 	operatorId := r.URL.Query().Get("operatorId")
 
 	if operatorId == "" {
-		logger.DebugWithPrefix("API", "Missing operatorId in deleteOperator request")
+		logger.DebugWithPrefix(h.servicePrefix, "Missing operatorId in deleteOperator request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(operatorId, 10); !ok {
-		logger.DebugWithPrefix("API", "Invalid operatorId format in deleteOperator")
+		logger.DebugWithPrefix(h.servicePrefix, "Invalid operatorId format in deleteOperator")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
@@ -381,7 +381,7 @@ func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request
 	// Check if operator ID exists
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to fetch operator IDs: %v", err)
 		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
 		return
 	}
@@ -395,13 +395,13 @@ func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request
 	}
 
 	if !found {
-		logger.DebugWithPrefix("API", "Operator ID %s not found", operatorId)
+		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s not found", operatorId)
 		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound, err)
 		return
 	}
 
 	if err := h.StoragePort.DeleteOperator(operatorId); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to delete Operator ID: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to delete Operator ID: %v", err)
 		writeErrorResponse(w, "Failed to delete Operator ID", http.StatusInternalServerError, err)
 		return
 	}
@@ -411,25 +411,25 @@ func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request
 
 // addOperator handles updates to the operator ID
 func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "addOperator request received")
+	logger.DebugWithPrefix(h.servicePrefix, "addOperator request received")
 	var req struct {
 		OperatorID string `json:"operatorId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.DebugWithPrefix("API", "Invalid request body in addOperator: %v", err)
+		logger.DebugWithPrefix(h.servicePrefix, "Invalid request body in addOperator: %v", err)
 		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest, err)
 		return
 	}
 
 	if req.OperatorID == "" {
-		logger.DebugWithPrefix("API", "Missing operatorId in addOperator request")
+		logger.DebugWithPrefix(h.servicePrefix, "Missing operatorId in addOperator request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	if _, ok := new(big.Int).SetString(req.OperatorID, 10); !ok {
-		logger.DebugWithPrefix("API", "Invalid operatorId format in addOperator")
+		logger.DebugWithPrefix(h.servicePrefix, "Invalid operatorId format in addOperator")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
@@ -437,21 +437,21 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 	// Check if operator ID already exists
 	operatorIds, err := h.StoragePort.GetOperatorIds()
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Failed to fetch operator IDs: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to fetch operator IDs: %v", err)
 		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
 		return
 	}
 
 	for _, id := range operatorIds {
 		if id.String() == req.OperatorID {
-			logger.DebugWithPrefix("API", "Operator ID %s already exists", req.OperatorID)
+			logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s already exists", req.OperatorID)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 	}
 
 	if err := h.StoragePort.SaveOperatorId(req.OperatorID); err != nil {
-		logger.ErrorWithPrefix("API", "Failed to update Operator ID: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Operator ID: %v", err)
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError, err)
 		return
 	}
@@ -461,32 +461,32 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 
 // getOperatorPerformance retrieves operator performance data
 func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getOperatorPerformance request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getOperatorPerformance request received")
 	operatorId := r.URL.Query().Get("operatorId")
 
 	operatorIdNum := new(big.Int)
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.DebugWithPrefix("API", "Invalid operatorId format in getOperatorPerformance")
+		logger.DebugWithPrefix(h.servicePrefix, "Invalid operatorId format in getOperatorPerformance")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
 	report, err := h.StoragePort.GetReports(operatorIdNum)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching Lido report: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching Lido report: %v", err)
 		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError, err)
 		return
 	}
 
 	if len(report) == 0 {
-		logger.WarnWithPrefix("API", "No report found for operator ID %s", operatorId)
+		logger.WarnWithPrefix(h.servicePrefix, "No report found for operator ID %s", operatorId)
 		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound, err)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(report)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in getOperatorPerformance: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getOperatorPerformance: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
@@ -497,33 +497,33 @@ func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http
 
 // getExitRequests retrieves exit requests for a given operator ID
 func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix("API", "getExitRequests request received")
+	logger.DebugWithPrefix(h.servicePrefix, "getExitRequests request received")
 	operatorId := r.URL.Query().Get("operatorId")
 	if operatorId == "" {
-		logger.DebugWithPrefix("API", "Missing operatorId in getExitRequests request")
+		logger.DebugWithPrefix(h.servicePrefix, "Missing operatorId in getExitRequests request")
 		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
 		return
 	}
 
 	operatorIdNum := new(big.Int)
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix("API", "Invalid operatorId format in getExitRequests")
+		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getExitRequests")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
 		return
 	}
 
 	exitRequests, err := h.StoragePort.GetExitRequests(operatorIdNum)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error fetching exit requests: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching exit requests: %v", err)
 		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError, err)
 		return
 	}
 
 	if exitRequests == nil {
-		logger.DebugWithPrefix("API", "No exit requests found for operator ID %s", operatorId)
+		logger.DebugWithPrefix(h.servicePrefix, "No exit requests found for operator ID %s", operatorId)
 		jsonResponse, err := json.Marshal([]domain.VeboValidatorExitRequest{})
 		if err != nil {
-			logger.ErrorWithPrefix("API", "Error generating JSON response in getExitRequests: %v", err)
+			logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getExitRequests: %v", err)
 			writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -533,7 +533,7 @@ func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Reques
 
 	jsonResponse, err := json.Marshal(exitRequests)
 	if err != nil {
-		logger.ErrorWithPrefix("API", "Error generating JSON response in getExitRequests: %v", err)
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getExitRequests: %v", err)
 		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
 		return
 	}
