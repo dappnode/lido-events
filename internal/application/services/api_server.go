@@ -313,12 +313,6 @@ func (h *APIServerService) getTelegramConfig(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if config.Token == "" && config.UserID == 0 {
-		logger.DebugWithPrefix("API", "No Telegram configuration found")
-		writeErrorResponse(w, "No Telegram configuration found", http.StatusNotFound, err)
-		return
-	}
-
 	jsonResponse, err := json.Marshal(config)
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error generating JSON response in GetTelegramConfig: %v", err)
