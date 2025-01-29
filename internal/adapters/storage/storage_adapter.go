@@ -56,18 +56,18 @@ type DistributionLogsUpdated struct {
 }
 
 type ExitsRequests struct {
-	LastProcessedBlock uint64
-	Exits              domain.ExitRequests
+	LastProcessedBlock uint64              `json:"lastProcessedBlock"`
+	Exits              domain.ExitRequests `json:"exits"`
 }
 
 type WithdrawalsSubmitted struct {
-	LastProcessedBlock uint64
-	Withdrawals        []domain.CsmoduleWithdrawalSubmitted
+	LastProcessedBlock uint64                               `json:"lastProcessedBlock"`
+	Withdrawals        []domain.CsmoduleWithdrawalSubmitted `json:"withdrawals"`
 }
 
 type ElRewardsStealingPenaltiesReported struct {
-	LastProcessedBlock uint64
-	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported
+	LastProcessedBlock uint64                                            `json:"lastProcessedBlock"`
+	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported `json:"penalties"`
 }
 
 type OperatorData struct {
