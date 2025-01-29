@@ -11,7 +11,7 @@ import (
 type CsModulePort interface {
 	ScanNodeOperatorEvents(ctx context.Context, address common.Address, start uint64, end *uint64, handleNodeOperatorAddedEvent func(*domain.CsmoduleNodeOperatorAdded, common.Address) error, handleNodeOperatorManagerAddressChangedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChanged, common.Address) error, handleNodeOperatorRewardAddressChangedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChanged, common.Address) error, handleNodeOperatorRewardAddressChangeProposedEvent func(*domain.CsmoduleNodeOperatorRewardAddressChangeProposed, common.Address) error, handleNodeOperatorManagerAddressChangeProposedEvent func(*domain.CsmoduleNodeOperatorManagerAddressChangeProposed, common.Address) error) error
 	ScanWithdrawalSubmitted(ctx context.Context, operatorId *big.Int, start uint64, end *uint64, handleWithdrawalSubmitted func(*domain.CsmoduleWithdrawalSubmitted, *big.Int) error) error
-	ScanElRewardsStealingPenaltyReported(ctx context.Context, operatorId *big.Int, start uint64, end *uint64, handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported, *big.Int) error) error
+	ScanElRewardsStealingPenaltyReported(ctx context.Context, start uint64, end *uint64, handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported) error) error
 	WatchCsModuleEvents(ctx context.Context, handlers CsModuleWatcherHandlers) error
 	ResubscribeSignal() <-chan struct{}
 }

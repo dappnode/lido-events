@@ -28,16 +28,17 @@ type StoragePort interface {
 	GetExitRequests(operatorID *big.Int) (domain.ExitRequests, error)
 	UpdateExitRequestStatus(operatorID *big.Int, validatorIndex string, status domain.ValidatorStatus) error
 	DeleteExitRequest(operatorID *big.Int, validatorIndex string) error
-	// withdrawals
-	GetElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int) (uint64, error)
-	SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int, block uint64) error
-	GetElRewardsStealingPenaltiesReported(operatorID *big.Int) ([]domain.CsmoduleELRewardsStealingPenaltyReported, error)
-	SaveElRewardsStealingPenaltyReported(operatorID *big.Int, penalty domain.CsmoduleELRewardsStealingPenaltyReported) error
-	// elRewardsStealingPenaltiesReported
+	// Withdrawals
 	GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error)
 	SaveWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int, block uint64) error
 	GetWithdrawals(operatorID *big.Int) ([]domain.CsmoduleWithdrawalSubmitted, error)
 	SaveWithdrawal(operatorID *big.Int, withdrawal domain.CsmoduleWithdrawalSubmitted) error
+
+	// Penalties
+	GetElRewardsStealingPenaltiesReportedLastProcessedBlock() (uint64, error)
+	SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(block uint64) error
+	GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error)
+	SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error
 
 	// addresses
 	GetAddressLastProcessedBlock(address common.Address) (uint64, error)

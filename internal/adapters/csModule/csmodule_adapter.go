@@ -75,10 +75,9 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 // Scan ElRewardsStealingPenaltyReported events emitted by the CsModule contract
 func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 	ctx context.Context,
-	operatorId *big.Int,
 	start uint64,
 	end *uint64,
-	handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported, *big.Int) error,
+	handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported) error,
 ) error {
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
 	if err != nil {
@@ -88,7 +87,7 @@ func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 	// Filter for ELRewardsStealingPenaltyReported events
 	elRewardsStealingPenaltyReportedEvents, err := csModuleContract.FilterELRewardsStealingPenaltyReported(
 		&bind.FilterOpts{Context: ctx, Start: start, End: end},
-		[]*big.Int{operatorId},
+		[]*big.Int{},
 	)
 
 	if err != nil {
@@ -100,7 +99,7 @@ func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 			return err
 
 		}
-		if err := handleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReportedEvents.Event, elRewardsStealingPenaltyReportedEvents.Event.NodeOperatorId); err != nil {
+		if err := handleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReportedEvents.Event); err != nil {
 			return err
 		}
 	}

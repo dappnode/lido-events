@@ -102,23 +102,23 @@ func (m *MockStoragePort) DeleteExitRequest(operatorID *big.Int, validatorIndex 
 }
 
 // Withdrawals
-func (m *MockStoragePort) GetElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
-	args := m.Called(operatorID)
+func (m *MockStoragePort) GetElRewardsStealingPenaltiesReportedLastProcessedBlock() (uint64, error) {
+	args := m.Called()
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func (m *MockStoragePort) SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int, block uint64) error {
-	args := m.Called(operatorID, block)
+func (m *MockStoragePort) SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(block uint64) error {
+	args := m.Called(block)
 	return args.Error(0)
 }
 
-func (m *MockStoragePort) GetElRewardsStealingPenaltiesReported(operatorID *big.Int) ([]domain.CsmoduleELRewardsStealingPenaltyReported, error) {
-	args := m.Called(operatorID)
+func (m *MockStoragePort) GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error) {
+	args := m.Called()
 	return args.Get(0).([]domain.CsmoduleELRewardsStealingPenaltyReported), args.Error(1)
 }
 
-func (m *MockStoragePort) SaveElRewardsStealingPenaltyReported(operatorID *big.Int, penalty domain.CsmoduleELRewardsStealingPenaltyReported) error {
-	args := m.Called(operatorID, penalty)
+func (m *MockStoragePort) SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error {
+	args := m.Called(penalty)
 	return args.Error(0)
 }
 

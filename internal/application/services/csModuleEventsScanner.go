@@ -98,7 +98,7 @@ func (cs *CsModuleEventsScanner) ScanWithdrawalsSubmittedEvents(ctx context.Cont
 }
 
 // ScanElRewardsStealingPenaltyReported
-func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx context.Context, operatorId *big.Int) error {
+func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx context.Context) error {
 	isSyncing, err := cs.executionPort.IsSyncing()
 	if err != nil {
 		return fmt.Errorf("error checking if node is syncing: %w", err)
@@ -118,7 +118,7 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
-	start, err := cs.storagePort.GetElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorId)
+	start, err := cs.storagePort.GetElRewardsStealingPenaltiesReportedLastProcessedBlock()
 	if err != nil {
 		logger.WarnWithPrefix(cs.servicePrefix, "Failed to get last processed block, using deployment block: %v", err)
 		start = cs.csFeeDistributorBlockDeployment
@@ -149,7 +149,6 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 	logger.DebugWithPrefix(cs.servicePrefix, "Scanning ElRewardsStealingPenaltyReported events from block %d to %d", start, end)
 	if err := cs.csModulePort.ScanElRewardsStealingPenaltyReported(
 		ctx,
-		operatorId,
 		start,
 		&end,
 		cs.HandleElRewardsStealingPenaltyReported,
@@ -157,7 +156,7 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 		return fmt.Errorf("error scanning ElRewardsStealingPenaltyReported events: %w", err)
 	}
 
-	if err := cs.storagePort.SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorId, end); err != nil {
+	if err := cs.storagePort.SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(end); err != nil {
 		return fmt.Errorf("error saving last processed block: %w", err)
 	}
 
@@ -295,10 +294,10 @@ func (cs *CsModuleEventsScanner) HandleWithdrawalsSubmittedEvent(withdrawalSubmi
 	return nil
 }
 
-func (cs *CsModuleEventsScanner) HandleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReported *domain.CsmoduleELRewardsStealingPenaltyReported, operatorId *big.Int) error {
+func (cs *CsModuleEventsScanner) HandleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReported *domain.CsmoduleELRewardsStealingPenaltyReported) error {
 	logger.DebugWithPrefix(cs.servicePrefix, "Found ElRewardsStealingPenaltyReported event")
 
-	if err := cs.storagePort.SaveElRewardsStealingPenaltyReported(operatorId, *elRewardsStealingPenaltyReported); err != nil {
+	if err := cs.storagePort.SaveElRewardsStealingPenaltyReported(*elRewardsStealingPenaltyReported); err != nil {
 		logger.ErrorWithPrefix(cs.servicePrefix, "Error saving ElRewardsStealingPenaltyReported event: %v", err)
 		return err
 	}

@@ -28,9 +28,9 @@ type APIServerService struct {
 	RelaysAllowedPort     ports.RelaysAllowedPort
 	CsModuleEventsScanner *CsModuleEventsScanner
 	Router                *mux.Router
-	processingAddresses   sync.Map // To track addresses being processed
-	processingWithdrawals sync.Map // To track withdrawals being processed
-	processingPenalties   sync.Map // To track penalties being processed
+	processingAddresses   sync.Map // To track NO events being processed by address
+	processingWithdrawals sync.Map // To track withdrawals being processed by operator ID
+	processingPenalties   bool     // bool to track EL rewards stealing penalties being processed
 }
 
 // NewAPIServerService initializes the API server
@@ -106,41 +106,29 @@ func (h *APIServerService) SetupRoutes() {
 func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.ResponseWriter, r *http.Request) {
 	logger.DebugWithPrefix("API", "getElRewardsStealingPenaltiesReported request received")
 
-	operatorId := r.URL.Query().Get("operatorId")
-	if operatorId == "" {
-		logger.ErrorWithPrefix("API", "Missing operatorId in getElRewardsStealingPenaltiesReported request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	operatorIdNum := new(big.Int)
-	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix("API", "Invalid operatorId format in getElRewardsStealingPenaltiesReported")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Check if the operator ID is already being processed
-	if _, exists := h.processingPenalties.Load(operatorIdNum.String()); exists {
-		logger.DebugWithPrefix("API", "Operator ID %s is already being processed", operatorIdNum.String())
+	// Check if the penalties are already being processed
+	if h.processingPenalties {
+		logger.DebugWithPrefix("API", "EL rewards stealing penalties are already being processed")
 		// If processing, return a 202 response
 		w.WriteHeader(http.StatusAccepted)
 		w.Write([]byte("Request is being processed"))
 		return
 	}
 
-	// Mark the operator ID as being processed
-	h.processingPenalties.Store(operatorIdNum.String(), struct{}{})
-	defer h.processingPenalties.Delete(operatorIdNum.String()) // Clear operator ID when done
+	// Mark the penalties as being processed
+	h.processingPenalties = true
+	defer func() {
+		h.processingPenalties = false // Clear when done
+	}()
 
 	// Perform the scanning (synchronously)
-	if err := h.CsModuleEventsScanner.ScanElRewardsStealingPenaltyReported(h.ctx, operatorIdNum); err != nil {
+	if err := h.CsModuleEventsScanner.ScanElRewardsStealingPenaltyReported(h.ctx); err != nil {
 		logger.ErrorWithPrefix("API", "Error scanning EL rewards stealing penalties reported: %v", err)
 		writeErrorResponse(w, "Error scanning EL rewards stealing penalties reported", http.StatusInternalServerError, err)
 		return
 	}
 
-	penalties, err := h.StoragePort.GetElRewardsStealingPenaltiesReported(operatorIdNum)
+	penalties, err := h.StoragePort.GetElRewardsStealingPenaltiesReported()
 	if err != nil {
 		logger.ErrorWithPrefix("API", "Error fetching EL rewards stealing penalties reported: %v", err)
 		writeErrorResponse(w, "Error fetching EL rewards stealing penalties reported", http.StatusInternalServerError, err)
@@ -156,7 +144,6 @@ func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.Response
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
-
 }
 
 // getWithdrawalsSubmitted retrieves the list of withdrawals submitted

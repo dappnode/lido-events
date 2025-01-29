@@ -43,9 +43,10 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 
 // Database structure for the new storage format
 type Database struct {
-	Telegram  domain.TelegramConfig                   `json:"telegram"`
-	Operators map[string]OperatorData                 `json:"operators"` // indexed by operator ID
-	Addresses map[common.Address]domain.AddressEvents `json:"addresses"` // indexed by Ethereum address
+	Telegram                           domain.TelegramConfig                   `json:"telegram"`
+	Operators                          map[string]OperatorData                 `json:"operators"`                          // indexed by operator ID
+	Addresses                          map[common.Address]domain.AddressEvents `json:"addresses"`                          // indexed by Ethereum address
+	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported      `json:"elRewardsStealingPenaltiesReported"` // not indexed by anything
 }
 
 type DistributionLogsUpdated struct {
@@ -70,10 +71,9 @@ type ElRewardsStealingPenaltiesReported struct {
 }
 
 type OperatorData struct {
-	DistributionLogsUpdated            DistributionLogsUpdated            `json:"distributionLogsUpdated"`
-	ExitsRequests                      ExitsRequests                      `json:"exitsRequests"`
-	WithdrawalsSubmitted               WithdrawalsSubmitted               `json:"withdrawalsSubmitted"`
-	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported `json:"elRewardsStealingPenaltiesReported"`
+	DistributionLogsUpdated DistributionLogsUpdated `json:"distributionLogsUpdated"`
+	ExitsRequests           ExitsRequests           `json:"exitsRequests"`
+	WithdrawalsSubmitted    WithdrawalsSubmitted    `json:"withdrawalsSubmitted"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -82,9 +82,10 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 
 	// Initialize an empty Database with default values
 	db := Database{
-		Telegram:  domain.TelegramConfig{},
-		Operators: make(map[string]OperatorData),
-		Addresses: make(map[common.Address]domain.AddressEvents),
+		Telegram:                           domain.TelegramConfig{},
+		Operators:                          make(map[string]OperatorData),
+		Addresses:                          make(map[common.Address]domain.AddressEvents),
+		ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
 	}
 
 	file, err := os.ReadFile(fs.DBFile)

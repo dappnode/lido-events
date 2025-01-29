@@ -21,10 +21,9 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 	if _, exists := db.Operators[operatorID]; !exists {
 		// Initialize an empty OperatorData if this is a new operator ID
 		db.Operators[operatorID] = OperatorData{
-			DistributionLogsUpdated:            DistributionLogsUpdated{},
-			ExitsRequests:                      ExitsRequests{},
-			WithdrawalsSubmitted:               WithdrawalsSubmitted{},
-			ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+			DistributionLogsUpdated: DistributionLogsUpdated{},
+			ExitsRequests:           ExitsRequests{},
+			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
 		}
 		if err := fs.SaveDatabase(db); err != nil {
 			return err
@@ -115,10 +114,9 @@ func (fs *Storage) SaveReport(operatorID *big.Int, report domain.Report) error {
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			DistributionLogsUpdated:            DistributionLogsUpdated{},
-			ExitsRequests:                      ExitsRequests{},
-			WithdrawalsSubmitted:               WithdrawalsSubmitted{},
-			ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+			DistributionLogsUpdated: DistributionLogsUpdated{},
+			ExitsRequests:           ExitsRequests{},
+			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
 		}
 	}
 
@@ -303,10 +301,9 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			DistributionLogsUpdated:            DistributionLogsUpdated{},
-			ExitsRequests:                      ExitsRequests{},
-			WithdrawalsSubmitted:               WithdrawalsSubmitted{},
-			ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+			DistributionLogsUpdated: DistributionLogsUpdated{},
+			ExitsRequests:           ExitsRequests{},
+			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
 		}
 	}
 
@@ -388,86 +385,6 @@ func (fs *Storage) DeleteExitRequest(operatorID *big.Int, validatorIndex string)
 	return fs.SaveDatabase(db)
 }
 
-// GetElRewardsStealingPenaltyReportedLastProcessedBlock retrieves the last processed block for the ELRewardsStealingPenaltyReported event for a specific operator ID.
-func (fs *Storage) GetElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return 0, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return 0, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.ElRewardsStealingPenaltiesReported.LastProcessedBlock, nil
-}
-
-// SaveElRewardsStealingPenaltiesReportedLastProcessedBlock updates the last processed block for the ELRewardsStealingPenaltyReported event for a specific operator ID.
-func (fs *Storage) SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(operatorID *big.Int, block uint64) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	operatorData.ElRewardsStealingPenaltiesReported.LastProcessedBlock = block
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// GetElRewardsStealingPenaltiesReported retrieves all ELRewardsStealingPenaltyReported events for a specific operator ID.
-func (fs *Storage) GetElRewardsStealingPenaltiesReported(operatorID *big.Int) ([]domain.CsmoduleELRewardsStealingPenaltyReported, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return nil, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return nil, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.ElRewardsStealingPenaltiesReported.Penalties, nil
-}
-
-// SaveElRewardsStealingPenaltyReported saves an ELRewardsStealingPenaltyReported event for a specific operator ID.
-func (fs *Storage) SaveElRewardsStealingPenaltyReported(operatorID *big.Int, penalty domain.CsmoduleELRewardsStealingPenaltyReported) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	if db.Operators == nil {
-		db.Operators = make(map[string]OperatorData)
-	}
-
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		operatorData = OperatorData{
-			DistributionLogsUpdated:            DistributionLogsUpdated{},
-			ExitsRequests:                      ExitsRequests{},
-			WithdrawalsSubmitted:               WithdrawalsSubmitted{},
-			ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
-		}
-	}
-
-	// Append the new penalty to the existing list
-	operatorData.ElRewardsStealingPenaltiesReported.Penalties = append(operatorData.ElRewardsStealingPenaltiesReported.Penalties, penalty)
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
 // GetWithdrawalsSubmittedLastProcessedBlock retrieves the last processed block for the WithdrawalsSubmitted event for a specific operator ID.
 func (fs *Storage) GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
 	db, err := fs.LoadDatabase()
@@ -534,10 +451,9 @@ func (fs *Storage) SaveWithdrawal(operatorID *big.Int, withdrawal domain.Csmodul
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			DistributionLogsUpdated:            DistributionLogsUpdated{},
-			ExitsRequests:                      ExitsRequests{},
-			WithdrawalsSubmitted:               WithdrawalsSubmitted{},
-			ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+			DistributionLogsUpdated: DistributionLogsUpdated{},
+			ExitsRequests:           ExitsRequests{},
+			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
 		}
 	}
 
