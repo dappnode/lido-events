@@ -49,6 +49,12 @@ type Database struct {
 	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported      `json:"elRewardsStealingPenaltiesReported"` // not indexed by anything
 }
 
+type OperatorData struct {
+	DistributionLogsUpdated DistributionLogsUpdated `json:"distributionLogsUpdated"`
+	ExitsRequests           ExitsRequests           `json:"exitsRequests"`
+	WithdrawalsSubmitted    WithdrawalsSubmitted    `json:"withdrawalsSubmitted"`
+}
+
 type DistributionLogsUpdated struct {
 	LastProcessedBlock uint64   `json:"lastProcessedBlock"`
 	PendingHashes      []string `json:"pendingHashes"`
@@ -68,12 +74,6 @@ type WithdrawalsSubmitted struct {
 type ElRewardsStealingPenaltiesReported struct {
 	LastProcessedBlock uint64                                            `json:"lastProcessedBlock"`
 	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported `json:"penalties"`
-}
-
-type OperatorData struct {
-	DistributionLogsUpdated DistributionLogsUpdated `json:"distributionLogsUpdated"`
-	ExitsRequests           ExitsRequests           `json:"exitsRequests"`
-	WithdrawalsSubmitted    WithdrawalsSubmitted    `json:"withdrawalsSubmitted"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
@@ -105,14 +105,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	err = json.Unmarshal(file, &db)
 	if err != nil {
 		return Database{}, fmt.Errorf("error unmarshalling database file: %v", err)
-	}
-
-	// Ensure nested fields are properly initialized
-	if db.Operators == nil {
-		db.Operators = make(map[string]OperatorData)
-	}
-	if db.Addresses == nil {
-		db.Addresses = make(map[common.Address]domain.AddressEvents)
 	}
 
 	return db, nil
