@@ -130,7 +130,7 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 		}
 
 		// Perform the scan
-		if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
+		if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, operatorID, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
 			return
 		}
