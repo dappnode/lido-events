@@ -114,10 +114,15 @@ func (fs *Storage) SaveReport(operatorID *big.Int, report domain.Report) error {
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{},
-			ExitsRequests:           ExitsRequests{},
-			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
+			DistributionLogsUpdated: DistributionLogsUpdated{
+				Reports: make(map[string]domain.Report), // Initialize Reports map
+			},
+			ExitsRequests:        ExitsRequests{},
+			WithdrawalsSubmitted: WithdrawalsSubmitted{},
 		}
+	} else if operatorData.DistributionLogsUpdated.Reports == nil {
+		// Initialize Reports if it's nil in an existing entry
+		operatorData.DistributionLogsUpdated.Reports = make(map[string]domain.Report)
 	}
 
 	// Construct the frame key as "startFrame-endFrame" from report.Frame
