@@ -72,42 +72,54 @@ func (csma *CsModuleAdapter) ResubscribeSignal() <-chan struct{} {
 	return csma.resubscribeSignal
 }
 
-// Scan ElRewardsStealingPenaltyReported events emitted by the CsModule contract
+// ScanElRewardsStealingPenaltyReported scans the CsModule contract for ELRewardsStealingPenaltyReported events in chunks of blocks.
 func (csma *CsModuleAdapter) ScanElRewardsStealingPenaltyReported(
 	ctx context.Context,
 	start uint64,
 	end *uint64,
 	handleElRewardsStealingPenaltyReported func(*domain.CsmoduleELRewardsStealingPenaltyReported) error,
 ) error {
+	if end == nil {
+		return fmt.Errorf("end block cannot be nil")
+	}
+
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
 	}
 
-	// Filter for ELRewardsStealingPenaltyReported events
-	elRewardsStealingPenaltyReportedEvents, err := csModuleContract.FilterELRewardsStealingPenaltyReported(
-		&bind.FilterOpts{Context: ctx, Start: start, End: end},
-		[]*big.Int{},
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to filter ELRewardsStealingPenaltyReported events: %w", err)
+	scanChunk := func(chunkStart, chunkEnd uint64) error {
+		events, err := csModuleContract.FilterELRewardsStealingPenaltyReported(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for events.Next() {
+			if err := events.Error(); err != nil {
+				return err
+			}
+			if err := handleElRewardsStealingPenaltyReported(events.Event); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
-	for elRewardsStealingPenaltyReportedEvents.Next() {
-		if err := elRewardsStealingPenaltyReportedEvents.Error(); err != nil {
-			return err
-
+	for currentStart := start; currentStart <= *end; currentStart += csma.blockChunkSize {
+		currentEnd := currentStart + csma.blockChunkSize - 1
+		if currentEnd > *end {
+			currentEnd = *end
 		}
-		if err := handleElRewardsStealingPenaltyReported(elRewardsStealingPenaltyReportedEvents.Event); err != nil {
-			return err
+		if err := scanChunk(currentStart, currentEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
-
 	return nil
 }
 
-// Scan WithdrawalSubmitted events emitted by the CsModule contract
+// ScanWithdrawalSubmitted scans the CsModule contract for WithdrawalSubmitted events in chunks of blocks.
 func (csma *CsModuleAdapter) ScanWithdrawalSubmitted(
 	ctx context.Context,
 	operatorId *big.Int,
@@ -115,30 +127,43 @@ func (csma *CsModuleAdapter) ScanWithdrawalSubmitted(
 	end *uint64,
 	handleWithdrawalSubmitted func(*domain.CsmoduleWithdrawalSubmitted, *big.Int) error,
 ) error {
+	if end == nil {
+		return fmt.Errorf("end block cannot be nil")
+	}
+
 	csModuleContract, err := bindings.NewCsmodule(csma.csModuleAddress, csma.rpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create CsModule contract instance: %w", err)
 	}
 
-	// Filter for WithdrawalSubmitted events
-	withdrawalSubmittedEvents, err := csModuleContract.FilterWithdrawalSubmitted(
-		&bind.FilterOpts{Context: ctx, Start: start, End: end},
-		[]*big.Int{operatorId},
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to filter WithdrawalSubmitted events: %w", err)
+	scanChunk := func(chunkStart, chunkEnd uint64) error {
+		events, err := csModuleContract.FilterWithdrawalSubmitted(
+			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
+			[]*big.Int{operatorId},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to filter events for block range %d to %d: %w", chunkStart, chunkEnd, err)
+		}
+		for events.Next() {
+			if err := events.Error(); err != nil {
+				return err
+			}
+			if err := handleWithdrawalSubmitted(events.Event, events.Event.NodeOperatorId); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
-	for withdrawalSubmittedEvents.Next() {
-		if err := withdrawalSubmittedEvents.Error(); err != nil {
-			return err
+	for currentStart := start; currentStart <= *end; currentStart += csma.blockChunkSize {
+		currentEnd := currentStart + csma.blockChunkSize - 1
+		if currentEnd > *end {
+			currentEnd = *end
 		}
-		if err := handleWithdrawalSubmitted(withdrawalSubmittedEvents.Event, withdrawalSubmittedEvents.Event.NodeOperatorId); err != nil {
-			return err
+		if err := scanChunk(currentStart, currentEnd); err != nil {
+			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
-
 	return nil
 }
 
