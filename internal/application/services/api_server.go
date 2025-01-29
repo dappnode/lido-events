@@ -478,12 +478,6 @@ func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http
 		return
 	}
 
-	if len(report) == 0 {
-		logger.WarnWithPrefix(h.servicePrefix, "No report found for operator ID %s", operatorId)
-		writeErrorResponse(w, "No report found for the given epoch range", http.StatusNotFound, err)
-		return
-	}
-
 	jsonResponse, err := json.Marshal(report)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getOperatorPerformance: %v", err)
