@@ -513,18 +513,6 @@ func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if exitRequests == nil {
-		logger.DebugWithPrefix(h.servicePrefix, "No exit requests found for operator ID %s", operatorId)
-		jsonResponse, err := json.Marshal([]domain.VeboValidatorExitRequest{})
-		if err != nil {
-			logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getExitRequests: %v", err)
-			writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonResponse)
-		return
-	}
-
 	jsonResponse, err := json.Marshal(exitRequests)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getExitRequests: %v", err)
