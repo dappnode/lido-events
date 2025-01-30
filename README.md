@@ -50,23 +50,32 @@
     - `GET /api/v0/event_indexer/address_events`: Retrieves the eventes associated to an EA
       - query params:
         - `address`: Address to get events.
+    - `GET /api/v0/event_indexer/address_events`: Retrieves the eventes associated to an EA
+      - query params:
+        - `address`: Address to get events.
+    - `GET /api/v0/events_indexer/withdrawals_submitted`: Retrieves the withdrawals submitted by an operator
+      - query params:
+        - `operatorId`: Operator ID to get withdrawals submitted.
+    - `GET /api/v0/events_indexer/el_rewards_stealing_penalties_reported`: Retrieves the rewards stealing penalties reported by Lido
 - Proxy API: a proxy API that redirect requests to the [Lico API keys](https://github.com/lidofinance/lido-keys-api). Its main functionality is to avoid the cors issues when the Lido CSM UI tries to fetch the API.
 
 ## Environment Variables
 
 To configure the app, set the following environment variables:
 
-| Variable         | Description                                                                                          |
-|------------------|------------------------------------------------------------------------------------------------------|
-| `NETWORK`        | Ethereum network (e.g., `mainnet`, `holesky`). Default holesky                                       |
-| `API_PORT`       | Port on which the API will be exposed. Default 8080                                                  |
-| `PROXY_API_PORT` | Proxy port on which the Proxy API will be exposed. Default 8081                                                 |
-| `BEACONCHAIN_URL`| URL of the Ethereum beacon chain client. Default http://beacon-chain.<network>,dncore.dappnode:3500  |
-| `WS_URL`         | URL of the Ethereum WebSocket client. Default ws://execution.<network>.dncore.dappnode:8546          |
-| `RPC_URL`        | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |
-| `IPFS_URL`       | URL of the IPFS gateway used to fetch logs. Default http://ipfs.dappnode:5001                        |
-| `LOG_LEVEL`      | Logging level (e.g., `DEBUG`, `INFO`, `WARN`, `ERROR`). Default INFO                                 |
-| `CORS`           | CORS origins domains allowed to fetch the api. Default to Lido CSM ui                                |
+| Variable                     | Description                                                                                          |
+|------------------------------|------------------------------------------------------------------------------------------------------|
+| `NETWORK`                    | Ethereum network (e.g., `mainnet`, `holesky`). Default holesky                                       |
+| `API_PORT`                   | Port on which the API will be exposed. Default 8080                                                  |
+| `PROXY_API_PORT`             | Proxy port on which the Proxy API will be exposed. Default 8081                                      |
+| `BEACONCHAIN_URL`            | URL of the Ethereum beacon chain client. Default http://beacon-chain.<network>,dncore.dappnode:3500  |
+| `WS_URL`                     | URL of the Ethereum WebSocket client. Default ws://execution.<network>.dncore.dappnode:8546          |
+| `RPC_URL`                    | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |
+| `IPFS_URL`                   | URL of the IPFS gateway used to fetch logs. Default http://ipfs.dappnode:5001                        |
+| `LOG_LEVEL`                  | Logging level (e.g., `DEBUG`, `INFO`, `WARN`, `ERROR`). Default INFO                                 |
+| `CORS`                       | CORS origins domains allowed to fetch the api. Default to Lido CSM ui                                |
+| `BLOCK_CHUNK_SIZE`           | Defines the block chunk size to scan long block ranges                                               |
+| `BLOCK_SCANNER_MIN_DISTANCE` | Defines the minimum block distance required to trigger a scan. Used to avoid spamming nodes          |
 
 Example `.env` file:
 

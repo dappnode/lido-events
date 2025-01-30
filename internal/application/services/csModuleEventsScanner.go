@@ -17,16 +17,18 @@ type CsModuleEventsScanner struct {
 	csModulePort                    ports.CsModulePort
 	csFeeDistributorBlockDeployment uint64
 	csModuleTxReceipt               common.Hash
+	BlockScannerMinDistance         uint64
 	servicePrefix                   string
 }
 
-func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash) *CsModuleEventsScanner {
+func NewCsModuleEventsScanner(storagePort ports.StoragePort, executionPort ports.ExecutionPort, csModulePort ports.CsModulePort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash, blockScannerMinDistance uint64) *CsModuleEventsScanner {
 	return &CsModuleEventsScanner{
 		storagePort:                     storagePort,
 		executionPort:                   executionPort,
 		csModulePort:                    csModulePort,
 		csFeeDistributorBlockDeployment: csFeeDistributorBlockDeployment,
 		csModuleTxReceipt:               csModuleTxReceipt,
+		BlockScannerMinDistance:         blockScannerMinDistance,
 		servicePrefix:                   "CsModuleEventsScanner",
 	}
 }
@@ -73,7 +75,7 @@ func (cs *CsModuleEventsScanner) ScanWithdrawalsSubmittedEvents(ctx context.Cont
 	}
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
-	if end-start < 320 {
+	if end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
 		return nil
 	}
@@ -141,7 +143,7 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 	}
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
-	if end-start < 320 {
+	if end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
 		return nil
 	}
@@ -206,7 +208,7 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 	}
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
-	if end-start < 320 {
+	if end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
 		return nil
 	}
