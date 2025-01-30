@@ -17,9 +17,6 @@ var MigrationRegistry = map[int]Migration{
 
 // RunMigrations runs all required migrations sequentially
 func RunMigrations(storage *Storage) error {
-	storage.mu.Lock()
-	defer storage.mu.Unlock()
-
 	// Load the current database
 	db, err := storage.LoadDatabase()
 	if err != nil {
