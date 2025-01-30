@@ -38,7 +38,7 @@ type APIServerService struct {
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, CsModuleEventsScanner *CsModuleEventsScanner, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, CsModuleEventsScanner *CsModuleEventsScanner, DistributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, ValidatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
 	router := mux.NewRouter()
 	apiServer := &APIServerService{
 		server:                &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
