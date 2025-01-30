@@ -68,12 +68,6 @@ func (cs *CsModuleEventsScanner) ScanWithdrawalsSubmittedEvents(ctx context.Cont
 		return fmt.Errorf("error getting most recent block number: %w", err)
 	}
 
-	// return if start block is greater or equal to end block
-	if start >= end {
-		logger.InfoWithPrefix(cs.servicePrefix, "Start block is greater or equal to end block, skipping scan")
-		return nil
-	}
-
 	// return if distance is less than 10 epoch = 10 * 32 blocks
 	if end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping WithdrawalsSubmittedEvents scan")
@@ -136,12 +130,6 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 		return fmt.Errorf("error getting most recent block number: %w", err)
 	}
 
-	// return if start block is greater or equal to end block
-	if start >= end {
-		logger.InfoWithPrefix(cs.servicePrefix, "Start block is greater or equal to end block, skipping scan")
-		return nil
-	}
-
 	// return if distance is less than 10 epoch = 10 * 32 blocks
 	if end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping ElRewardsStealingPenaltyReported scan")
@@ -199,12 +187,6 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 	end, err := cs.executionPort.GetMostRecentBlockNumber()
 	if err != nil {
 		return fmt.Errorf("error getting most recent block number: %w", err)
-	}
-
-	// return if start block is greater or equal to end block
-	if start >= end {
-		logger.InfoWithPrefix(cs.servicePrefix, "Start block is greater or equal to end block, skipping scan")
-		return nil
 	}
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
