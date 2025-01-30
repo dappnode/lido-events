@@ -110,7 +110,6 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 	}
 
 	for _, operatorID := range operatorIDs {
-
 		// Retrieve start and end blocks for scanning
 		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
 		if err != nil {
@@ -153,27 +152,28 @@ func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(vali
 		return err
 	}
 
-	// If validator is active and not exiting (ongoing or slashed), send a notification. We don't send a notification or store the exit request if the validator is already exiting
-	// or has already exited
+	// If validator is active and not exiting (ongoing or slashed), send a notification. We don't send a notification if the validator is already exiting or has already exited
 	if validatorStatus == domain.StatusActiveOngoing || validatorStatus == domain.StatusActiveSlashed {
 		logger.InfoWithPrefix(vs.servicePrefix, "Validator %s is active and has been requestes to exit", validatorExitEvent.ValidatorIndex)
 		message := fmt.Sprintf("- 🚨 Your validator with ID: %s has been requested to exit. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
-		vs.notifierPort.SendNotification(message)
-
-		exitRequest := domain.ExitRequest{
-			Event:              *validatorExitEvent,
-			Status:             validatorStatus,
-			ValidatorPubkeyHex: pubkeyHex, // Save the pubkey in hex format for the ejector to use later
+		err := vs.notifierPort.SendNotification(message)
+		if err != nil {
+			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
 		}
+	}
 
-		if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {
-			logger.ErrorWithPrefix(vs.servicePrefix, "Error saving exit request for validator %s: %v", validatorExitEvent.ValidatorIndex, err)
-			// if validator is active print attention warning log that manual exit is required
-			if validatorStatus == domain.StatusActiveOngoing {
-				logger.WarnWithPrefix(vs.servicePrefix, "Validator %s is still active and requires to exit, it could not be saved and will not be exited automatically, a manal exit is required", validatorExitEvent.ValidatorIndex)
-			}
-			return err
+	exitRequest := domain.ExitRequest{
+		Event:              *validatorExitEvent,
+		Status:             validatorStatus,
+		ValidatorPubkeyHex: pubkeyHex, // Save the pubkey in hex format for the ejector to use later
+	}
+	if err := vs.storagePort.SaveExitRequest(validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex.String(), exitRequest); err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error saving exit request for validator %s: %v", validatorExitEvent.ValidatorIndex, err)
+		// if validator is active print attention warning log that manual exit is required
+		if validatorStatus == domain.StatusActiveOngoing {
+			logger.WarnWithPrefix(vs.servicePrefix, "Validator %s is still active and requires to exit, it could not be saved and will not be exited automatically, a manal exit is required", validatorExitEvent.ValidatorIndex)
 		}
+		return err
 	}
 
 	logger.DebugWithPrefix(vs.servicePrefix, "Finished processing ValidatorExitRequest event")
