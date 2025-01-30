@@ -43,10 +43,6 @@ type Config struct {
 	// tx receipts
 	CSModuleTxReceipt common.Hash
 
-	// Lido specifics
-	LidoKeysApiUrl string
-	ProxyApiPort   uint64
-
 	// Blockchain
 	MinGenesisTime uint64
 	BlockChunkSize uint64
@@ -95,17 +91,6 @@ func LoadNetworkConfig() (Config, error) {
 			apiPort = port
 		} else {
 			logger.Fatal("Invalid API_PORT value: %s", apiPortStr)
-		}
-	}
-
-	proxyApiPortStr := os.Getenv("PROXY_API_PORT")
-	proxyApiPort := uint64(8081)
-	if proxyApiPortStr != "" {
-		// Try to parse the port as uint64
-		if port, err := strconv.ParseUint(proxyApiPortStr, 10, 64); err == nil {
-			proxyApiPort = port
-		} else {
-			logger.Fatal("Invalid PROXY_API_PORT value: %s", proxyApiPortStr)
 		}
 	}
 
@@ -180,8 +165,6 @@ func LoadNetworkConfig() (Config, error) {
 			CsFeeDistributorBlockDeployment: uint64(1774650),
 			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSModuleTxReceipt:               common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26"),
-			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
-			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1695902400),
 			BlockChunkSize:                  blockChunkSize,
 		}
@@ -221,8 +204,6 @@ func LoadNetworkConfig() (Config, error) {
 			CsFeeDistributorBlockDeployment: uint64(20935463),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
-			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
-			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1606824023),
 			BlockChunkSize:                  blockChunkSize,
 		}

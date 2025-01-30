@@ -90,11 +90,9 @@ func main() {
 
 	// Initialize API services
 	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csModuleEventsScannerService, networkConfig.CORS)
-	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
 
 	// Start API services
 	apiService.Start(&wg)
-	proxyService.Start(&wg)
 
 	// Wait for and validate initial configuration
 	if err := waitForConfig(ctx, storageAdapter); err != nil {
@@ -123,7 +121,7 @@ func main() {
 	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle OS signals for shutdown
-	handleShutdown(cancel, apiService, proxyService)
+	handleShutdown(cancel, apiService)
 
 	// Wait for all goroutines to finish
 	wg.Wait()
@@ -153,7 +151,7 @@ func waitForConfig(ctx context.Context, storageAdapter *storage.Storage) error {
 }
 
 // handleShutdown manages graceful shutdown for services
-func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerService, proxyService *services.ProxyAPIServerService) {
+func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerService) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -167,6 +165,5 @@ func handleShutdown(cancel context.CancelFunc, apiService *services.APIServerSer
 		defer shutdownCancel()
 
 		apiService.Shutdown(shutdownCtx)
-		proxyService.Shutdown(shutdownCtx)
 	}()
 }
