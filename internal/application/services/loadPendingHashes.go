@@ -17,6 +17,7 @@ type PendingHashesLoader struct {
 	notifierPort   ports.NotifierPort
 	ipfsPort       ports.IpfsPort
 	minGenesisTime uint64
+	mu             sync.Mutex
 	servicePrefix  string
 }
 
@@ -26,6 +27,7 @@ func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.No
 		notifierPort,
 		ipfsPort,
 		minGenesisTime,
+		sync.Mutex{},
 		"PendingHashesLoader",
 	}
 }
@@ -63,6 +65,10 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 }
 
 func (phl *PendingHashesLoader) LoadPendingHashes() error {
+	// Lock the mutex
+	phl.mu.Lock()
+	defer phl.mu.Unlock()
+
 	// Get operator IDs
 	operatorIDs, err := phl.storagePort.GetOperatorIds()
 	if err != nil {
