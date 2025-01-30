@@ -57,6 +57,9 @@
       - query params:
         - `operatorId`: Operator ID to get withdrawals submitted.
     - `GET /api/v0/events_indexer/el_rewards_stealing_penalties_reported`: Retrieves the rewards stealing penalties reported by Lido
+    - `GET /api/v0/events_indexer/pending_hashes`: Retrieves the pending hashes for an operator
+      - query params:
+        - `operatorId`: Operator ID to get pending hashes.
 - Proxy API: a proxy API that redirect requests to the [Lico API keys](https://github.com/lidofinance/lido-keys-api). Its main functionality is to avoid the cors issues when the Lido CSM UI tries to fetch the API.
 
 ## Environment Variables
