@@ -90,11 +90,14 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 
 	// Initialize an empty Database with default values
 	db := Database{
-		Version:                            1,
-		Telegram:                           domain.TelegramConfig{},
-		Operators:                          make(map[string]OperatorData),
-		Addresses:                          make(map[common.Address]domain.AddressEvents),
-		ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+		Version:   1,
+		Telegram:  domain.TelegramConfig{},
+		Operators: make(map[string]OperatorData),
+		Addresses: make(map[common.Address]domain.AddressEvents),
+		ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{
+			Penalties:          []domain.CsmoduleELRewardsStealingPenaltyReported{},
+			LastProcessedBlock: 0,
+		},
 	}
 
 	file, err := os.ReadFile(fs.DBFile)
