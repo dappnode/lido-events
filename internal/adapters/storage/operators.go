@@ -21,14 +21,28 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 	if _, exists := db.Operators[operatorID]; !exists {
 		// Initialize an empty OperatorData if this is a new operator ID
 		db.Operators[operatorID] = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{},
-			ExitsRequests:           ExitsRequests{},
-			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
+			DistributionLogsUpdated: DistributionLogsUpdated{
+				Reports:            make(domain.Reports), // Initialize Reports map
+				PendingHashes:      []string{},           // Initialize PendingHashes slice
+				LastProcessedBlock: 0,
+			},
+			ExitsRequests: ExitsRequests{
+				Exits:              make(domain.ExitRequests), // Initialize Exits map
+				LastProcessedBlock: 0,
+			},
+			WithdrawalsSubmitted: WithdrawalsSubmitted{
+				Withdrawals:        []domain.CsmoduleWithdrawalSubmitted{}, // Initialize Withdrawals slice
+				LastProcessedBlock: 0,
+			},
 		}
+
+		// Save changes to disk
 		if err := fs.SaveDatabase(db); err != nil {
 			return err
 		}
-		fs.notifyOperatorIdListeners() // Notify listeners of the change
+
+		// Notify listeners about the new operator
+		fs.notifyOperatorIdListeners()
 	}
 
 	return nil // Operator ID already exists, no changes needed
