@@ -23,9 +23,9 @@ func RunMigrations(storage *Storage) error {
 		return fmt.Errorf("failed to load database for migration: %v", err)
 	}
 
-	// Default version if not set
+	// If db.Version is missing (0), treat it as an old database
 	if db.Version == 0 {
-		db.Version = 1 // Assume the initial version is 1
+		fmt.Println("Database version missing, treating as old database and running migrations...")
 	}
 
 	// Apply all necessary migrations
