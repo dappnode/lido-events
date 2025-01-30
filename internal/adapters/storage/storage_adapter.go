@@ -36,13 +36,21 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 	// Construct the DB file path
 	dbFile := filepath.Join(dbDirectory, "db.json")
 
-	return &Storage{
+	storage := &Storage{
 		DBFile: dbFile,
-	}, nil
+	}
+
+	// Run migrations
+	if err := RunMigrations(storage); err != nil {
+		return nil, fmt.Errorf("database migration failed: %w", err)
+	}
+
+	return storage, nil
 }
 
 // Database structure for the new storage format
 type Database struct {
+	Version                            int                                     `json:"version"`
 	Telegram                           domain.TelegramConfig                   `json:"telegram"`
 	Operators                          map[string]OperatorData                 `json:"operators"`                          // indexed by operator ID
 	Addresses                          map[common.Address]domain.AddressEvents `json:"addresses"`                          // indexed by Ethereum address
@@ -82,6 +90,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 
 	// Initialize an empty Database with default values
 	db := Database{
+		Version:                            1,
 		Telegram:                           domain.TelegramConfig{},
 		Operators:                          make(map[string]OperatorData),
 		Addresses:                          make(map[common.Address]domain.AddressEvents),

@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"lido-events/internal/application/domain"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -59,7 +58,7 @@ func migrateToVersion1(db *Database) error {
 	fmt.Println("Performing migration to version 1...")
 
 	// Extract only Telegram config and Operator IDs
-	newOperators := make(map[*big.Int]OperatorData)
+	newOperators := make(map[string]OperatorData)
 	for id := range db.Operators {
 		newOperators[id] = OperatorData{}
 	}
