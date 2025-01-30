@@ -190,11 +190,14 @@ func (ve *ValidatorEjector) EjectValidator() error {
 					if err := ve.notifierPort.SendNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
-					// Do not delete the exit request so the event can be served through API
-					// logger.DebugWithPrefix(ve.servicePrefix, "Deleting exit request for validator %s from db", exitRequest.Event.ValidatorIndex)
-					// if err := ve.storagePort.DeleteExitRequest(operatorID, exitRequest.Event.ValidatorIndex.String()); err != nil {
-					// 	logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
-					// }
+
+					// Update the status of the validator in the exit request if its different from the current status
+					if exitRequest.Status != validatorStatus {
+						logger.DebugWithPrefix(ve.servicePrefix, "Updating exit request status for validator %s", exitRequest.Event.ValidatorIndex)
+						if err := ve.storagePort.UpdateExitRequestStatus(operatorID, exitRequest.Event.ValidatorIndex.String(), validatorStatus); err != nil {
+							logger.ErrorWithPrefix(ve.servicePrefix, "Error updating exit request status", err)
+						}
+					}
 					break
 				}
 
