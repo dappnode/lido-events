@@ -76,7 +76,7 @@ func (cs *CsModuleEventsScanner) ScanWithdrawalsSubmittedEvents(ctx context.Cont
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
 	if end-start < cs.BlockScannerMinDistance {
-		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
+		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping WithdrawalsSubmittedEvents scan")
 		return nil
 	}
 
@@ -144,7 +144,7 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
 	if end-start < cs.BlockScannerMinDistance {
-		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
+		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping ElRewardsStealingPenaltyReported scan")
 		return nil
 	}
 
@@ -209,7 +209,7 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 
 	// return if distance is less than 10 epoch = 10 * 32 blocks
 	if end-start < cs.BlockScannerMinDistance {
-		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping scan")
+		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping aaddress events scan")
 		return nil
 	}
 
