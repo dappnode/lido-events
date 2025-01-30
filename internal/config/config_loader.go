@@ -48,8 +48,9 @@ type Config struct {
 	ProxyApiPort   uint64
 
 	// Blockchain
-	MinGenesisTime uint64
-	BlockChunkSize uint64
+	MinGenesisTime          uint64
+	BlockChunkSize          uint64
+	BlockScannerMinDistance uint64
 }
 
 // Helper function to parse and validate CORS from environment variable
@@ -140,6 +141,17 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	}
 
+	blockScannerMinDistance := uint64(320) // 320 blocks = 10 epochs
+	blockScannerMinDistanceStr := os.Getenv("BLOCK_SCANNER_MIN_DISTANCE")
+	if blockScannerMinDistanceStr != "" {
+		// Try to parse the block scanner min distance as uint64
+		if distance, err := strconv.ParseUint(blockScannerMinDistanceStr, 10, 64); err == nil {
+			blockScannerMinDistance = distance
+		} else {
+			logger.Fatal("Invalid BLOCK_SCANNER_MIN_DISTANCE value: %s", blockScannerMinDistanceStr)
+		}
+	}
+
 	corsEnv := os.Getenv("CORS")
 	var config Config
 
@@ -184,6 +196,7 @@ func LoadNetworkConfig() (Config, error) {
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1695902400),
 			BlockChunkSize:                  blockChunkSize,
+			BlockScannerMinDistance:         blockScannerMinDistance,
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
@@ -225,6 +238,7 @@ func LoadNetworkConfig() (Config, error) {
 			ProxyApiPort:                    proxyApiPort,
 			MinGenesisTime:                  uint64(1606824023),
 			BlockChunkSize:                  blockChunkSize,
+			BlockScannerMinDistance:         blockScannerMinDistance,
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)
