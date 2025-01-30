@@ -138,13 +138,8 @@ func (ve *ValidatorEjector) EjectValidator() error {
 			// if the validator status is not active ongoing or active slashed we skip the exit request because it is already exiting.
 			if onchainStatus != domain.StatusActiveOngoing && onchainStatus != domain.StatusActiveSlashed {
 				if onchainStatus != domain.StatusPendingInitialized && onchainStatus != domain.StatusPendingQueued {
-					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required, deleting the exit request from db", exitRequest.Event.ValidatorIndex, exitRequest.Status)
+					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s is %s so no exit request is required", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 					// TODO: send notification validator exited if timestamp of the event is within an hour
-					// Since the validator is already exiting, we remove the exit request from the db
-					if err := ve.storagePort.DeleteExitRequest(operatorID, exitRequest.Event.ValidatorIndex.String()); err != nil {
-						// An error here is no big deal, we will retry to delete this in the next iteration of the cron
-						logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
-					}
 				} else {
 					logger.DebugWithPrefix(ve.servicePrefix, "Validator %s is exited to request but it is in a pending status, %s waiting for it to be active", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 				}
