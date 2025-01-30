@@ -20,6 +20,7 @@ type DistributionLogUpdatedEventScanner struct {
 	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
 	csFeeDistributorBlockDeployment uint64
 	csModuleTxReceipt               common.Hash
+	mu                              sync.Mutex
 	servicePrefix                   string
 }
 
@@ -31,6 +32,7 @@ func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifi
 		csFeeDistributorImplPort,
 		csFeeDistributorBlockDeployment,
 		csModuleTxReceipt,
+		sync.Mutex{},
 		"DistributionLogUpdatedEventScanner",
 	}
 }
@@ -40,7 +42,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 	wg.Add(1)       // Increment the WaitGroup counter
 
 	// Execute immediately on startup
-	ds.runScan(ctx)
+	ds.RunScan(ctx)
 
 	logger.DebugWithPrefix(ds.servicePrefix, "First execution complete, sending signal to start periodic cron for loading pending CIDs")
 	// Signal that the first execution is complete
@@ -53,7 +55,7 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 		select {
 		case <-ticker.C:
 			// Run the scan logic periodically
-			ds.runScan(ctx)
+			ds.RunScan(ctx)
 		case <-ctx.Done():
 			logger.InfoWithPrefix(ds.servicePrefix, "Stopping DistributionLogUpdated cron scan")
 			return
@@ -61,36 +63,39 @@ func (ds *DistributionLogUpdatedEventScanner) ScanDistributionLogUpdatedEventsCr
 	}
 }
 
-// runScan contains the execution logic for scanning DistributionLogUpdated events
-func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
+// RunScan contains the execution logic for scanning DistributionLogUpdated events
+func (ds *DistributionLogUpdatedEventScanner) RunScan(ctx context.Context) error {
+	ds.mu.Lock()         // Lock mutex to ensure only one execution at a time
+	defer ds.mu.Unlock() // Unlock when function exits
+
 	// Skip if node is syncing
 	isSyncing, err := ds.executionPort.IsSyncing()
 	if err != nil {
 		logger.ErrorWithPrefix(ds.servicePrefix, "Error checking if node is syncing: %v", err)
-		return
+		return err
 	}
 
 	if isSyncing {
 		logger.InfoWithPrefix(ds.servicePrefix, "Node is syncing, skipping DistributionLogUpdated scan")
-		return
+		return fmt.Errorf("node is syncing")
 	}
 
 	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
 	receiptExists, err := ds.executionPort.GetTransactionReceiptExists(ds.csModuleTxReceipt)
 	if err != nil {
 		logger.ErrorWithPrefix(ds.servicePrefix, "Error checking if transaction receipt exists: %v", err)
-		return
+		return err
 	}
 	if !receiptExists {
 		logger.WarnWithPrefix(ds.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping DistributionLog event scan")
-		return
+		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
 	// Do a for loop over the operator ids
 	operatorIds, err := ds.storagePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix(ds.servicePrefix, "Error getting operator ids: %v", err)
-		return
+		return err
 	}
 
 	for _, operatorId := range operatorIds {
@@ -109,22 +114,23 @@ func (ds *DistributionLogUpdatedEventScanner) runScan(ctx context.Context) {
 		end, err := ds.executionPort.GetMostRecentBlockNumber()
 		if err != nil {
 			logger.ErrorWithPrefix(ds.servicePrefix, "Failed to get most recent block number, cannot continue with cron execution, waiting for next iteration: %v", err)
-			return
+			return err
 		}
 
 		// Perform the scan
 		if err := ds.csFeeDistributorImplPort.ScanDistributionLogUpdatedEvents(ctx, start, &end, operatorId, ds.HandleDistributionLogUpdatedEvent); err != nil {
 			logger.ErrorWithPrefix(ds.servicePrefix, "Error scanning DistributionLogUpdated events: %v", err)
-			return
+			return err
 		}
 
 		// Save the last processed block if successful
 		if err := ds.storagePort.SaveDistributionLogLastProcessedBlock(operatorId, end); err != nil {
 			logger.ErrorWithPrefix(ds.servicePrefix, "Error saving last processed block, next cron execution will run from previous processed: %v", err)
-			return
+			return err
 		}
-
 	}
+
+	return nil
 }
 
 // HandleDistributionLogUpdatedEvent processes a DistributionLogUpdated event
