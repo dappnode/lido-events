@@ -122,6 +122,24 @@ func TestScanNodeOperatorEventsIntegration(t *testing.T) {
 			)
 			return nil
 		},
+		func(event *domain.CsmoduleNodeOperatorRewardAddressChangeProposed, address common.Address) error {
+			t.Logf("NodeOperatorRewardAddressChangeProposed: NodeOperatorId=%s, OldAddress=%s, NewAddress=%s, BlockNumber=%d",
+				event.NodeOperatorId.String(),
+				event.OldProposedAddress.Hex(),
+				event.NewProposedAddress.Hex(),
+				event.Raw.BlockNumber,
+			)
+			return nil
+		},
+		func(event *domain.CsmoduleNodeOperatorManagerAddressChangeProposed, address common.Address) error {
+			t.Logf("NodeOperatorManagerAddressChangeProposed: NodeOperatorId=%s, OldAddress=%s, NewAddress=%s, BlockNumber=%d",
+				event.NodeOperatorId.String(),
+				event.OldProposedAddress.Hex(),
+				event.NewProposedAddress.Hex(),
+				event.Raw.BlockNumber,
+			)
+			return nil
+		},
 	)
 	t.Log("Scan complete")
 

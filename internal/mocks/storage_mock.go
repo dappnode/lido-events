@@ -13,164 +13,183 @@ type MockStoragePort struct {
 	mock.Mock
 }
 
-// GetOperatorIds returns a list of operator IDs
+// Node Operators
 func (m *MockStoragePort) GetOperatorIds() ([]*big.Int, error) {
 	args := m.Called()
 	return args.Get(0).([]*big.Int), args.Error(1)
 }
 
-// SaveOperatorId simulates saving an operator ID
 func (m *MockStoragePort) SaveOperatorId(operatorID string) error {
 	args := m.Called(operatorID)
 	return args.Error(0)
 }
 
-// DeleteOperator simulates deleting an operator ID
-func (m *MockStoragePort) DeleteOperator(operatorID string) error {
-	args := m.Called(operatorID)
-	return args.Error(0)
-}
-
-// RegisterOperatorIdListener returns a channel for operator ID updates
 func (m *MockStoragePort) RegisterOperatorIdListener() chan []*big.Int {
 	args := m.Called()
 	return args.Get(0).(chan []*big.Int)
 }
 
-// GetReports returns a map of reports for an operator ID
-func (m *MockStoragePort) GetReports(operatorID *big.Int) (domain.Reports, error) {
+func (m *MockStoragePort) DeleteOperator(operatorID string) error {
 	args := m.Called(operatorID)
-	return args.Get(0).(domain.Reports), args.Error(1)
+	return args.Error(0)
 }
 
-// SaveReport simulates saving report data for an operator
+// Reports
 func (m *MockStoragePort) SaveReport(operatorID *big.Int, report domain.Report) error {
 	args := m.Called(operatorID, report)
 	return args.Error(0)
 }
 
-// GetDistributionLogLastProcessedBlock returns the last processed block for the DistributionLogUpdated event
-func (m *MockStoragePort) GetDistributionLogLastProcessedBlock() (uint64, error) {
-	args := m.Called()
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-// SaveDistributionLogLastProcessedBlock simulates saving the last processed block for the DistributionLogUpdated event
-func (m *MockStoragePort) SaveDistributionLogLastProcessedBlock(block uint64) error {
-	args := m.Called(block)
-	return args.Error(0)
-}
-
-// GetValidatorExitRequestLastProcessedBlock returns the last processed block for the ValidatorExitRequest event
-func (m *MockStoragePort) GetValidatorExitRequestLastProcessedBlock() (uint64, error) {
-	args := m.Called()
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-// SaveValidatorExitRequestLastProcessedBlock simulates saving the last processed block for the ValidatorExitRequest event
-func (m *MockStoragePort) SaveValidatorExitRequestLastProcessedBlock(block uint64) error {
-	args := m.Called(block)
-	return args.Error(0)
-}
-
-// GetExitRequests returns exit requests for a given operator
-func (m *MockStoragePort) GetExitRequests(operatorID string) (domain.ExitRequests, error) {
+func (m *MockStoragePort) GetReports(operatorID *big.Int) (domain.Reports, error) {
 	args := m.Called(operatorID)
-	return args.Get(0).(domain.ExitRequests), args.Error(1)
+	return args.Get(0).(domain.Reports), args.Error(1)
 }
 
-// SaveExitRequests simulates saving a map of exit requests
-func (m *MockStoragePort) SaveExitRequests(operatorID *big.Int, requests domain.ExitRequests) error {
-	args := m.Called(operatorID, requests)
+func (m *MockStoragePort) GetDistributionLogLastProcessedBlock(operatorID *big.Int) (uint64, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func (m *MockStoragePort) SaveDistributionLogLastProcessedBlock(operatorID *big.Int, block uint64) error {
+	args := m.Called(operatorID, block)
 	return args.Error(0)
 }
 
-// SaveExitRequest simulates saving an individual exit request
+func (m *MockStoragePort) AddPendingHash(operatorID *big.Int, hash string) error {
+	args := m.Called(operatorID, hash)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) DeletePendingHash(operatorID *big.Int, hash string) error {
+	args := m.Called(operatorID, hash)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) GetPendingHashes(operatorID *big.Int) ([]string, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).([]string), args.Error(1)
+}
+
+// Exit Requests
+func (m *MockStoragePort) GetValidatorExitRequestLastProcessedBlock(operatorID *big.Int) (uint64, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func (m *MockStoragePort) SaveValidatorExitRequestLastProcessedBlock(operatorID *big.Int, block uint64) error {
+	args := m.Called(operatorID, block)
+	return args.Error(0)
+}
+
 func (m *MockStoragePort) SaveExitRequest(operatorID *big.Int, validatorIndex string, exitRequest domain.ExitRequest) error {
 	args := m.Called(operatorID, validatorIndex, exitRequest)
 	return args.Error(0)
 }
 
-// UpdateExitRequestStatus simulates updating the status of an exit request
-func (m *MockStoragePort) UpdateExitRequestStatus(operatorID string, validatorIndex string, status domain.ValidatorStatus) error {
+func (m *MockStoragePort) GetExitRequests(operatorID *big.Int) (domain.ExitRequests, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).(domain.ExitRequests), args.Error(1)
+}
+
+func (m *MockStoragePort) UpdateExitRequestStatus(operatorID *big.Int, validatorIndex string, status domain.ValidatorStatus) error {
 	args := m.Called(operatorID, validatorIndex, status)
 	return args.Error(0)
 }
 
-// DeleteExitRequest simulates deleting an individual exit request for a specific operator ID and validator index.
-func (m *MockStoragePort) DeleteExitRequest(operatorID string, validatorIndex string) error {
+func (m *MockStoragePort) DeleteExitRequest(operatorID *big.Int, validatorIndex string) error {
 	args := m.Called(operatorID, validatorIndex)
 	return args.Error(0)
 }
 
-// GetTelegramConfig returns Telegram configuration data
-func (m *MockStoragePort) GetTelegramConfig() (domain.TelegramConfig, error) {
+// Withdrawals
+func (m *MockStoragePort) GetElRewardsStealingPenaltiesReportedLastProcessedBlock() (uint64, error) {
 	args := m.Called()
-	return args.Get(0).(domain.TelegramConfig), args.Error(1)
+	return args.Get(0).(uint64), args.Error(1)
 }
 
-// SaveTelegramConfig simulates saving Telegram configuration data
-func (m *MockStoragePort) SaveTelegramConfig(config domain.TelegramConfig) error {
-	args := m.Called(config)
+func (m *MockStoragePort) SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(block uint64) error {
+	args := m.Called(block)
 	return args.Error(0)
 }
 
-// RegisterTelegramConfigListener returns a channel for Telegram config updates
-func (m *MockStoragePort) RegisterTelegramConfigListener() chan domain.TelegramConfig {
+func (m *MockStoragePort) GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error) {
 	args := m.Called()
-	return args.Get(0).(chan domain.TelegramConfig)
+	return args.Get(0).([]domain.CsmoduleELRewardsStealingPenaltyReported), args.Error(1)
 }
 
-// AddPendingHash simulates adding a pending hash to DistributionLogUpdated.PendingHashes
-func (m *MockStoragePort) AddPendingHash(hash string) error {
-	args := m.Called(hash)
+func (m *MockStoragePort) SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error {
+	args := m.Called(penalty)
 	return args.Error(0)
 }
 
-// DeletePendingHash simulates deleting a pending hash from DistributionLogUpdated.PendingHashes
-func (m *MockStoragePort) DeletePendingHash(hash string) error {
-	args := m.Called(hash)
+func (m *MockStoragePort) GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func (m *MockStoragePort) SaveWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int, block uint64) error {
+	args := m.Called(operatorID, block)
 	return args.Error(0)
 }
 
-// GetPendingHashes returns the list of pending hashes from DistributionLogUpdated
-func (m *MockStoragePort) GetPendingHashes() ([]string, error) {
-	args := m.Called()
-	return args.Get(0).([]string), args.Error(1)
+func (m *MockStoragePort) GetWithdrawals(operatorID *big.Int) ([]domain.CsmoduleWithdrawalSubmitted, error) {
+	args := m.Called(operatorID)
+	return args.Get(0).([]domain.CsmoduleWithdrawalSubmitted), args.Error(1)
 }
 
-// SetNodeOperatorAdded simulates saving a NodeOperatorAdded event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error {
-	args := m.Called(address, event)
+func (m *MockStoragePort) SaveWithdrawal(operatorID *big.Int, withdrawal domain.CsmoduleWithdrawalSubmitted) error {
+	args := m.Called(operatorID, withdrawal)
 	return args.Error(0)
 }
 
-// SetNodeOperatorManagerAddressChanged simulates saving a NodeOperatorManagerAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-// SetNodeOperatorRewardAddressChanged simulates saving a NodeOperatorRewardAddressChanged event for a specific operator ID
-func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-// GetAddressEvents returns a map of address events for a specific address
-func (m *MockStoragePort) GetAddressEvents(address common.Address) (domain.AddressEvents, error) {
-	args := m.Called(address)
-	return args.Get(0).(domain.AddressEvents), args.Error(1)
-}
-
-// GetAddressLastProcessedBlock returns the last processed block for a specific address
+// Addresses
 func (m *MockStoragePort) GetAddressLastProcessedBlock(address common.Address) (uint64, error) {
 	args := m.Called(address)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// SaveAddressLastProcessedBlock simulates saving the last processed block for a specific address
 func (m *MockStoragePort) SaveAddressLastProcessedBlock(address common.Address, block uint64) error {
 	args := m.Called(address, block)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) GetAddressEvents(address common.Address) (domain.AddressEvents, error) {
+	args := m.Called(address)
+	return args.Get(0).(domain.AddressEvents), args.Error(1)
+}
+
+func (m *MockStoragePort) SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error {
+	args := m.Called(address, event)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
+	args := m.Called(address, event)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
+	args := m.Called(address, event)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) SetNodeOperatorRewardAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error {
+	args := m.Called(address, event)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) SetNodeOperatorManagerAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error {
+	args := m.Called(address, event)
+	return args.Error(0)
+}
+
+// Telegram
+func (m *MockStoragePort) GetTelegramConfig() (domain.TelegramConfig, error) {
+	args := m.Called()
+	return args.Get(0).(domain.TelegramConfig), args.Error(1)
+}
+
+func (m *MockStoragePort) SaveTelegramConfig(config domain.TelegramConfig) error {
+	args := m.Called(config)
 	return args.Error(0)
 }

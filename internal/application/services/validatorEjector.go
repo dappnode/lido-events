@@ -6,6 +6,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"math/big"
 	"sync"
 	"time"
 )
@@ -90,7 +91,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 
 	// Collect all exit requests. Could be from different operators, so we create a struct of exit requests with the operatorID
 	for _, operatorID := range operatorIDs {
-		exitRequests, err := ve.storagePort.GetExitRequests(operatorID.String())
+		exitRequests, err := ve.storagePort.GetExitRequests(operatorID)
 		if err != nil {
 			logger.ErrorWithPrefix(ve.servicePrefix, "Error getting exit requests for operator %s: %v", operatorID.String(), err)
 			continue
@@ -116,7 +117,14 @@ func (ve *ValidatorEjector) EjectValidator() error {
 	wg.Add(len(allExitRequests)) // Add the count of requests we are going to process
 
 	for _, req := range allExitRequests {
-		go func(exitRequest domain.ExitRequest, operatorID string) {
+		operatorIdNum := new(big.Int)
+		operatorIdNum, ok := operatorIdNum.SetString(req.operatorID, 10)
+		if !ok {
+			logger.ErrorWithPrefix(ve.servicePrefix, "Error converting operatorID to big.Int", err)
+			continue
+		}
+
+		go func(exitRequest domain.ExitRequest, operatorID *big.Int) {
 			defer wg.Done()
 
 			// First thing we do is to check the onchain status of the validator. This way we make sure we dont try to exit a validator that is already exiting
@@ -182,17 +190,18 @@ func (ve *ValidatorEjector) EjectValidator() error {
 					if err := ve.notifierPort.SendNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
-					logger.DebugWithPrefix(ve.servicePrefix, "Deleting exit request for validator %s from db", exitRequest.Event.ValidatorIndex)
-					if err := ve.storagePort.DeleteExitRequest(operatorID, exitRequest.Event.ValidatorIndex.String()); err != nil {
-						logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
-					}
+					// Do not delete the exit request so the event can be served through API
+					// logger.DebugWithPrefix(ve.servicePrefix, "Deleting exit request for validator %s from db", exitRequest.Event.ValidatorIndex)
+					// if err := ve.storagePort.DeleteExitRequest(operatorID, exitRequest.Event.ValidatorIndex.String()); err != nil {
+					// 	logger.ErrorWithPrefix(ve.servicePrefix, "Error deleting exit request from db", err)
+					// }
 					break
 				}
 
 				time.Sleep(30 * time.Second)
 			}
 
-		}(req.exitRequest, req.operatorID)
+		}(req.exitRequest, operatorIdNum)
 	}
 
 	// Wait for all goroutines to complete (either success or failure)
