@@ -21,6 +21,7 @@ type ValidatorExitRequestEventScanner struct {
 	beaconchainPort     ports.Beaconchain
 	veboBlockDeployment uint64
 	csModuleTxReceipt   common.Hash
+	mu                  sync.Mutex
 	servicePrefix       string
 }
 
@@ -33,6 +34,7 @@ func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifier
 		beaconchainPort,
 		veboBlockDeployment,
 		csModuleTxReceipt,
+		sync.Mutex{},
 		"ValidatorExitRequestEventScanner",
 	}
 }
@@ -43,7 +45,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 	wg.Add(1)       // Increment the WaitGroup counter
 
 	// Run the scan logic immediately
-	vs.runScan(ctx)
+	vs.RunScan(ctx)
 
 	logger.DebugWithPrefix(vs.servicePrefix, "First execution complete, sending signal to start periodic ejector cron for ValidatorExitRequest events")
 	// Signal that the first execution is complete
@@ -56,7 +58,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 		select {
 		case <-ticker.C:
 			// Run the scan logic periodically
-			vs.runScan(ctx)
+			vs.RunScan(ctx)
 		case <-ctx.Done():
 			logger.InfoWithPrefix(vs.servicePrefix, "Stopping ValidatorExitRequest cron scan")
 			return
@@ -64,33 +66,36 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 	}
 }
 
-// runScan contains the execution logic for scanning ValidatorExitRequest events
-func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
+// RunScan contains the execution logic for scanning ValidatorExitRequest events
+func (vs *ValidatorExitRequestEventScanner) RunScan(ctx context.Context) error {
+	vs.mu.Lock()         // Lock mutex to ensure only one execution at a time
+	defer vs.mu.Unlock() // Unlock when function exits
+
 	// Skip if execution or beaconchain nodes are syncing
 	executionSyncing, err := vs.executionPort.IsSyncing()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if execution node is syncing: %v", err)
-		return
+		return err
 	}
 	if executionSyncing {
 		logger.InfoWithPrefix(vs.servicePrefix, "Execution node is syncing, skipping ValidatorExitRequest event scan")
-		return
+		return fmt.Errorf("execution node is syncing")
 	}
 	beaconchainSyncing, err := vs.beaconchainPort.GetSyncingStatus()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if beaconchain node is syncing: %v", err)
-		return
+		return err
 	}
 	if beaconchainSyncing {
 		logger.InfoWithPrefix(vs.servicePrefix, "Beaconchain node is syncing, skipping ValidatorExitRequest event scan")
-		return
+		return fmt.Errorf("beaconchain node is syncing")
 	}
 
 	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
 	receiptExists, err := vs.executionPort.GetTransactionReceiptExists(vs.csModuleTxReceipt)
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if transaction receipt exists: %v", err)
-		return
+		return err
 	}
 	if !receiptExists {
 		logger.WarnWithPrefix(vs.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping ValidatorExitRequests event scan")
@@ -99,14 +104,14 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 		if err := vs.notifierPort.SendNotification(message); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
 		}
-		return
+		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
 	// Iterrate over operator ids
 	operatorIDs, err := vs.storagePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting operator ids: %v", err)
-		return
+		return err
 	}
 
 	for _, operatorID := range operatorIDs {
@@ -125,21 +130,23 @@ func (vs *ValidatorExitRequestEventScanner) runScan(ctx context.Context) {
 		end, err := vs.executionPort.GetMostRecentBlockNumber()
 		if err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Failed to get most recent block number, cannot continue with cron execution, waiting for next iteration: %v", err)
-			return
+			return err
 		}
 
 		// Perform the scan
 		if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, operatorID, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
-			return
+			return err
 		}
 
 		// Save the last processed block if successful
 		if err := vs.storagePort.SaveValidatorExitRequestLastProcessedBlock(operatorID, end); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error saving last processed block, next cron execution will run from previous processed: %v", err)
-			return
+			return err
 		}
 	}
+
+	return nil
 }
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
