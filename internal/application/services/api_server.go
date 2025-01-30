@@ -99,6 +99,7 @@ func (h *APIServerService) SetupRoutes() {
 	h.Router.HandleFunc("/api/v0/events_indexer/address_events", h.getAddressEvents).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/withdrawals_submitted", h.getWithdrawalsSubmitted).Methods("GET", "OPTIONS")
 	h.Router.HandleFunc("/api/v0/events_indexer/el_rewards_stealing_penalties_reported", h.getElRewardsStealingPenaltiesReported).Methods("GET", "OPTIONS")
+	h.Router.HandleFunc("/api/v0/events_indexer/pending_hashes", h.getPendingHashes).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.Router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +108,64 @@ func (h *APIServerService) SetupRoutes() {
 }
 
 // Handlers
+
+// getPendingHashes retrieves the list of pending hashes for a given operator ID
+func (h *APIServerService) getPendingHashes(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix(h.servicePrefix, "getPendingHashes request received")
+
+	operatorId := r.URL.Query().Get("operatorId")
+	if operatorId == "" {
+		logger.ErrorWithPrefix(h.servicePrefix, "Missing operatorId in getPendingHashes request")
+		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
+		return
+	}
+
+	operatorIdNum := new(big.Int)
+	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
+		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getPendingHashes")
+		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
+		return
+	}
+
+	// Check if the operator ID exists
+	operatorIds, err := h.StoragePort.GetOperatorIds()
+	if err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching operator IDs: %v", err)
+		writeErrorResponse(w, "Error fetching operator IDs", http.StatusInternalServerError, err)
+		return
+	}
+
+	found := false
+	for _, id := range operatorIds {
+		if id.String() == operatorId {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s not found", operatorId)
+		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound, err)
+		return
+	}
+
+	pendingHashes, err := h.StoragePort.GetPendingHashes(operatorIdNum)
+	if err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching pending hashes: %v", err)
+		writeErrorResponse(w, "Error fetching pending hashes", http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(pendingHashes)
+	if err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getPendingHashes: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
 
 // getElRewardsStealingPenaltiesReported retrieves the list of EL rewards stealing penalties reported
 func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.ResponseWriter, r *http.Request) {
