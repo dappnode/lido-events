@@ -104,7 +104,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 				// giveUp flag is set to true when we dont want to retry fetching the data of all pending hashes.
 				// This is useful if we want this function to finish somewhat quickly and not wait for all pending hashes to be fetched.
 				if giveUp {
-					logger.DebugWithPrefix(phl.servicePrefix, "Skipping the rest of the pending hashes")
+					logger.DebugWithPrefix(phl.servicePrefix, "Called with 'giveUp' flag set to true, skipping the rest of the pending hashes")
 					return nil
 				}
 				continue
