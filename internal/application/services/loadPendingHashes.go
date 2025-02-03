@@ -41,7 +41,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	logger.DebugWithPrefix(phl.servicePrefix, "Signal received, starting periodic cron for loading pending CIDs")
 
 	// Execute immediately on startup
-	if err := phl.LoadPendingHashes(); err != nil {
+	if err := phl.LoadPendingHashes(false); err != nil {
 		logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 	}
 
@@ -52,7 +52,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 		select {
 		case <-ticker.C:
 			// Call the load method periodically
-			if err := phl.LoadPendingHashes(); err != nil {
+			if err := phl.LoadPendingHashes(false); err != nil {
 				logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 				continue
 			}
@@ -64,7 +64,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	}
 }
 
-func (phl *PendingHashesLoader) LoadPendingHashes() error {
+func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 	// Lock the mutex
 	phl.mu.Lock()
 	defer phl.mu.Unlock()
@@ -101,6 +101,12 @@ func (phl *PendingHashesLoader) LoadPendingHashes() error {
 			originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 			if err != nil {
 				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
+				// giveUp flag is set to true when we dont want to retry fetching the data of all pending hashes.
+				// This is useful if we want this function to finish somewhat quickly and not wait for all pending hashes to be fetched.
+				if giveUp {
+					logger.DebugWithPrefix(phl.servicePrefix, "Skipping the rest of the pending hashes")
+					return nil
+				}
 				continue
 			}
 
