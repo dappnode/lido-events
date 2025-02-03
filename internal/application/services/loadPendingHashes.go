@@ -98,12 +98,12 @@ func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 		for _, pendingHash := range pendingHashes {
 			logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
 
-			originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
+			originalReport, isTimeout, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 			if err != nil {
 				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
 				// giveUp flag is set to true when we dont want to retry fetching the data of all pending hashes.
 				// This is useful if we want this function to finish somewhat quickly and not wait for all pending hashes to be fetched.
-				if giveUp {
+				if giveUp && isTimeout {
 					logger.DebugWithPrefix(phl.servicePrefix, "Called with 'giveUp' flag set to true, skipping the rest of the pending hashes")
 					return nil
 				}

@@ -19,12 +19,12 @@ func NewIPFSAdapter(gatewayURL string) *IPFSAdapter {
 }
 
 // FetchAndParseIpfs fetches data from IPFS using a CID and parses the JSON content as a Report.
-func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, error) {
+func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (report domain.OriginalReport, isTimeout bool, err error) {
 	// Construct the URL without any format query parameter
 	url := fmt.Sprintf("%s/ipfs/%s", ia.GatewayURL, cid)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return domain.OriginalReport{}, fmt.Errorf("failed to create request for URL %s: %w", url, err)
+		return domain.OriginalReport{}, false, fmt.Errorf("failed to create request for URL %s: %w", url, err)
 	}
 
 	// Set the Accept header to explicitly request JSON
@@ -33,25 +33,28 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, err
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return domain.OriginalReport{}, fmt.Errorf("failed to fetch data from IPFS at %s: %w", url, err)
+		// these are 504 and 408 status codes respectively
+		if resp.StatusCode == http.StatusGatewayTimeout || resp.StatusCode == http.StatusRequestTimeout {
+			return domain.OriginalReport{}, true, fmt.Errorf("failed to fetch data from IPFS at %s: %w", url, err)
+		}
+		return domain.OriginalReport{}, false, fmt.Errorf("failed to fetch data from IPFS at %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return domain.OriginalReport{}, fmt.Errorf("unexpected response status %s fetching from IPFS gateway", resp.Status)
+		return domain.OriginalReport{}, false, fmt.Errorf("unexpected response status %s fetching from IPFS gateway", resp.Status)
 	}
 
 	// Read the JSON data directly from the response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return domain.OriginalReport{}, fmt.Errorf("failed to read response body from IPFS gateway: %w", err)
+		return domain.OriginalReport{}, false, fmt.Errorf("failed to read response body from IPFS gateway: %w", err)
 	}
 
 	// Parse the JSON data into the Report struct
-	var report domain.OriginalReport
 	if err := json.Unmarshal(body, &report); err != nil {
-		return domain.OriginalReport{}, fmt.Errorf("failed to unmarshal JSON data from IPFS response: %w", err)
+		return domain.OriginalReport{}, false, fmt.Errorf("failed to unmarshal JSON data from IPFS response: %w", err)
 	}
 
-	return report, nil
+	return report, false, nil
 }
