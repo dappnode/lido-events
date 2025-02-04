@@ -23,7 +23,7 @@ func TestFetchAndParseIpfs(t *testing.T) {
 	cid := "QmTN9oYsjcJjGMpRrT2PZD4iY6aJpy5aCSBvGKU2a9EMQF"
 
 	// Fetch and parse the report from IPFS
-	report, err := adapter.FetchAndParseIpfs(cid)
+	report, _, err := adapter.FetchAndParseIpfs(cid)
 	if err != nil {
 		t.Fatalf("failed to fetch and parse IPFS data: %v", err)
 	}
