@@ -563,7 +563,7 @@ func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Load the pending hashes
+	// Load the pending hashes and skip if its a timeout error
 	if err := h.pendingHashesLoader.LoadPendingHashes(true); err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error loading pending hashes: %v", err)
 		writeErrorResponse(w, "Error loading pending hashes", http.StatusInternalServerError, err)

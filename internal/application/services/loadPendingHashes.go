@@ -64,7 +64,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	}
 }
 
-func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
+func (phl *PendingHashesLoader) LoadPendingHashes(skipIfTimeoutError bool) error {
 	// Lock the mutex
 	phl.mu.Lock()
 	defer phl.mu.Unlock()
@@ -98,15 +98,15 @@ func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 		for _, pendingHash := range pendingHashes {
 			logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
 
-			originalReport, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
+			originalReport, isTimeoutError, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
 			if err != nil {
-				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
-				// giveUp flag is set to true when we dont want to retry fetching the data of all pending hashes.
-				// This is useful if we want this function to finish somewhat quickly and not wait for all pending hashes to be fetched.
-				if giveUp {
-					logger.DebugWithPrefix(phl.servicePrefix, "Called with 'giveUp' flag set to true, skipping the rest of the pending hashes")
+				if isTimeoutError && skipIfTimeoutError {
+					// if its a timeout error (504 or 408) skip the load of the next pending hashes
+					// because those hashes will probably fail as well
+					logger.WarnWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s due to a timeout error, consider switching your IPFS gateway. Stopped from loading pending hashes: %v", pendingHash, err)
 					return nil
 				}
+				logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch and parse IPFS data for pending hash %s, skipping hash: %v", pendingHash, err)
 				continue
 			}
 
