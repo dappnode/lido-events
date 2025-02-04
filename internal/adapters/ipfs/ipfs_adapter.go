@@ -1,11 +1,15 @@
 package ipfs
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"lido-events/internal/application/domain"
 	"net/http"
+	"os"
+	"time"
 )
 
 type IPFSAdapter struct {
@@ -19,7 +23,7 @@ func NewIPFSAdapter(gatewayURL string) *IPFSAdapter {
 }
 
 // FetchAndParseIpfs fetches data from IPFS using a CID and parses the JSON content as a Report.
-func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, bool, error) {
+func (ia *IPFSAdapter) FetchAndParseIpfs(cid string, timeout *time.Duration) (domain.OriginalReport, bool, error) {
 	isTimeoutError := false
 	// Construct the URL without any format query parameter
 	url := fmt.Sprintf("%s/ipfs/%s", ia.GatewayURL, cid)
@@ -31,9 +35,18 @@ func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.OriginalReport, boo
 	// Set the Accept header to explicitly request JSON
 	req.Header.Set("Accept", "application/json")
 
+	// Set up the HTTP client with timeout if provided
 	client := &http.Client{}
+	if timeout != nil {
+		client.Timeout = *timeout
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
+		// Check if error is due to timeout
+		if os.IsTimeout(err) || errors.Is(err, context.DeadlineExceeded) {
+			isTimeoutError = true
+		}
 		return domain.OriginalReport{}, isTimeoutError, fmt.Errorf("failed to fetch data from IPFS at %s: %w", url, err)
 	}
 	defer resp.Body.Close()

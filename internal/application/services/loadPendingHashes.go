@@ -41,7 +41,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	logger.DebugWithPrefix(phl.servicePrefix, "Signal received, starting periodic cron for loading pending CIDs")
 
 	// Execute immediately on startup
-	if err := phl.LoadPendingHashes(false); err != nil {
+	if err := phl.LoadPendingHashes(false, nil); err != nil {
 		logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 	}
 
@@ -52,7 +52,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 		select {
 		case <-ticker.C:
 			// Call the load method periodically
-			if err := phl.LoadPendingHashes(false); err != nil {
+			if err := phl.LoadPendingHashes(false, nil); err != nil {
 				logger.InfoWithPrefix(phl.servicePrefix, "Error loading pending hashes: %v", err)
 				continue
 			}
@@ -64,7 +64,7 @@ func (phl *PendingHashesLoader) LoadPendingHashesCron(ctx context.Context, inter
 	}
 }
 
-func (phl *PendingHashesLoader) LoadPendingHashes(skipIfTimeoutError bool) error {
+func (phl *PendingHashesLoader) LoadPendingHashes(skipIfTimeoutError bool, timeout *time.Duration) error {
 	// Lock the mutex
 	phl.mu.Lock()
 	defer phl.mu.Unlock()
@@ -98,7 +98,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes(skipIfTimeoutError bool) error
 		for _, pendingHash := range pendingHashes {
 			logger.DebugWithPrefix(phl.servicePrefix, "Fetching and parsing IPFS data for pending hash %s", pendingHash)
 
-			originalReport, isTimeoutError, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash)
+			originalReport, isTimeoutError, err := phl.ipfsPort.FetchAndParseIpfs(pendingHash, timeout)
 			if err != nil {
 				if isTimeoutError && skipIfTimeoutError {
 					// if its a timeout error (504 or 408) skip the load of the next pending hashes
