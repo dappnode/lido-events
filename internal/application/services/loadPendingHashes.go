@@ -114,7 +114,11 @@ func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 
 			data, exists := originalReport.Operators[operatorID.String()]
 			if !exists {
-				logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s not found in the original report, skipping", operatorID.String())
+				logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s not found in the original report, deleting pending hash and skipping", operatorID.String())
+				// Remove the pending hash
+				if err := phl.storagePort.DeletePendingHash(operatorID, pendingHash); err != nil {
+					logger.ErrorWithPrefix(phl.servicePrefix, "Failed to delete pending hash %s: %v", pendingHash, err)
+				}
 				continue
 			}
 
