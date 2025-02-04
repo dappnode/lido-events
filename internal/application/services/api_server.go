@@ -54,7 +54,7 @@ func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.Sto
 		distributionLogUpdatedEventScanner: distributionLogUpdatedEventScanner,
 		validatorExitRequestEventScanner:   validatorExitRequestEventScanner,
 		pendingHashesLoader:                pendingHashesLoader,
-		hashLoaderTimeout:                  5 * time.Minute,
+		hashLoaderTimeout:                  5 * time.Second,
 		router:                             mux.NewRouter(),
 	}
 
