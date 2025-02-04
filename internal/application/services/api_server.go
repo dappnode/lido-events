@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
@@ -35,7 +36,8 @@ type APIServerService struct {
 	processingWithdrawals              sync.Map // To track withdrawals being processed by operator ID
 	processingExitRequests             sync.Map // To track exit requests being processed by operator ID
 	processingOperatorPerformance      sync.Map // To track operator performance being processed by operator ID
-	processingPenalties                bool     // bool to track EL rewards stealing penalties being processed
+	hashLoaderTimeout                  time.Duration
+	processingPenalties                bool // bool to track EL rewards stealing penalties being processed
 }
 
 // NewAPIServerService initializes the API server
@@ -52,6 +54,7 @@ func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.Sto
 		distributionLogUpdatedEventScanner: distributionLogUpdatedEventScanner,
 		validatorExitRequestEventScanner:   validatorExitRequestEventScanner,
 		pendingHashesLoader:                pendingHashesLoader,
+		hashLoaderTimeout:                  5 * time.Second,
 		router:                             mux.NewRouter(),
 	}
 
@@ -563,8 +566,8 @@ func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Load the pending hashes
-	if err := h.pendingHashesLoader.LoadPendingHashes(true); err != nil {
+	// Load the pending hashes and skip if its a timeout error
+	if err := h.pendingHashesLoader.LoadPendingHashes(true, &h.hashLoaderTimeout); err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error loading pending hashes: %v", err)
 		writeErrorResponse(w, "Error loading pending hashes", http.StatusInternalServerError, err)
 		return
