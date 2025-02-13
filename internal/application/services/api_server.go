@@ -272,6 +272,20 @@ func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *htt
 func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Request) {
 	logger.DebugWithPrefix(h.servicePrefix, "getAddressEvents request received")
 
+	// Check for optional boolean parameter "force"
+	force := r.URL.Query().Get("force")
+	// Default value
+	forceBool := false
+	// Convert to boolean only if force is not empty
+	if force != "" {
+		var err error
+		forceBool, err = strconv.ParseBool(force)
+		if err != nil {
+			writeErrorResponse(w, "Invalid force parameter", http.StatusBadRequest, err)
+			return
+		}
+	}
+
 	address := r.URL.Query().Get("address")
 	if address == "" {
 		writeErrorResponse(w, "address is required", http.StatusBadRequest, nil)
@@ -300,7 +314,7 @@ func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Reque
 	defer h.processingAddresses.Delete(addressValidated.Hex()) // Clear address when done
 
 	// Perform the scanning (synchronously)
-	if err := h.csModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated); err != nil {
+	if err := h.csModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated, forceBool); err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning address events: %v", err)
 		writeErrorResponse(w, "Error scanning address events", http.StatusInternalServerError, err)
 		return

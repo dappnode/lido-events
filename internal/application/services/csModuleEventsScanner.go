@@ -154,7 +154,7 @@ func (cs *CsModuleEventsScanner) ScanElRewardsStealingPenaltyReported(ctx contex
 	return nil
 }
 
-func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address common.Address) error {
+func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address common.Address, force bool) error {
 	isSyncing, err := cs.executionPort.IsSyncing()
 	if err != nil {
 		return fmt.Errorf("error checking if node is syncing: %w", err)
@@ -189,8 +189,8 @@ func (cs *CsModuleEventsScanner) ScanAddressEvents(ctx context.Context, address 
 		return fmt.Errorf("error getting most recent block number: %w", err)
 	}
 
-	// return if distance is less than 10 epoch = 10 * 32 blocks
-	if end-start < cs.BlockScannerMinDistance {
+	// return if distance is less than min distance AND not forced
+	if !force && end-start < cs.BlockScannerMinDistance {
 		logger.InfoWithPrefix(cs.servicePrefix, "Block distance is less than 320 blocks (10 epochs), skipping aaddress events scan")
 		return nil
 	}
