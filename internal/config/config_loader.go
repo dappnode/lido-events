@@ -29,6 +29,7 @@ type Config struct {
 	CORS []string
 
 	// Individual contract addresses
+	CSFeeOracleAddress            common.Address
 	CSAccountingAddress           common.Address
 	CSFeeDistributorAddress       common.Address
 	CSFeeDistributorImplAddress   common.Address
@@ -183,6 +184,7 @@ func LoadNetworkConfig() (Config, error) {
 			StakersUiUrl:                    "http://my.dappnode/stakers/holesky",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
+			CSFeeOracleAddress:              common.HexToAddress("0xaF57326C7d513085051b50912D51809ECC5d98Ee"),
 			CSAccountingAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
@@ -225,13 +227,14 @@ func LoadNetworkConfig() (Config, error) {
 			StakersUiUrl:                    "http://my.dappnode/stakers/ethereum",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
+			CSFeeOracleAddress:              common.HexToAddress("0x4D4074628678Bd302921c20573EEa1ed38DdF7FB"),
 			CSAccountingAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
 			VEBOAddress:                     common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
 			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
 			VeboBlockDeployment:             uint64(17172556),
-			CsFeeDistributorBlockDeployment: uint64(20935463),
+			CsFeeDistributorBlockDeployment: uint64(20935462),
 			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",

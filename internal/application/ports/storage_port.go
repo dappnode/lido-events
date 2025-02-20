@@ -53,4 +53,10 @@ type StoragePort interface {
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)
 	SaveTelegramConfig(config domain.TelegramConfig) error
+
+	// ProcessingStarted events
+	GetProcessingStartedLastProcessedBlock() (uint64, error)
+	SaveProcessingStartedLastProcessedBlock(block uint64) error
+	GetProcessingStartedEvents() ([]domain.BindingsProcessingStarted, error)
+	SaveProcessingStartedEvent(event domain.BindingsProcessingStarted) error
 }

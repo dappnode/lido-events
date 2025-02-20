@@ -11,6 +11,7 @@ import (
 	"lido-events/internal/adapters/beaconchain"
 	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
+	csfeeoracle "lido-events/internal/adapters/csFeeOracle"
 	csmodule "lido-events/internal/adapters/csModule"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
@@ -77,6 +78,10 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
+	csFeeOracleAdapter, err := csfeeoracle.NewCsFeeOracleAdapter(networkConfig.CsFeeDistributorBlockDeployment, rpcClient, networkConfig.CSFeeOracleAddress, networkConfig.BlockChunkSize)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeOracleAdapter: %v", err)
+	}
 	csModuleAdapter, err := csmodule.NewCsModuleAdapter(wsClient, rpcClient, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
@@ -93,10 +98,11 @@ func main() {
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
 	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt, networkConfig.BlockScannerMinDistance)
+	csFeeOracleEventsScannerService := services.NewCsFeeOracleEventsScanner(storageAdapter, executionAdapter, csFeeOracleAdapter, networkConfig.CsFeeDistributorBlockDeployment)
 	// relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
 
 	// Initialize API services
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csModuleEventsScannerService, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
+	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csFeeOracleEventsScannerService, csModuleEventsScannerService, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
 
 	// Start API services
