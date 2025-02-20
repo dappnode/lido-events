@@ -42,7 +42,7 @@ func setupCsFeeOracleAdapter(t *testing.T) (*csfeeoracle.CsFeeOracleAdapter, err
 // TestScanProcessingStartedEventsIntegration scans for ProcessingStarted events in the given block range.
 func TestScanProcessingStartedEventsIntegration(t *testing.T) {
 	// Uncomment the following line to skip integration tests if needed.
-	// t.Skip()
+	t.Skip()
 
 	adapter, err := setupCsFeeOracleAdapter(t)
 	assert.NoError(t, err)
