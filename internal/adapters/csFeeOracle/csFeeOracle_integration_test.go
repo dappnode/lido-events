@@ -32,10 +32,9 @@ func setupCsFeeOracleAdapter(t *testing.T) (*csfeeoracle.CsFeeOracleAdapter, err
 	// Use the provided proxy address for csFeeOracle
 	csFeeOracleAddress := common.HexToAddress("0x4D4074628678Bd302921c20573EEa1ed38DdF7FB")
 	// Deployment block used as the filter value for the indexed refSlot parameter.
-	deploymentBlock := uint64(20935462)
 	blockChunkSize := uint64(1000) // Adjust the chunk size as needed
 
-	adapter, err := csfeeoracle.NewCsFeeOracleAdapter(deploymentBlock, rpcClient, csFeeOracleAddress, blockChunkSize)
+	adapter, err := csfeeoracle.NewCsFeeOracleAdapter(rpcClient, csFeeOracleAddress, blockChunkSize)
 	return adapter, err
 }
 

@@ -78,7 +78,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
-	csFeeOracleAdapter, err := csfeeoracle.NewCsFeeOracleAdapter(networkConfig.CsFeeDistributorBlockDeployment, rpcClient, networkConfig.CSFeeOracleAddress, networkConfig.BlockChunkSize)
+	csFeeOracleAdapter, err := csfeeoracle.NewCsFeeOracleAdapter(rpcClient, networkConfig.CSFeeOracleAddress, networkConfig.BlockChunkSize)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeOracleAdapter: %v", err)
 	}

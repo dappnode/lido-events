@@ -14,7 +14,6 @@ import (
 
 // CsFeeOracleAdapter holds the RPC client, contract address, and block chunk size.
 type CsFeeOracleAdapter struct {
-	deploymentBlock    uint64
 	rpcClient          *ethclient.Client
 	CsFeeOracleAddress common.Address
 	blockChunkSize     uint64 // Configurable block chunk size
@@ -22,13 +21,11 @@ type CsFeeOracleAdapter struct {
 
 // NewCsFeeOracleAdapter creates a new instance of CsFeeOracleAdapter.
 func NewCsFeeOracleAdapter(
-	deploymentBlock uint64,
 	rpcClient *ethclient.Client,
 	csFeeOracleAddress common.Address,
 	blockChunkSize uint64,
 ) (*CsFeeOracleAdapter, error) {
 	return &CsFeeOracleAdapter{
-		deploymentBlock:    deploymentBlock,
 		rpcClient:          rpcClient,
 		CsFeeOracleAddress: csFeeOracleAddress,
 		blockChunkSize:     blockChunkSize,
@@ -60,7 +57,7 @@ func (oracle *CsFeeOracleAdapter) ScanProcessingStartedEvents(
 			Context: ctx,
 			Start:   chunkStart,
 			End:     &chunkEnd,
-		}, []*big.Int{big.NewInt(int64(oracle.deploymentBlock))})
+		}, nil)
 		if err != nil {
 			return fmt.Errorf("failed to filter ProcessingStarted events for block range %d to %d: %w", chunkStart, chunkEnd, err)
 		}
