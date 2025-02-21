@@ -26,6 +26,7 @@ type APIServerService struct {
 	notifierPort                       ports.NotifierPort
 	relaysUsedPort                     ports.RelaysUsedPort
 	relaysAllowedPort                  ports.RelaysAllowedPort
+	csFeeOracleEventsScanner           *CsFeeOracleEventsScanner
 	csModuleEventsScanner              *CsModuleEventsScanner
 	distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner
 	validatorExitRequestEventScanner   *ValidatorExitRequestEventScanner
@@ -35,11 +36,12 @@ type APIServerService struct {
 	processingWithdrawals              sync.Map // To track withdrawals being processed by operator ID
 	processingExitRequests             sync.Map // To track exit requests being processed by operator ID
 	processingOperatorPerformance      sync.Map // To track operator performance being processed by operator ID
+	processingProcessingStarted        bool     // bool to track ProcessingStarted events being processed
 	processingPenalties                bool     // bool to track EL rewards stealing penalties being processed
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, csModuleEventsScanner *CsModuleEventsScanner, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, csFeeOracleEventsScanner *CsFeeOracleEventsScanner, csModuleEventsScanner *CsModuleEventsScanner, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                             &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                      "API",
@@ -48,6 +50,7 @@ func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.Sto
 		notifierPort:                       notifierPort,
 		relaysUsedPort:                     relaysUsedPort,
 		relaysAllowedPort:                  relaysAllowedPort,
+		csFeeOracleEventsScanner:           csFeeOracleEventsScanner,
 		csModuleEventsScanner:              csModuleEventsScanner,
 		distributionLogUpdatedEventScanner: distributionLogUpdatedEventScanner,
 		validatorExitRequestEventScanner:   validatorExitRequestEventScanner,
@@ -101,6 +104,7 @@ func (h *APIServerService) SetupRoutes() {
 	h.router.HandleFunc("/api/v0/events_indexer/withdrawals_submitted", h.getWithdrawalsSubmitted).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/el_rewards_stealing_penalties_reported", h.getElRewardsStealingPenaltiesReported).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/pending_hashes", h.getPendingHashes).Methods("GET", "OPTIONS")
+	h.router.HandleFunc("/api/v0/events_indexer/processing_started", h.getProcessingStarted).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +113,44 @@ func (h *APIServerService) SetupRoutes() {
 }
 
 // Handlers
+
+// getProcessingStarted retrieves the processing started events
+func (h *APIServerService) getProcessingStarted(w http.ResponseWriter, r *http.Request) {
+	logger.DebugWithPrefix(h.servicePrefix, "getProcessingStarted request received")
+	// Check if the processing started events are already being processed
+	if h.processingProcessingStarted {
+		logger.DebugWithPrefix(h.servicePrefix, "ProcessingStarted events are already being processed")
+		// If processing, return a 202 response
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte("Request is being processed"))
+		return
+	}
+
+	// Perform the scanning (synchronously)
+	if err := h.csFeeOracleEventsScanner.RunScan(h.ctx); err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning ProcessingStarted events: %v", err)
+		writeErrorResponse(w, "Error scanning ProcessingStarted events", http.StatusInternalServerError, err)
+		return
+	}
+
+	// Fetch the updated events
+	processingStartedEvents, err := h.storagePort.GetProcessingStartedEvents()
+	if err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching ProcessingStarted events: %v", err)
+		writeErrorResponse(w, "Error fetching ProcessingStarted events", http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(processingStartedEvents)
+	if err != nil {
+		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getProcessingStarted: %v", err)
+		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
 
 // getPendingHashes retrieves the list of pending hashes for a given operator ID
 func (h *APIServerService) getPendingHashes(w http.ResponseWriter, r *http.Request) {

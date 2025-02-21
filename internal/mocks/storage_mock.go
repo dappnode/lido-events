@@ -193,3 +193,25 @@ func (m *MockStoragePort) SaveTelegramConfig(config domain.TelegramConfig) error
 	args := m.Called(config)
 	return args.Error(0)
 }
+
+// ProcessingStarted
+
+func (m *MockStoragePort) GetProcessingStartedLastProcessedBlock() (uint64, error) {
+	args := m.Called()
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func (m *MockStoragePort) SaveProcessingStartedLastProcessedBlock(block uint64) error {
+	args := m.Called(block)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) SaveProcessingStartedEvent(event domain.BindingsProcessingStarted) error {
+	args := m.Called(event)
+	return args.Error(0)
+}
+
+func (m *MockStoragePort) GetProcessingStartedEvents() ([]domain.BindingsProcessingStarted, error) {
+	args := m.Called()
+	return args.Get(0).([]domain.BindingsProcessingStarted), args.Error(1)
+}

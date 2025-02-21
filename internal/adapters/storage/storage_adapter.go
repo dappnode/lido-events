@@ -55,6 +55,7 @@ type Database struct {
 	Operators                          map[string]OperatorData                 `json:"operators"`                          // indexed by operator ID
 	Addresses                          map[common.Address]domain.AddressEvents `json:"addresses"`                          // indexed by Ethereum address
 	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported      `json:"elRewardsStealingPenaltiesReported"` // not indexed by anything
+	ProcessingStarted                  ProcessingStarted                       `json:"processingStarted"`                  // not indexed by anything
 }
 
 type OperatorData struct {
@@ -82,6 +83,11 @@ type WithdrawalsSubmitted struct {
 type ElRewardsStealingPenaltiesReported struct {
 	LastProcessedBlock uint64                                            `json:"lastProcessedBlock"`
 	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported `json:"penalties"`
+}
+
+type ProcessingStarted struct {
+	LastProcessedBlock uint64                             `json:"lastProcessedBlock"`
+	Events             []domain.BindingsProcessingStarted `json:"events"`
 }
 
 func (fs *Storage) LoadDatabase() (Database, error) {
