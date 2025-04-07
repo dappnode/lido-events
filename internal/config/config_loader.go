@@ -112,9 +112,9 @@ func LoadNetworkConfig() (Config, error) {
 	}
 
 	network := os.Getenv("NETWORK")
-	// Default to holesky
+	// Default to hoodi
 	if network == "" {
-		network = "holesky"
+		network = "hoodi"
 	}
 
 	ipfsUrl := os.Getenv("IPFS_URL")
@@ -157,6 +157,48 @@ func LoadNetworkConfig() (Config, error) {
 	var config Config
 
 	switch network {
+	case "hoodi":
+		// Configure default values for the hoodi network
+		if wsURL == "" {
+			wsURL = "ws://execution.hoodi.dncore.dappnode:8546"
+		}
+		if rpcURL == "" {
+			rpcURL = "http://execution.hoodi.dncore.dappnode:8545"
+		}
+		if beaconchainURL == "" {
+			beaconchainURL = "http://beacon-chain.hoodi.dncore.dappnode:3500"
+		}
+		config = Config{
+			DBDirectory:                     dbDirectory,
+			MevBoostDnpName:                 "mev-boost-hoodi.dnp.dappnode.eth",
+			DappmanagerUrl:                  dappmanagerUrl,
+			SignerUrl:                       "http://signer.hoodi.dncore.dappnode:9000",
+			IpfsUrl:                         ipfsUrl,
+			WsURL:                           wsURL,
+			RpcUrl:                          rpcURL,
+			CSMStakingModuleID:              big.NewInt(4),
+			EtherscanURL:                    "https://hoodi.etherscan.io",
+			BeaconchainURL:                  beaconchainURL,
+			BeaconchaUrl:                    "https://hoodi.beaconcha.in",
+			CSMUIURL:                        "https://csm.testnet.fi",
+			StakersUiUrl:                    "http://my.dappnode/stakers/hoodi",
+			ApiPort:                         apiPort,
+			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
+			CSFeeOracleAddress:              common.HexToAddress("0xe7314f561B2e72f9543F1004e741bab6Fc51028B"),
+			CSFeeDistributorAddress:         common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
+			CSFeeDistributorImplAddress:     common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
+			VEBOAddress:                     common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
+			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
+			VeboBlockDeployment:             uint64(750),
+			CsFeeDistributorBlockDeployment: uint64(4980),
+			CSModuleAddress:                 common.HexToAddress("0x79CEf36D84743222f37765204Bec41E92a93E59d"),
+			CSModuleTxReceipt:               common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
+			LidoKeysApiUrl:                  "https://keys-api-hoodi.testnet.fi",
+			ProxyApiPort:                    proxyApiPort,
+			MinGenesisTime:                  uint64(1742277084), // timestamp when the CSFeeDistributorAddress SC was deployed:  https://hoodi.etherscan.io/tx/0xb5bf7cc66bc3b04eee6fb8ec650dd699d23b4ff53028fa5ec333d8e8fbe5201e
+			BlockChunkSize:                  blockChunkSize,
+			BlockScannerMinDistance:         blockScannerMinDistance,
+		}
 	case "holesky":
 		// Configure default values for the holesky network
 		if wsURL == "" {
@@ -180,12 +222,11 @@ func LoadNetworkConfig() (Config, error) {
 			EtherscanURL:                    "https://holesky.etherscan.io",
 			BeaconchainURL:                  beaconchainURL,
 			BeaconchaUrl:                    "https://holesky.beaconcha.in",
-			CSMUIURL:                        "https://csm.testnet.fi",
+			CSMUIURL:                        "https://csm-holesky.testnet.fi",
 			StakersUiUrl:                    "http://my.dappnode/stakers/holesky",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
 			CSFeeOracleAddress:              common.HexToAddress("0xaF57326C7d513085051b50912D51809ECC5d98Ee"),
-			CSAccountingAddress:             common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
 			VEBOAddress:                     common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
@@ -228,7 +269,6 @@ func LoadNetworkConfig() (Config, error) {
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
 			CSFeeOracleAddress:              common.HexToAddress("0x4D4074628678Bd302921c20573EEa1ed38DdF7FB"),
-			CSAccountingAddress:             common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
 			VEBOAddress:                     common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
