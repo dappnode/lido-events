@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"lido-events/internal/adapters/beaconchain"
-	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
 	csfeeoracle "lido-events/internal/adapters/csFeeOracle"
 	csmodule "lido-events/internal/adapters/csModule"
@@ -86,13 +85,9 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
 	}
-	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
-	}
 
 	// Initialize domain services
-	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
+	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, notifierAdapter)
 	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)

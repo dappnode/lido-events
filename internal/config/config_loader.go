@@ -227,7 +227,6 @@ func LoadNetworkConfig() (Config, error) {
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
 			CSFeeOracleAddress:              common.HexToAddress("0xaF57326C7d513085051b50912D51809ECC5d98Ee"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
 			VEBOAddress:                     common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
 			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x2d86C5855581194a386941806E38cA119E50aEA3"),

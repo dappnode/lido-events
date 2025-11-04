@@ -10,18 +10,16 @@ import (
 )
 
 type EventsWatcher struct {
-	veboPort             ports.VeboPort
-	csModulePort         ports.CsModulePort
-	csFeeDistributorPort ports.CsFeeDistributorPort
-	notifierPort         ports.NotifierPort
-	servicePrefix        string
+	veboPort      ports.VeboPort
+	csModulePort  ports.CsModulePort
+	notifierPort  ports.NotifierPort
+	servicePrefix string
 }
 
-func NewEventsWatcherService(veboPort ports.VeboPort, csModulePort ports.CsModulePort, csFeeDistributorPort ports.CsFeeDistributorPort, notifierPort ports.NotifierPort) *EventsWatcher {
+func NewEventsWatcherService(veboPort ports.VeboPort, csModulePort ports.CsModulePort, notifierPort ports.NotifierPort) *EventsWatcher {
 	return &EventsWatcher{
 		veboPort,
 		csModulePort,
-		csFeeDistributorPort,
 		notifierPort,
 		"EventsWatcher",
 	}
@@ -44,7 +42,6 @@ func (ew *EventsWatcher) WatchAllEvents(ctx context.Context, wg *sync.WaitGroup)
 	}
 
 	startWatcher(ew.watchCsModuleEvents, "CSModule")
-	startWatcher(ew.watchCsFeeDistributorEvents, "CsFeeDistributor")
 	startWatcher(ew.watchReportSubmittedEvents, "ReportSubmitted")
 
 	// Monitor for errors and context cancellation
@@ -88,10 +85,6 @@ func (ew *EventsWatcher) watchCsModuleEvents(ctx context.Context) error {
 	}
 }
 
-func (ew *EventsWatcher) watchCsFeeDistributorEvents(ctx context.Context) error {
-	return ew.csFeeDistributorPort.WatchCsFeeDistributorEvents(ctx, ew.HandleDistributionDataUpdated)
-}
-
 // Handlers Vebo
 
 func (ew *EventsWatcher) HandleReportSubmittedEvent(reportSubmitted *domain.VeboReportSubmitted) error {
@@ -102,19 +95,6 @@ func (ew *EventsWatcher) HandleReportSubmittedEvent(reportSubmitted *domain.Vebo
 	// 	logger.ErrorWithPrefix(ew.servicePrefix, "Error sending reportSubmitted event notification", err)
 	// 	return err
 	// }
-
-	return nil
-}
-
-// Handlers csFeeDistributor
-
-func (ew *EventsWatcher) HandleDistributionDataUpdated(rewardsDistributed *domain.CsfeedistributorDistributionDataUpdated) error {
-	// send the notification message
-	message := fmt.Sprintf("- 📈 New rewards distributed. Total claimable shares: %s", rewardsDistributed.TotalClaimableShares)
-	if err := ew.notifierPort.SendNotification(message); err != nil {
-		logger.ErrorWithPrefix(ew.servicePrefix, "Error sending rewardsDistributed event notification", err)
-		return err
-	}
 
 	return nil
 }
