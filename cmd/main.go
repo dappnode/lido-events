@@ -10,8 +10,6 @@ import (
 
 	"lido-events/internal/adapters/beaconchain"
 	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
-	csfeeoracle "lido-events/internal/adapters/csFeeOracle"
-	csmodule "lido-events/internal/adapters/csModule"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
@@ -77,27 +75,14 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
-	csFeeOracleAdapter, err := csfeeoracle.NewCsFeeOracleAdapter(rpcClient, networkConfig.CSFeeOracleAddress, networkConfig.BlockChunkSize)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeOracleAdapter: %v", err)
-	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(wsClient, rpcClient, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
-	}
 
 	// Initialize domain services
-	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, notifierAdapter)
 	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
-	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt, networkConfig.BlockScannerMinDistance)
-	csFeeOracleEventsScannerService := services.NewCsFeeOracleEventsScanner(storageAdapter, executionAdapter, csFeeOracleAdapter, networkConfig.CsFeeDistributorBlockDeployment)
-	// relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
-
 	// Initialize API services
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csFeeOracleEventsScannerService, csModuleEventsScannerService, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
+	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
 
 	// Start API services
@@ -119,8 +104,6 @@ func main() {
 	exitRequestExecutionComplete := make(chan struct{})
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
-
-	go eventsWatcherService.WatchAllEvents(ctx, &wg)
 
 	// Handle OS signals for shutdown
 	handleShutdown(cancel, apiService, proxyService)

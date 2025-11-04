@@ -12,7 +12,6 @@ import (
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -26,22 +25,16 @@ type APIServerService struct {
 	notifierPort                       ports.NotifierPort
 	relaysUsedPort                     ports.RelaysUsedPort
 	relaysAllowedPort                  ports.RelaysAllowedPort
-	csFeeOracleEventsScanner           *CsFeeOracleEventsScanner
-	csModuleEventsScanner              *CsModuleEventsScanner
 	distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner
 	validatorExitRequestEventScanner   *ValidatorExitRequestEventScanner
 	pendingHashesLoader                *PendingHashesLoader
 	router                             *mux.Router
-	processingAddresses                sync.Map // To track NO events being processed by address
-	processingWithdrawals              sync.Map // To track withdrawals being processed by operator ID
 	processingExitRequests             sync.Map // To track exit requests being processed by operator ID
 	processingOperatorPerformance      sync.Map // To track operator performance being processed by operator ID
-	processingProcessingStarted        bool     // bool to track ProcessingStarted events being processed
-	processingPenalties                bool     // bool to track EL rewards stealing penalties being processed
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, csFeeOracleEventsScanner *CsFeeOracleEventsScanner, csModuleEventsScanner *CsModuleEventsScanner, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                             &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                      "API",
@@ -50,8 +43,6 @@ func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.Sto
 		notifierPort:                       notifierPort,
 		relaysUsedPort:                     relaysUsedPort,
 		relaysAllowedPort:                  relaysAllowedPort,
-		csFeeOracleEventsScanner:           csFeeOracleEventsScanner,
-		csModuleEventsScanner:              csModuleEventsScanner,
 		distributionLogUpdatedEventScanner: distributionLogUpdatedEventScanner,
 		validatorExitRequestEventScanner:   validatorExitRequestEventScanner,
 		pendingHashesLoader:                pendingHashesLoader,
@@ -92,19 +83,13 @@ func (s *APIServerService) Shutdown(ctx context.Context) {
 
 // SetupRoutes defines API endpoints and routes
 func (h *APIServerService) SetupRoutes() {
-	h.router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.updateTelegramConfig).Methods("POST", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/telegramConfig", h.getTelegramConfig).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/operatorId", h.addOperator).Methods("POST", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/operatorId", h.deleteOperator).Methods("DELETE", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/operator_performance", h.getOperatorPerformance).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/exit_requests", h.getExitRequests).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.getRelaysAllowed).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/relays_used", h.getRelaysUsed).Methods("GET", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/address_events", h.getAddressEvents).Methods("GET", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/withdrawals_submitted", h.getWithdrawalsSubmitted).Methods("GET", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/el_rewards_stealing_penalties_reported", h.getElRewardsStealingPenaltiesReported).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/pending_hashes", h.getPendingHashes).Methods("GET", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/processing_started", h.getProcessingStarted).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -113,44 +98,6 @@ func (h *APIServerService) SetupRoutes() {
 }
 
 // Handlers
-
-// getProcessingStarted retrieves the processing started events
-func (h *APIServerService) getProcessingStarted(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getProcessingStarted request received")
-	// Check if the processing started events are already being processed
-	if h.processingProcessingStarted {
-		logger.DebugWithPrefix(h.servicePrefix, "ProcessingStarted events are already being processed")
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Perform the scanning (synchronously)
-	if err := h.csFeeOracleEventsScanner.RunScan(h.ctx); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning ProcessingStarted events: %v", err)
-		writeErrorResponse(w, "Error scanning ProcessingStarted events", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Fetch the updated events
-	processingStartedEvents, err := h.storagePort.GetProcessingStartedEvents()
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching ProcessingStarted events: %v", err)
-		writeErrorResponse(w, "Error fetching ProcessingStarted events", http.StatusInternalServerError, err)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(processingStartedEvents)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getProcessingStarted: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
 
 // getPendingHashes retrieves the list of pending hashes for a given operator ID
 func (h *APIServerService) getPendingHashes(w http.ResponseWriter, r *http.Request) {
@@ -207,179 +154,6 @@ func (h *APIServerService) getPendingHashes(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
-
-// getElRewardsStealingPenaltiesReported retrieves the list of EL rewards stealing penalties reported
-func (h *APIServerService) getElRewardsStealingPenaltiesReported(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getElRewardsStealingPenaltiesReported request received")
-
-	// Check if the penalties are already being processed
-	if h.processingPenalties {
-		logger.DebugWithPrefix(h.servicePrefix, "EL rewards stealing penalties are already being processed")
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Mark the penalties as being processed
-	h.processingPenalties = true
-	defer func() {
-		h.processingPenalties = false // Clear when done
-	}()
-
-	// Perform the scanning (synchronously)
-	if err := h.csModuleEventsScanner.ScanElRewardsStealingPenaltyReported(h.ctx); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning EL rewards stealing penalties reported: %v", err)
-		writeErrorResponse(w, "Error scanning EL rewards stealing penalties reported", http.StatusInternalServerError, err)
-		return
-	}
-
-	penalties, err := h.storagePort.GetElRewardsStealingPenaltiesReported()
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching EL rewards stealing penalties reported: %v", err)
-		writeErrorResponse(w, "Error fetching EL rewards stealing penalties reported", http.StatusInternalServerError, err)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(penalties)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getElRewardsStealingPenaltiesReported: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
-
-// getWithdrawalsSubmitted retrieves the list of withdrawals submitted
-func (h *APIServerService) getWithdrawalsSubmitted(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getWithdrawalsSubmitted request received")
-
-	operatorId := r.URL.Query().Get("operatorId")
-	if operatorId == "" {
-		logger.ErrorWithPrefix(h.servicePrefix, "Missing operatorId in getWithdrawalsSubmitted request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	operatorIdNum := new(big.Int)
-	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getWithdrawalsSubmitted")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Check if the operator ID is already being processed
-	if _, exists := h.processingWithdrawals.Load(operatorIdNum.String()); exists {
-		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s is already being processed", operatorIdNum.String())
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Mark the operator ID as being processed
-	h.processingWithdrawals.Store(operatorIdNum.String(), struct{}{})
-	defer h.processingWithdrawals.Delete(operatorIdNum.String()) // Clear operator ID when done
-
-	// Perform the scanning (synchronously)
-	if err := h.csModuleEventsScanner.ScanWithdrawalsSubmittedEvents(h.ctx, operatorIdNum); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning withdrawals submitted: %v", err)
-		writeErrorResponse(w, "Error scanning withdrawals submitted", http.StatusInternalServerError, err)
-		return
-	}
-
-	withdrawals, err := h.storagePort.GetWithdrawals(operatorIdNum)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching withdrawals submitted: %v", err)
-		writeErrorResponse(w, "Error fetching withdrawals submitted", http.StatusInternalServerError, err)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(withdrawals)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getWithdrawalsSubmitted: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
-
-// getAddressEvents retrieves events for a given address
-func (h *APIServerService) getAddressEvents(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getAddressEvents request received")
-
-	// Check for optional boolean parameter "force"
-	force := r.URL.Query().Get("force")
-	// Default value
-	forceBool := false
-	// Convert to boolean only if force is not empty
-	if force != "" {
-		var err error
-		forceBool, err = strconv.ParseBool(force)
-		if err != nil {
-			writeErrorResponse(w, "Invalid force parameter", http.StatusBadRequest, err)
-			return
-		}
-	}
-
-	address := r.URL.Query().Get("address")
-	if address == "" {
-		writeErrorResponse(w, "address is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Validate address
-	if !common.IsHexAddress(address) {
-		logger.ErrorWithPrefix(h.servicePrefix, "Invalid address format in getAddressEvents: %s", address)
-		writeErrorResponse(w, "Invalid address format", http.StatusBadRequest, nil)
-		return
-	}
-	addressValidated := common.HexToAddress(address)
-
-	// Check if the address is already being processed
-	if _, exists := h.processingAddresses.Load(addressValidated.Hex()); exists {
-		logger.DebugWithPrefix(h.servicePrefix, "Address %s is already being processed", addressValidated.Hex())
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Mark the address as being processed
-	h.processingAddresses.Store(addressValidated.Hex(), struct{}{})
-	defer h.processingAddresses.Delete(addressValidated.Hex()) // Clear address when done
-
-	// Perform the scanning (synchronously)
-	if err := h.csModuleEventsScanner.ScanAddressEvents(h.ctx, addressValidated, forceBool); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning address events: %v", err)
-		writeErrorResponse(w, "Error scanning address events", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Fetch the updated events for the address
-	addressEvents, err := h.storagePort.GetAddressEvents(addressValidated)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching address events: %v", err)
-		writeErrorResponse(w, "Error fetching address events", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Respond with the scanned and fetched data
-	jsonResponse, err := json.Marshal(addressEvents)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getAddressEvents: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
 }
 

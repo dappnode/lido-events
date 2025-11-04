@@ -3,8 +3,6 @@ package ports
 import (
 	"lido-events/internal/application/domain"
 	"math/big"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type StoragePort interface {
@@ -39,16 +37,6 @@ type StoragePort interface {
 	SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(block uint64) error
 	GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error)
 	SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error
-
-	// addresses
-	GetAddressLastProcessedBlock(address common.Address) (uint64, error)
-	SaveAddressLastProcessedBlock(address common.Address, block uint64) error
-	GetAddressEvents(address common.Address) (domain.AddressEvents, error)
-	SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error
-	SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error
-	SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error
-	SetNodeOperatorRewardAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error
-	SetNodeOperatorManagerAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error
 
 	// telegram
 	GetTelegramConfig() (domain.TelegramConfig, error)
