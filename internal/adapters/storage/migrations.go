@@ -2,9 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"lido-events/internal/application/domain"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Migration defines the function signature for migrations
@@ -62,11 +59,8 @@ func migrateToVersion1(db *Database) error {
 
 	// Reset the database with only these fields
 	*db = Database{
-		Version:                            1,
-		Telegram:                           db.Telegram,
-		Operators:                          newOperators,
-		Addresses:                          make(map[common.Address]domain.AddressEvents),
-		ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{},
+		Version:   1,
+		Operators: newOperators,
 	}
 
 	return nil

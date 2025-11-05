@@ -26,25 +26,4 @@ type StoragePort interface {
 	GetExitRequests(operatorID *big.Int) (domain.ExitRequests, error)
 	UpdateExitRequestStatus(operatorID *big.Int, validatorIndex string, status domain.ValidatorStatus) error
 	DeleteExitRequest(operatorID *big.Int, validatorIndex string) error
-	// Withdrawals
-	GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error)
-	SaveWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int, block uint64) error
-	GetWithdrawals(operatorID *big.Int) ([]domain.CsmoduleWithdrawalSubmitted, error)
-	SaveWithdrawal(operatorID *big.Int, withdrawal domain.CsmoduleWithdrawalSubmitted) error
-
-	// Penalties
-	GetElRewardsStealingPenaltiesReportedLastProcessedBlock() (uint64, error)
-	SaveElRewardsStealingPenaltiesReportedLastProcessedBlock(block uint64) error
-	GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error)
-	SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error
-
-	// telegram
-	GetTelegramConfig() (domain.TelegramConfig, error)
-	SaveTelegramConfig(config domain.TelegramConfig) error
-
-	// ProcessingStarted events
-	GetProcessingStartedLastProcessedBlock() (uint64, error)
-	SaveProcessingStartedLastProcessedBlock(block uint64) error
-	GetProcessingStartedEvents() ([]domain.BindingsProcessingStarted, error)
-	SaveProcessingStartedEvent(event domain.BindingsProcessingStarted) error
 }

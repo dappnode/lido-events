@@ -30,10 +30,6 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 				Exits:              make(domain.ExitRequests), // Initialize Exits map
 				LastProcessedBlock: 0,
 			},
-			WithdrawalsSubmitted: WithdrawalsSubmitted{
-				Withdrawals:        []domain.CsmoduleWithdrawalSubmitted{}, // Initialize Withdrawals slice
-				LastProcessedBlock: 0,
-			},
 		}
 
 		// Save changes to disk
@@ -131,8 +127,7 @@ func (fs *Storage) SaveReport(operatorID *big.Int, report domain.Report) error {
 			DistributionLogsUpdated: DistributionLogsUpdated{
 				Reports: make(map[string]domain.Report), // Initialize Reports map
 			},
-			ExitsRequests:        ExitsRequests{},
-			WithdrawalsSubmitted: WithdrawalsSubmitted{},
+			ExitsRequests: ExitsRequests{},
 		}
 	} else if operatorData.DistributionLogsUpdated.Reports == nil {
 		// Initialize Reports if it's nil in an existing entry
@@ -322,7 +317,6 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 		operatorData = OperatorData{
 			DistributionLogsUpdated: DistributionLogsUpdated{},
 			ExitsRequests:           ExitsRequests{},
-			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
 		}
 	}
 
@@ -399,85 +393,6 @@ func (fs *Storage) DeleteExitRequest(operatorID *big.Int, validatorIndex string)
 	delete(operatorData.ExitsRequests.Exits, validatorIndex)
 
 	// Save the updated OperatorData back to the database
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// GetWithdrawalsSubmittedLastProcessedBlock retrieves the last processed block for the WithdrawalsSubmitted event for a specific operator ID.
-func (fs *Storage) GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return 0, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return 0, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.WithdrawalsSubmitted.LastProcessedBlock, nil
-}
-
-// SaveWithdrawalsSubmittedLastProcessedBlock updates the last processed block for the WithdrawalsSubmitted event for a specific operator ID.
-func (fs *Storage) SaveWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int, block uint64) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	operatorData.WithdrawalsSubmitted.LastProcessedBlock = block
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// GetWithdrawals retrieves all WithdrawalsSubmitted events for a specific operator ID.
-func (fs *Storage) GetWithdrawals(operatorID *big.Int) ([]domain.CsmoduleWithdrawalSubmitted, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return nil, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return nil, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.WithdrawalsSubmitted.Withdrawals, nil
-}
-
-// SaveWithdrawal saves a WithdrawalSubmitted event for a specific operator ID.
-func (fs *Storage) SaveWithdrawal(operatorID *big.Int, withdrawal domain.CsmoduleWithdrawalSubmitted) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	if db.Operators == nil {
-		db.Operators = make(map[string]OperatorData)
-	}
-
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		operatorData = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{},
-			ExitsRequests:           ExitsRequests{},
-			WithdrawalsSubmitted:    WithdrawalsSubmitted{},
-		}
-	}
-
-	// Append the new withdrawal to the existing list
-	operatorData.WithdrawalsSubmitted.Withdrawals = append(operatorData.WithdrawalsSubmitted.Withdrawals, withdrawal)
 	db.Operators[opID] = operatorData
 
 	return fs.SaveDatabase(db)

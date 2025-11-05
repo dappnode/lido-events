@@ -29,12 +29,8 @@ type Config struct {
 	CORS []string
 
 	// Individual contract addresses
-	CSFeeOracleAddress            common.Address
-	CSAccountingAddress           common.Address
-	CSFeeDistributorAddress       common.Address
 	CSFeeDistributorImplAddress   common.Address
 	VEBOAddress                   common.Address
-	CSModuleAddress               common.Address
 	MEVBoostRelaysAllowListAddres common.Address
 
 	// Block number of the deployment of the VEBO contract and the CSFeeDistributor contract
@@ -184,14 +180,11 @@ func LoadNetworkConfig() (Config, error) {
 			StakersUiUrl:                    "http://my.dappnode/stakers/hoodi",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0xe7314f561B2e72f9543F1004e741bab6Fc51028B"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                     common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
 			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
 			VeboBlockDeployment:             uint64(750),
 			CsFeeDistributorBlockDeployment: uint64(4980),
-			CSModuleAddress:                 common.HexToAddress("0x79CEf36D84743222f37765204Bec41E92a93E59d"),
 			CSModuleTxReceipt:               common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
 			LidoKeysApiUrl:                  "https://keys-api-hoodi.testnet.fi",
 			ProxyApiPort:                    proxyApiPort,
@@ -226,14 +219,11 @@ func LoadNetworkConfig() (Config, error) {
 			StakersUiUrl:                    "http://my.dappnode/stakers/ethereum",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0x4D4074628678Bd302921c20573EEa1ed38DdF7FB"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
 			VEBOAddress:                     common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
 			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
 			VeboBlockDeployment:             uint64(17172556),
 			CsFeeDistributorBlockDeployment: uint64(20935462),
-			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
 			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
 			ProxyApiPort:                    proxyApiPort,

@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Storage handles file-based storage for configuration and operator data
@@ -50,18 +48,13 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 
 // Database structure for the new storage format
 type Database struct {
-	Version                            int                                     `json:"version"`
-	Telegram                           domain.TelegramConfig                   `json:"telegram"`
-	Operators                          map[string]OperatorData                 `json:"operators"`                          // indexed by operator ID
-	Addresses                          map[common.Address]domain.AddressEvents `json:"addresses"`                          // indexed by Ethereum address
-	ElRewardsStealingPenaltiesReported ElRewardsStealingPenaltiesReported      `json:"elRewardsStealingPenaltiesReported"` // not indexed by anything
-	ProcessingStarted                  ProcessingStarted                       `json:"processingStarted"`                  // not indexed by anything
+	Version   int                     `json:"version"`
+	Operators map[string]OperatorData `json:"operators"` // indexed by operator ID
 }
 
 type OperatorData struct {
 	DistributionLogsUpdated DistributionLogsUpdated `json:"distributionLogsUpdated"`
 	ExitsRequests           ExitsRequests           `json:"exitsRequests"`
-	WithdrawalsSubmitted    WithdrawalsSubmitted    `json:"withdrawalsSubmitted"`
 }
 
 type DistributionLogsUpdated struct {
@@ -75,21 +68,6 @@ type ExitsRequests struct {
 	Exits              domain.ExitRequests `json:"exits"`
 }
 
-type WithdrawalsSubmitted struct {
-	LastProcessedBlock uint64                               `json:"lastProcessedBlock"`
-	Withdrawals        []domain.CsmoduleWithdrawalSubmitted `json:"withdrawals"`
-}
-
-type ElRewardsStealingPenaltiesReported struct {
-	LastProcessedBlock uint64                                            `json:"lastProcessedBlock"`
-	Penalties          []domain.CsmoduleELRewardsStealingPenaltyReported `json:"penalties"`
-}
-
-type ProcessingStarted struct {
-	LastProcessedBlock uint64                             `json:"lastProcessedBlock"`
-	Events             []domain.BindingsProcessingStarted `json:"events"`
-}
-
 func (fs *Storage) LoadDatabase() (Database, error) {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
@@ -97,13 +75,7 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 	// Initialize an empty Database with default values
 	db := Database{
 		Version:   1,
-		Telegram:  domain.TelegramConfig{},
 		Operators: make(map[string]OperatorData),
-		Addresses: make(map[common.Address]domain.AddressEvents),
-		ElRewardsStealingPenaltiesReported: ElRewardsStealingPenaltiesReported{
-			Penalties:          []domain.CsmoduleELRewardsStealingPenaltyReported{},
-			LastProcessedBlock: 0,
-		},
 	}
 
 	file, err := os.ReadFile(fs.DBFile)

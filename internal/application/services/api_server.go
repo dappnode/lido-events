@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 
-	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
 
@@ -197,64 +196,6 @@ func (h *APIServerService) getRelaysUsed(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
-}
-
-// getTelegramConfig retrieves the Telegram configuration
-func (h *APIServerService) getTelegramConfig(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getTelegramConfig request received")
-	config, err := h.storagePort.GetTelegramConfig()
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching Telegram configuration: %v", err)
-		writeErrorResponse(w, "Error fetching Telegram configuration", http.StatusInternalServerError, err)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(config)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in GetTelegramConfig: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
-
-// updateTelegramConfig handles updates to the Telegram configuration
-func (h *APIServerService) updateTelegramConfig(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "updateTelegramConfig request received")
-	var req struct {
-		Token  string `json:"token"`
-		UserID int64  `json:"userId"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnWithPrefix(h.servicePrefix, "Invalid request body in updateTelegramConfig: %v", err)
-		writeErrorResponse(w, "Invalid request body", http.StatusBadRequest, err)
-		return
-	}
-
-	if req.Token == "" && req.UserID == 0 {
-		logger.DebugWithPrefix(h.servicePrefix, "Missing token and userId in updateTelegramConfig request")
-		writeErrorResponse(w, "At least one of token or userId must be provided", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Update storage
-	if err := h.storagePort.SaveTelegramConfig(domain.TelegramConfig(req)); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Telegram configuration: %v", err)
-		writeErrorResponse(w, "Failed to update Telegram configuration", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Synchronously update the Telegram bot configuration
-	if err := h.notifierPort.UpdateBotConfig(); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Telegram bot configuration: %v", err)
-		writeErrorResponse(w, "Failed to update Telegram bot configuration", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // deleteOperator handles deletion of an operator ID

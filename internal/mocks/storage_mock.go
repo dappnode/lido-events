@@ -112,16 +112,6 @@ func (m *MockStoragePort) SaveElRewardsStealingPenaltiesReportedLastProcessedBlo
 	return args.Error(0)
 }
 
-func (m *MockStoragePort) GetElRewardsStealingPenaltiesReported() ([]domain.CsmoduleELRewardsStealingPenaltyReported, error) {
-	args := m.Called()
-	return args.Get(0).([]domain.CsmoduleELRewardsStealingPenaltyReported), args.Error(1)
-}
-
-func (m *MockStoragePort) SaveElRewardsStealingPenaltyReported(penalty domain.CsmoduleELRewardsStealingPenaltyReported) error {
-	args := m.Called(penalty)
-	return args.Error(0)
-}
-
 func (m *MockStoragePort) GetWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int) (uint64, error) {
 	args := m.Called(operatorID)
 	return args.Get(0).(uint64), args.Error(1)
@@ -129,16 +119,6 @@ func (m *MockStoragePort) GetWithdrawalsSubmittedLastProcessedBlock(operatorID *
 
 func (m *MockStoragePort) SaveWithdrawalsSubmittedLastProcessedBlock(operatorID *big.Int, block uint64) error {
 	args := m.Called(operatorID, block)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) GetWithdrawals(operatorID *big.Int) ([]domain.CsmoduleWithdrawalSubmitted, error) {
-	args := m.Called(operatorID)
-	return args.Get(0).([]domain.CsmoduleWithdrawalSubmitted), args.Error(1)
-}
-
-func (m *MockStoragePort) SaveWithdrawal(operatorID *big.Int, withdrawal domain.CsmoduleWithdrawalSubmitted) error {
-	args := m.Called(operatorID, withdrawal)
 	return args.Error(0)
 }
 
@@ -151,67 +131,4 @@ func (m *MockStoragePort) GetAddressLastProcessedBlock(address common.Address) (
 func (m *MockStoragePort) SaveAddressLastProcessedBlock(address common.Address, block uint64) error {
 	args := m.Called(address, block)
 	return args.Error(0)
-}
-
-func (m *MockStoragePort) GetAddressEvents(address common.Address) (domain.AddressEvents, error) {
-	args := m.Called(address)
-	return args.Get(0).(domain.AddressEvents), args.Error(1)
-}
-
-func (m *MockStoragePort) SetNodeOperatorAdded(address common.Address, event domain.CsmoduleNodeOperatorAdded) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) SetNodeOperatorManagerAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChanged) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) SetNodeOperatorRewardAddressChanged(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChanged) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) SetNodeOperatorRewardAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorRewardAddressChangeProposed) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) SetNodeOperatorManagerAddressChangeProposed(address common.Address, event domain.CsmoduleNodeOperatorManagerAddressChangeProposed) error {
-	args := m.Called(address, event)
-	return args.Error(0)
-}
-
-// Telegram
-func (m *MockStoragePort) GetTelegramConfig() (domain.TelegramConfig, error) {
-	args := m.Called()
-	return args.Get(0).(domain.TelegramConfig), args.Error(1)
-}
-
-func (m *MockStoragePort) SaveTelegramConfig(config domain.TelegramConfig) error {
-	args := m.Called(config)
-	return args.Error(0)
-}
-
-// ProcessingStarted
-
-func (m *MockStoragePort) GetProcessingStartedLastProcessedBlock() (uint64, error) {
-	args := m.Called()
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-func (m *MockStoragePort) SaveProcessingStartedLastProcessedBlock(block uint64) error {
-	args := m.Called(block)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) SaveProcessingStartedEvent(event domain.BindingsProcessingStarted) error {
-	args := m.Called(event)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) GetProcessingStartedEvents() ([]domain.BindingsProcessingStarted, error) {
-	args := m.Called()
-	return args.Get(0).([]domain.BindingsProcessingStarted), args.Error(1)
 }
