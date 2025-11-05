@@ -199,47 +199,6 @@ func LoadNetworkConfig() (Config, error) {
 			BlockChunkSize:                  blockChunkSize,
 			BlockScannerMinDistance:         blockScannerMinDistance,
 		}
-	case "holesky":
-		// Configure default values for the holesky network
-		if wsURL == "" {
-			wsURL = "ws://execution.holesky.dncore.dappnode:8546"
-		}
-		if rpcURL == "" {
-			rpcURL = "http://execution.holesky.dncore.dappnode:8545"
-		}
-		if beaconchainURL == "" {
-			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500"
-		}
-		config = Config{
-			DBDirectory:                     dbDirectory,
-			MevBoostDnpName:                 "mev-boost-holesky.dnp.dappnode.eth",
-			DappmanagerUrl:                  dappmanagerUrl,
-			SignerUrl:                       "http://signer.holesky.dncore.dappnode:9000",
-			IpfsUrl:                         ipfsUrl,
-			WsURL:                           wsURL,
-			RpcUrl:                          rpcURL,
-			CSMStakingModuleID:              big.NewInt(4),
-			EtherscanURL:                    "https://holesky.etherscan.io",
-			BeaconchainURL:                  beaconchainURL,
-			BeaconchaUrl:                    "https://holesky.beaconcha.in",
-			CSMUIURL:                        "https://csm-holesky.testnet.fi",
-			StakersUiUrl:                    "http://my.dappnode/stakers/holesky",
-			ApiPort:                         apiPort,
-			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0xaF57326C7d513085051b50912D51809ECC5d98Ee"),
-			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
-			VEBOAddress:                     common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
-			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x2d86C5855581194a386941806E38cA119E50aEA3"),
-			VeboBlockDeployment:             uint64(30701),
-			CsFeeDistributorBlockDeployment: uint64(1774650),
-			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
-			CSModuleTxReceipt:               common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26"),
-			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
-			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1695902400),
-			BlockChunkSize:                  blockChunkSize,
-			BlockScannerMinDistance:         blockScannerMinDistance,
-		}
 	case "mainnet":
 		// Configure default values for the mainnet
 		if wsURL == "" {
