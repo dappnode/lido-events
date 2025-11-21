@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"lido-events/internal/application/domain"
-	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,9 +12,8 @@ import (
 
 // Storage handles file-based storage for configuration and operator data
 type Storage struct {
-	DBFile              string
-	mu                  sync.RWMutex // RWMutex for concurrent access
-	operatorIdListeners []chan []*big.Int
+	DBFile string
+	mu     sync.RWMutex // RWMutex for concurrent access
 }
 
 // NewStorageAdapter creates a new instance of Storage and ensures the DB directory exists

@@ -9,7 +9,6 @@ type StoragePort interface {
 	// node operators
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error
-	RegisterOperatorIdListener() chan []*big.Int
 	DeleteOperator(operatorID string) error
 	// reports
 	SaveReport(operatorID *big.Int, report domain.Report) error
