@@ -1,0 +1,10 @@
+- [ ] Implement notifier adapter
+  - notifications:
+    - balck-listes relay used
+    - exit requested
+    - exit submitted
+- [ ] Review DB
+- [ ] Review all the smart contracts
+- [ ] Fetch ipfs hashes from smart contract instead of scanning events
+- [ ] Consider implementing composite adapters for:
+  - [ ] exit validator. Do not use beaconchain and exit adapters but instead use a wrapper that uses both.
