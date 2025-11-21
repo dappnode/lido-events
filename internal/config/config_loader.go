@@ -11,6 +11,8 @@ import (
 )
 
 type Config struct {
+	Network string
+
 	DBDirectory        string
 	MevBoostDnpName    string
 	DappmanagerUrl     string
@@ -25,6 +27,7 @@ type Config struct {
 	CSMUIURL           string
 	StakersUiUrl       string
 	ApiPort            uint64
+	LidoDnpName        string
 
 	CORS []string
 
@@ -165,6 +168,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.hoodi.dncore.dappnode:3500"
 		}
 		config = Config{
+			Network:                         network,
 			DBDirectory:                     dbDirectory,
 			MevBoostDnpName:                 "mev-boost-hoodi.dnp.dappnode.eth",
 			DappmanagerUrl:                  dappmanagerUrl,
@@ -179,6 +183,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSMUIURL:                        "https://csm.testnet.fi",
 			StakersUiUrl:                    "http://my.dappnode/stakers/hoodi",
 			ApiPort:                         apiPort,
+			LidoDnpName:                     "llido-csm-holesky.dnp.dappnode.eth",
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                     common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
@@ -204,6 +209,7 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500"
 		}
 		config = Config{
+			Network:                         network,
 			DBDirectory:                     dbDirectory,
 			MevBoostDnpName:                 "mev-boost.dnp.dappnode.eth",
 			DappmanagerUrl:                  dappmanagerUrl,
@@ -217,6 +223,7 @@ func LoadNetworkConfig() (Config, error) {
 			BeaconchaUrl:                    "https://beaconcha.in",
 			CSMUIURL:                        "https://csm.lido.fi",
 			StakersUiUrl:                    "http://my.dappnode/stakers/ethereum",
+			LidoDnpName:                     "llido-csm-mainnet.dnp.dappnode.eth",
 			ApiPort:                         apiPort,
 			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
 			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
