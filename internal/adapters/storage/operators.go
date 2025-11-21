@@ -36,9 +36,6 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 		if err := fs.SaveDatabase(db); err != nil {
 			return err
 		}
-
-		// Notify listeners about the new operator
-		fs.notifyOperatorIdListeners()
 	}
 
 	return nil // Operator ID already exists, no changes needed
@@ -58,7 +55,6 @@ func (fs *Storage) DeleteOperator(operatorID string) error {
 		if err := fs.SaveDatabase(db); err != nil {
 			return err
 		}
-		fs.notifyOperatorIdListeners() // Notify listeners of the change
 		return nil
 	}
 
@@ -84,29 +80,6 @@ func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 	}
 
 	return operatorIDs, nil
-}
-
-// RegisterOperatorIdListener registers a channel to receive updates when operator IDs change.
-func (fs *Storage) RegisterOperatorIdListener() chan []*big.Int {
-	updateChan := make(chan []*big.Int, 1)
-	fs.operatorIdListeners = append(fs.operatorIdListeners, updateChan)
-	return updateChan
-}
-
-// notifyOperatorIdListeners sends updates to all registered listeners of operator ID changes.
-func (fs *Storage) notifyOperatorIdListeners() {
-	operatorIds, err := fs.GetOperatorIds()
-	if err != nil {
-		return
-	}
-
-	for _, listener := range fs.operatorIdListeners {
-		select {
-		case listener <- operatorIds:
-		default:
-			// Ignore if channel is full to prevent blocking
-		}
-	}
 }
 
 // SaveReport saves report data for a specific operator ID, using the frame from the report.
