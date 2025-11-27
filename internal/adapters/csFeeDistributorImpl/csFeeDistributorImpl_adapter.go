@@ -23,7 +23,6 @@ func NewCsFeeDistributorImplAdapter(
 	csFeeDistributorAddress common.Address,
 	blockChunkSize uint64,
 ) (*CsFeeDistributorImplAdapter, error) {
-
 	return &CsFeeDistributorImplAdapter{
 		rpcClient:               rpcClient,
 		CsFeeDistributorAddress: csFeeDistributorAddress,
