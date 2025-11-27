@@ -54,10 +54,8 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
 	}
-	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
-	if err != nil {
-		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)
-	}
+	notifier := notifier.NewNotifier(networkConfig.Network, networkConfig.LidoDnpName)
+
 	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	if err != nil {
@@ -77,12 +75,12 @@ func main() {
 	}
 
 	// Initialize domain services
-	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
-	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
-	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
-	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
+	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifier, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
+	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifier, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
+	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifier, exitValidatorAdapter, beaconchainAdapter)
+	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifier, ipfsAdapter, networkConfig.MinGenesisTime)
 	// Initialize API services
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
+	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifier, relaysUsedAdapter, relaysAllowedAdapter, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
 
 	// Start API services
