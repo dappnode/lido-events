@@ -9,29 +9,23 @@ import (
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type DistributionLogUpdatedEventScanner struct {
-	storagePort                     ports.StoragePort
-	notifierPort                    ports.NotifierPort
-	executionPort                   ports.ExecutionPort
-	csFeeDistributorImplPort        ports.CsFeeDistributorImplPort
-	csFeeDistributorBlockDeployment uint64
-	csModuleTxReceipt               common.Hash
-	mu                              sync.Mutex
-	servicePrefix                   string
+	storagePort          ports.StoragePort
+	notifierPort         ports.NotifierPort
+	executionPort        ports.ExecutionPort
+	csFeeDistributorPort ports.CsFeeDistributorPort
+	mu                   sync.Mutex
+	servicePrefix        string
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorImplPort ports.CsFeeDistributorImplPort, csFeeDistributorBlockDeployment uint64, csModuleTxReceipt common.Hash) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorPort ports.CsFeeDistributorPort) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,
 		executionPort,
-		csFeeDistributorImplPort,
-		csFeeDistributorBlockDeployment,
-		csModuleTxReceipt,
+		csFeeDistributorPort,
 		sync.Mutex{},
 		"DistributionLogUpdatedEventScanner",
 	}
@@ -78,17 +72,6 @@ func (ds *DistributionLogUpdatedEventScanner) RunScan(ctx context.Context) error
 	if isSyncing {
 		logger.InfoWithPrefix(ds.servicePrefix, "Node is syncing, skipping DistributionLogUpdated scan")
 		return fmt.Errorf("node is syncing")
-	}
-
-	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
-	receiptExists, err := ds.executionPort.GetTransactionReceiptExists(ds.csModuleTxReceipt)
-	if err != nil {
-		logger.ErrorWithPrefix(ds.servicePrefix, "Error checking if transaction receipt exists: %v", err)
-		return err
-	}
-	if !receiptExists {
-		logger.WarnWithPrefix(ds.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping DistributionLog event scan")
-		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
 	// Do a for loop over the operator ids

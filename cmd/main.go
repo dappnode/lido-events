@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"lido-events/internal/adapters/beaconchain"
-	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
+	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
@@ -65,9 +65,9 @@ func main() {
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
 	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
 	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(rpcClient, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
+	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(rpcClient, networkConfig.CSFeeDistributorProxyAddress)
 	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
 	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
 	if err != nil {
