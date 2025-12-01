@@ -72,7 +72,6 @@ To configure the app, set the following environment variables:
 | `API_PORT`                   | Port on which the API will be exposed. Default 8080                                                  |
 | `PROXY_API_PORT`             | Proxy port on which the Proxy API will be exposed. Default 8081                                      |
 | `BEACONCHAIN_URL`            | URL of the Ethereum beacon chain client. Default http://beacon-chain.<network>,dncore.dappnode:3500  |
-| `WS_URL`                     | URL of the Ethereum WebSocket client. Default ws://execution.<network>.dncore.dappnode:8546          |
 | `RPC_URL`                    | URL of the Ethereum RPC client. Default http://execution.<network>.dncore.dappnode:8545              |
 | `IPFS_URL`                   | URL of the IPFS gateway used to fetch logs. Default http://ipfs.dappnode:5001                        |
 | `LOG_LEVEL`                  | Logging level (e.g., `DEBUG`, `INFO`, `WARN`, `ERROR`). Default INFO                                 |
@@ -145,13 +144,13 @@ LOG_LEVEL=INFO
 - Integration
 
     ```bash
-    WS_URL="" go test -v -tags=integration ./...  
+    RPC_URL="" go test -v -tags=integration ./...  
     ```
 
 - Integration with race conditions
 
     ```bash
-    WS_URL="" go test --race -v -tags=integration ./...  
+    RPC_URL="" go test --race -v -tags=integration ./...  
     ```
 
 - Unit

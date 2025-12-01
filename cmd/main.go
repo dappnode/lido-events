@@ -41,14 +41,10 @@ func main() {
 	}
 	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
-	// Initiate RPC and Ws Ethereum clients
+	// Initiate RPC Ethereum clients
 	rpcClient, err := ethclient.Dial(networkConfig.RpcUrl)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize RPC client: %v", err)
-	}
-	wsClient, err := ethclient.Dial(networkConfig.WsURL)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize WS client: %v", err)
 	}
 
 	exitsStorage, err := exits.NewAdapter(networkConfig.DBDirectory)
@@ -74,7 +70,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, exitsStorage, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
+	veboAdapter, err := vebo.NewVeboAdapter(rpcClient, networkConfig.VEBOAddress, exitsStorage, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}

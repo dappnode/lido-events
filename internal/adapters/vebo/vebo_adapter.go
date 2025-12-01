@@ -14,7 +14,6 @@ import (
 )
 
 type VeboAdapter struct {
-	WsClient        *ethclient.Client
 	RpcClient       *ethclient.Client
 	VeboAddress     common.Address
 	StorageAdapter  ports.ExitsStorage
@@ -23,7 +22,6 @@ type VeboAdapter struct {
 }
 
 func NewVeboAdapter(
-	wsClient *ethclient.Client,
 	rpcClient *ethclient.Client,
 	veboAddress common.Address,
 	storageAdapter ports.ExitsStorage,
@@ -31,7 +29,6 @@ func NewVeboAdapter(
 	stakingModuleId *big.Int,
 ) (*VeboAdapter, error) {
 	return &VeboAdapter{
-		WsClient:        wsClient,
 		RpcClient:       rpcClient,
 		VeboAddress:     veboAddress,
 		StorageAdapter:  storageAdapter,
@@ -95,35 +92,6 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 			return fmt.Errorf("error scanning block range %d to %d: %w", currentStart, currentEnd, err)
 		}
 	}
-
-	return nil
-}
-
-// WatchReportSubmittedEvents subscribes to Ethereum events and handles them.
-func (va *VeboAdapter) WatchReportSubmittedEvents(ctx context.Context, handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error) error {
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.WsClient)
-	if err != nil {
-		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
-	}
-
-	// Watch for ReportSubmitted events
-	reportSubmittedChan := make(chan *domain.VeboReportSubmitted)
-	subReport, err := veboContract.WatchReportSubmitted(&bind.WatchOpts{Context: ctx}, reportSubmittedChan, []*big.Int{})
-	if err != nil {
-		return fmt.Errorf("failed to subscribe to ReportSubmitted events: %w", err)
-	}
-
-	go func() {
-		defer subReport.Unsubscribe()
-		for {
-			select {
-			case event := <-reportSubmittedChan:
-				handleReportSubmittedEvent(event)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
 
 	return nil
 }

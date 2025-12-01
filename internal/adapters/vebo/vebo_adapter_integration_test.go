@@ -21,15 +21,6 @@ import (
 
 // setupVeboAdapter initializes VeboAdapter with a mocked StoragePort
 func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, error) {
-	wsURL := os.Getenv("WS_URL")
-	if wsURL == "" {
-		t.Fatal("WS_URL environment variable not set")
-	}
-	wsClient, err := ethclient.Dial(wsURL)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
@@ -52,7 +43,7 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 	moduleId := big.NewInt(4)
 
 	// Initialize the adapter with the mock storage
-	adapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, veboAddress, mockStorage, blockChunkSize, moduleId)
+	adapter, err := vebo.NewVeboAdapter(rpcClient, veboAddress, mockStorage, blockChunkSize, moduleId)
 	return adapter, mockStorage, err
 }
 

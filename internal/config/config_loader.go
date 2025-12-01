@@ -18,7 +18,6 @@ type Config struct {
 	DappmanagerUrl     string
 	SignerUrl          string
 	IpfsUrl            string
-	WsURL              string
 	RpcUrl             string
 	CSMStakingModuleID *big.Int
 	EtherscanURL       string
@@ -122,7 +121,6 @@ func LoadNetworkConfig() (Config, error) {
 	}
 
 	// Retrieve other necessary environment variables
-	wsURL := os.Getenv("WS_URL")
 	rpcURL := os.Getenv("RPC_URL")
 	beaconchainURL := os.Getenv("BEACONCHAIN_URL")
 	logLevel := os.Getenv("LOG_LEVEL")
@@ -157,9 +155,6 @@ func LoadNetworkConfig() (Config, error) {
 	switch network {
 	case "hoodi":
 		// Configure default values for the hoodi network
-		if wsURL == "" {
-			wsURL = "ws://execution.hoodi.dncore.dappnode:8546"
-		}
 		if rpcURL == "" {
 			rpcURL = "http://execution.hoodi.dncore.dappnode:8545"
 		}
@@ -173,7 +168,6 @@ func LoadNetworkConfig() (Config, error) {
 			DappmanagerUrl:                dappmanagerUrl,
 			SignerUrl:                     "http://signer.hoodi.dncore.dappnode:9000",
 			IpfsUrl:                       ipfsUrl,
-			WsURL:                         wsURL,
 			RpcUrl:                        rpcURL,
 			CSMStakingModuleID:            big.NewInt(4),
 			EtherscanURL:                  "https://hoodi.etherscan.io",
@@ -197,9 +191,6 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
-		if wsURL == "" {
-			wsURL = "ws://execution.mainnet.dncore.dappnode:8546"
-		}
 		if rpcURL == "" {
 			rpcURL = "http://execution.mainnet.dncore.dappnode:8545"
 		}
@@ -213,7 +204,6 @@ func LoadNetworkConfig() (Config, error) {
 			DappmanagerUrl:                dappmanagerUrl,
 			SignerUrl:                     "http://signer.mainnet.dncore.dappnode:9000",
 			IpfsUrl:                       ipfsUrl,
-			WsURL:                         wsURL,
 			RpcUrl:                        rpcURL,
 			CSMStakingModuleID:            big.NewInt(3),
 			EtherscanURL:                  "https://etherscan.io",
