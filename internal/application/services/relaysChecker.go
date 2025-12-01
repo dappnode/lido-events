@@ -78,7 +78,7 @@ func (rcs *RelayCronService) monitorRelays(ctx context.Context) error {
 	// Send notifications if issues are found
 	if len(blacklistedRelays) > 0 {
 		message := rcs.buildBlacklistNotification(blacklistedRelays)
-		if err := rcs.notifierPort.SendNotification(message); err != nil {
+		if err := rcs.notifierPort.SendBlackListedNotification(message); err != nil {
 			return fmt.Errorf("failed to send blacklist notification: %w", err)
 		}
 	}
@@ -86,7 +86,7 @@ func (rcs *RelayCronService) monitorRelays(ctx context.Context) error {
 	// Change: Notify if no mandatory relays are being used
 	if mandatoryRelaysUsed == 0 {
 		message := rcs.buildMissingMandatoryNotification(allowedRelays)
-		if err := rcs.notifierPort.SendNotification(message); err != nil {
+		if err := rcs.notifierPort.SendMissingRelayNotification(message); err != nil {
 			return fmt.Errorf("failed to send missing mandatory relays notification: %w", err)
 		}
 	}

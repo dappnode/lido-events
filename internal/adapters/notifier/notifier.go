@@ -93,3 +93,87 @@ func (n *Notifier) sendNotification(payload NotificationPayload) error {
 	}
 	return nil
 }
+
+// SendMisingLogReceiptsNotification sends a notification about missing log receipts.
+func (n *Notifier) SendMissingLogReceiptsNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "⚠️ Missing Log Receipts Detected",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := High; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendValidatorExitRequestedNotification sends a notification about a validator exit request.
+func (n *Notifier) SendValidatorExitRequestedNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "🚪 Validator Exit Requested",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := Medium; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendValidatorExecutingExitNotification sends a notification about a validator executing exit.
+func (n *Notifier) SendValidatorExecutingExitNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "🏃 Validator Executing Exit",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := Medium; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendValidatorFailedExitNotification sends a notification about a validator failed exit.
+func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "❌ Validator Exit Failed",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := High; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendValidatorSucceedExitNotification sends a notification about a validator successful exit.
+func (n *Notifier) SendValidatorSucceedExitNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "✅ Validator Exit Succeeded",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := Medium; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendBlackListedNotification sends a notification about blacklisted relays.
+func (n *Notifier) SendBlackListedNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "🚨 Blacklisted Relays Detected",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := High; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
+
+// SendMissingRelayNotification sends a notification about missing mandatory relays.
+func (n *Notifier) SendMissingRelayNotification(message string) error {
+	payload := NotificationPayload{
+		Title:    "⚠️ No Mandatory Relays in Use",
+		Body:     message,
+		Category: &n.Category,
+		Priority: func() *Priority { p := Medium; return &p }(),
+		DnpName:  &n.LidoDnpName,
+	}
+	return n.sendNotification(payload)
+}
