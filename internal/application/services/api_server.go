@@ -17,35 +17,32 @@ import (
 
 // APIServerService starts and manages the API server
 type APIServerService struct {
-	server                             *http.Server
-	servicePrefix                      string
-	ctx                                context.Context
-	storagePort                        ports.ExitsStorage
-	notifierPort                       ports.NotifierPort
-	relaysUsedPort                     ports.RelaysUsedPort
-	relaysAllowedPort                  ports.RelaysAllowedPort
-	distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner
-	validatorExitRequestEventScanner   *ValidatorExitRequestEventScanner
-	pendingHashesLoader                *PendingHashesLoader
-	router                             *mux.Router
-	processingExitRequests             sync.Map // To track exit requests being processed by operator ID
-	processingOperatorPerformance      sync.Map // To track operator performance being processed by operator ID
+	server                           *http.Server
+	servicePrefix                    string
+	ctx                              context.Context
+	exitsStorage                     ports.ExitsStorage
+	performanceStorage               ports.PerformanceStorage
+	notifierPort                     ports.NotifierPort
+	relaysUsedPort                   ports.RelaysUsedPort
+	relaysAllowedPort                ports.RelaysAllowedPort
+	validatorExitRequestEventScanner *ValidatorExitRequestEventScanner
+	router                           *mux.Router
+	processingExitRequests           sync.Map // To track exit requests being processed by operator ID
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
-		server:                             &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
-		servicePrefix:                      "API",
-		ctx:                                ctx,
-		storagePort:                        storagePort,
-		notifierPort:                       notifierPort,
-		relaysUsedPort:                     relaysUsedPort,
-		relaysAllowedPort:                  relaysAllowedPort,
-		distributionLogUpdatedEventScanner: distributionLogUpdatedEventScanner,
-		validatorExitRequestEventScanner:   validatorExitRequestEventScanner,
-		pendingHashesLoader:                pendingHashesLoader,
-		router:                             mux.NewRouter(),
+		server:                           &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
+		servicePrefix:                    "API",
+		ctx:                              ctx,
+		exitsStorage:                     exitsStorage,
+		performanceStorage:               performanceStorage,
+		notifierPort:                     notifierPort,
+		relaysUsedPort:                   relaysUsedPort,
+		relaysAllowedPort:                relaysAllowedPort,
+		validatorExitRequestEventScanner: validatorExitRequestEventScanner,
+		router:                           mux.NewRouter(),
 	}
 
 	apiServer.SetupRoutes()
@@ -157,7 +154,7 @@ func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check if operator ID exists
-	operatorIds, err := h.storagePort.GetOperatorIds()
+	operatorIds, err := h.exitsStorage.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Failed to fetch operator IDs: %v", err)
 		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
@@ -178,7 +175,7 @@ func (h *APIServerService) deleteOperator(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.storagePort.DeleteOperator(operatorId); err != nil {
+	if err := h.exitsStorage.DeleteOperator(operatorId); err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Failed to delete Operator ID: %v", err)
 		writeErrorResponse(w, "Failed to delete Operator ID", http.StatusInternalServerError, err)
 		return
@@ -213,7 +210,7 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if operator ID already exists
-	operatorIds, err := h.storagePort.GetOperatorIds()
+	operatorIds, err := h.exitsStorage.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Failed to fetch operator IDs: %v", err)
 		writeErrorResponse(w, "Failed to fetch operator IDs", http.StatusInternalServerError, err)
@@ -228,7 +225,7 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := h.storagePort.SaveOperatorId(req.OperatorID); err != nil {
+	if err := h.exitsStorage.SaveOperatorId(req.OperatorID); err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Failed to update Operator ID: %v", err)
 		writeErrorResponse(w, "Failed to update Operator ID", http.StatusInternalServerError, err)
 		return
@@ -248,42 +245,8 @@ func (h *APIServerService) getOperatorPerformance(w http.ResponseWriter, r *http
 		return
 	}
 
-	operatorIdNum := new(big.Int)
-	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getOperatorPerformance")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Check if the operator ID is already being processed
-	if _, exists := h.processingOperatorPerformance.Load(operatorIdNum.String()); exists {
-		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s is already being processed", operatorIdNum.String())
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Mark the operator ID as being processed
-	h.processingOperatorPerformance.Store(operatorIdNum.String(), struct{}{})
-	defer h.processingOperatorPerformance.Delete(operatorIdNum.String()) // Clear operator ID when done
-
-	// Perform distribution log scanning (synchronously)
-	if err := h.distributionLogUpdatedEventScanner.RunScan(h.ctx); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning operator performance events: %v", err)
-		writeErrorResponse(w, "Error scanning operator performance events", http.StatusInternalServerError, err)
-		return
-	}
-
-	// Load the pending hashes
-	if err := h.pendingHashesLoader.LoadPendingHashes(true); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error loading pending hashes: %v", err)
-		writeErrorResponse(w, "Error loading pending hashes", http.StatusInternalServerError, err)
-		return
-	}
-
 	// Fetch operator performance data
-	report, err := h.storagePort.GetReports(operatorIdNum)
+	report, err := h.performanceStorage.GetNoPerformance(operatorId)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching Lido report: %v", err)
 		writeErrorResponse(w, "Error fetching Lido report", http.StatusInternalServerError, err)
@@ -339,7 +302,7 @@ func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	exitRequests, err := h.storagePort.GetExitRequests(operatorIdNum)
+	exitRequests, err := h.exitsStorage.GetExitRequests(operatorIdNum)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching exit requests: %v", err)
 		writeErrorResponse(w, "Error fetching exit requests", http.StatusInternalServerError, err)
