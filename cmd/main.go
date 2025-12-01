@@ -79,24 +79,21 @@ func main() {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
 
-	// Initialize domain services
+	// Initialize services
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, exitsStorage, notifier, exitValidatorAdapter, beaconchainAdapter)
-	pendingHashesLoaderService := services.NewHashesLoader(performanceStorage, notifier, csFeeDistributorAdapter, ipfsAdapter)
-	// Initialize API services
+	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributorAdapter, ipfsAdapter)
 	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, exitsStorage, performanceStorage, notifier, relaysUsedAdapter, relaysAllowedAdapter, validatorExitRequestScannerService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
+	relaysCheckerService := services.NewRelayCronService(networkConfig.StakersUiUrl, relaysAllowedAdapter, relaysUsedAdapter, notifier)
 
-	// Start API services
+	// Start servers
 	apiService.Start(&wg)
 	proxyService.Start(&wg)
 
-	// Start domain services
-	// go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
-
+	// Start services
+	go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 	go pendingHashesLoaderService.LoadHashesCron(ctx, 3*time.Hour, &wg)
-
-	// Add wait for config here?
 	exitRequestExecutionComplete := make(chan struct{})
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
