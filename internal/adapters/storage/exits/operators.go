@@ -1,4 +1,4 @@
-package _json
+package exits
 
 import (
 	"fmt"

@@ -13,14 +13,14 @@ import (
 
 type ValidatorEjector struct {
 	beaconchaUrl      string
-	storagePort       ports.StoragePort
+	storagePort       ports.ExitsStorage
 	notifierPort      ports.NotifierPort
 	exitValidatorPort ports.ExitValidator
 	beaconchainPort   ports.Beaconchain
 	servicePrefix     string
 }
 
-func NewValidatorEjectorService(beaconchaUrl string, storagePort ports.StoragePort, notifierPort ports.NotifierPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *ValidatorEjector {
+func NewValidatorEjectorService(beaconchaUrl string, storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *ValidatorEjector {
 	return &ValidatorEjector{
 		beaconchaUrl,
 		storagePort,

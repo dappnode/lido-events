@@ -14,7 +14,7 @@ import (
 )
 
 type ValidatorExitRequestEventScanner struct {
-	storagePort         ports.StoragePort
+	storagePort         ports.ExitsStorage
 	notifierPort        ports.NotifierPort
 	veboPort            ports.VeboPort
 	executionPort       ports.ExecutionPort
@@ -25,7 +25,7 @@ type ValidatorExitRequestEventScanner struct {
 	servicePrefix       string
 }
 
-func NewValidatorExitRequestEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64, csModuleTxReceipt common.Hash) *ValidatorExitRequestEventScanner {
+func NewValidatorExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64, csModuleTxReceipt common.Hash) *ValidatorExitRequestEventScanner {
 	return &ValidatorExitRequestEventScanner{
 		storagePort,
 		notifierPort,

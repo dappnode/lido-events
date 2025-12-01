@@ -20,7 +20,7 @@ type APIServerService struct {
 	server                             *http.Server
 	servicePrefix                      string
 	ctx                                context.Context
-	storagePort                        ports.StoragePort
+	storagePort                        ports.ExitsStorage
 	notifierPort                       ports.NotifierPort
 	relaysUsedPort                     ports.RelaysUsedPort
 	relaysAllowedPort                  ports.RelaysAllowedPort
@@ -33,7 +33,7 @@ type APIServerService struct {
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.StoragePort, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, distributionLogUpdatedEventScanner *DistributionLogUpdatedEventScanner, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, pendingHashesLoader *PendingHashesLoader, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                             &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                      "API",

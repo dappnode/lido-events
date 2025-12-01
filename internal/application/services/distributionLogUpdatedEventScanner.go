@@ -12,7 +12,7 @@ import (
 )
 
 type DistributionLogUpdatedEventScanner struct {
-	storagePort          ports.StoragePort
+	storagePort          ports.ExitsStorage
 	notifierPort         ports.NotifierPort
 	executionPort        ports.ExecutionPort
 	csFeeDistributorPort ports.CsFeeDistributorPort
@@ -20,7 +20,7 @@ type DistributionLogUpdatedEventScanner struct {
 	servicePrefix        string
 }
 
-func NewDistributionLogUpdatedEventScanner(storagePort ports.StoragePort, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorPort ports.CsFeeDistributorPort) *DistributionLogUpdatedEventScanner {
+func NewDistributionLogUpdatedEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, executionPort ports.ExecutionPort, csFeeDistributorPort ports.CsFeeDistributorPort) *DistributionLogUpdatedEventScanner {
 	return &DistributionLogUpdatedEventScanner{
 		storagePort,
 		notifierPort,

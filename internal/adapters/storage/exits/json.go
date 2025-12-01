@@ -1,4 +1,4 @@
-package _json
+package exits
 
 import (
 	"encoding/json"
@@ -36,17 +36,11 @@ func NewStorageAdapter(dbDirectory string) (*Storage, error) {
 		DBFile: dbFile,
 	}
 
-	// Run migrations
-	if err := RunMigrations(storage); err != nil {
-		return nil, fmt.Errorf("database migration failed: %w", err)
-	}
-
 	return storage, nil
 }
 
 // Database structure for the new storage format
 type Database struct {
-	Version   int                     `json:"version"`
 	Operators map[string]OperatorData `json:"operators"` // indexed by operator ID
 }
 
@@ -65,7 +59,6 @@ func (fs *Storage) LoadDatabase() (Database, error) {
 
 	// Initialize an empty Database with default values
 	db := Database{
-		Version:   1,
 		Operators: make(map[string]OperatorData),
 	}
 

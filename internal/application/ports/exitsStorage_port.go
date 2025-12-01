@@ -5,7 +5,7 @@ import (
 	"math/big"
 )
 
-type StoragePort interface {
+type ExitsStorage interface {
 	// node operators
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error

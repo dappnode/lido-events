@@ -17,7 +17,7 @@ type VeboAdapter struct {
 	WsClient        *ethclient.Client
 	RpcClient       *ethclient.Client
 	VeboAddress     common.Address
-	StorageAdapter  ports.StoragePort
+	StorageAdapter  ports.ExitsStorage
 	blockChunkSize  uint64
 	stakingModuleId *big.Int
 }
@@ -26,7 +26,7 @@ func NewVeboAdapter(
 	wsClient *ethclient.Client,
 	rpcClient *ethclient.Client,
 	veboAddress common.Address,
-	storageAdapter ports.StoragePort,
+	storageAdapter ports.ExitsStorage,
 	blockChunkSize uint64,
 	stakingModuleId *big.Int,
 ) (*VeboAdapter, error) {

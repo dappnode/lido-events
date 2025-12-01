@@ -13,7 +13,7 @@ import (
 )
 
 type PendingHashesLoader struct {
-	storagePort    ports.StoragePort
+	storagePort    ports.ExitsStorage
 	notifierPort   ports.NotifierPort
 	ipfsPort       ports.IpfsPort
 	minGenesisTime uint64
@@ -21,7 +21,7 @@ type PendingHashesLoader struct {
 	servicePrefix  string
 }
 
-func NewPendingHashesLoader(storagePort ports.StoragePort, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort, minGenesisTime uint64) *PendingHashesLoader {
+func NewPendingHashesLoader(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, ipfsPort ports.IpfsPort, minGenesisTime uint64) *PendingHashesLoader {
 	return &PendingHashesLoader{
 		storagePort,
 		notifierPort,
@@ -147,7 +147,7 @@ func (phl *PendingHashesLoader) LoadPendingHashes(giveUp bool) error {
 	return nil
 }
 
-func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, validators map[string]domain.Validator, originalReport domain.OriginalReport) {
+func (phl *PendingHashesLoader) CheckAndNotifyPerformance(operatorID *big.Int, validators map[string]domain.Validator, originalReport domain.Report) {
 	operatorData, exists := originalReport.Operators[operatorID.String()]
 	if !exists {
 		logger.WarnWithPrefix(phl.servicePrefix, "Operator ID %s not found in the original report, skipping", operatorID.String())
