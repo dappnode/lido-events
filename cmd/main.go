@@ -14,8 +14,7 @@ import (
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
-	relaysallowed "lido-events/internal/adapters/relaysAllowed"
-	relaysused "lido-events/internal/adapters/relaysUsed"
+	"lido-events/internal/adapters/relays"
 	"lido-events/internal/adapters/storage/exits"
 	"lido-events/internal/adapters/storage/performance"
 	"lido-events/internal/adapters/vebo"
@@ -57,8 +56,7 @@ func main() {
 	}
 	notifier := notifier.NewNotifier(networkConfig.Network, networkConfig.LidoDnpName)
 
-	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
-	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relays, err := relays.NewAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	if err != nil {
 		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
 	}
@@ -79,9 +77,9 @@ func main() {
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, exitsStorage, notifier, exitValidatorAdapter, beaconchainAdapter)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributorAdapter, ipfsAdapter)
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, exitsStorage, performanceStorage, notifier, relaysUsedAdapter, relaysAllowedAdapter, validatorExitRequestScannerService, networkConfig.CORS)
+	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, exitsStorage, performanceStorage, notifier, relays, validatorExitRequestScannerService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
-	relaysCheckerService := services.NewRelayCronService(networkConfig.StakersUiUrl, relaysAllowedAdapter, relaysUsedAdapter, notifier)
+	relaysCheckerService := services.NewRelayCronService(networkConfig.StakersUiUrl, relays, notifier)
 
 	// Start servers
 	apiService.Start(&wg)

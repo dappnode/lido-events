@@ -23,15 +23,14 @@ type APIServerService struct {
 	exitsStorage                     ports.ExitsStorage
 	performanceStorage               ports.PerformanceStorage
 	notifierPort                     ports.NotifierPort
-	relaysUsedPort                   ports.RelaysUsedPort
-	relaysAllowedPort                ports.RelaysAllowedPort
+	relays                           ports.Relays
 	validatorExitRequestEventScanner *ValidatorExitRequestEventScanner
 	router                           *mux.Router
 	processingExitRequests           sync.Map // To track exit requests being processed by operator ID
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, notifierPort ports.NotifierPort, relaysUsedPort ports.RelaysUsedPort, relaysAllowedPort ports.RelaysAllowedPort, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, notifierPort ports.NotifierPort, relays ports.Relays, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                           &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                    "API",
@@ -39,8 +38,7 @@ func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.Ex
 		exitsStorage:                     exitsStorage,
 		performanceStorage:               performanceStorage,
 		notifierPort:                     notifierPort,
-		relaysUsedPort:                   relaysUsedPort,
-		relaysAllowedPort:                relaysAllowedPort,
+		relays:                           relays,
 		validatorExitRequestEventScanner: validatorExitRequestEventScanner,
 		router:                           mux.NewRouter(),
 	}
@@ -97,7 +95,7 @@ func (h *APIServerService) SetupRoutes() {
 // getRelaysAllowed retrieves the list of allowed relays
 func (h *APIServerService) getRelaysAllowed(w http.ResponseWriter, r *http.Request) {
 	logger.DebugWithPrefix(h.servicePrefix, "getRelaysAllowed request received")
-	relays, err := h.relaysAllowedPort.GetRelaysAllowList(h.ctx)
+	relays, err := h.relays.GetRelaysAllowList(h.ctx)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching allowed relays: %v", err)
 		writeErrorResponse(w, "Error fetching allowed relays", http.StatusInternalServerError, err)
@@ -118,7 +116,7 @@ func (h *APIServerService) getRelaysAllowed(w http.ResponseWriter, r *http.Reque
 // getRelaysUsed retrieves the list of used relays
 func (h *APIServerService) getRelaysUsed(w http.ResponseWriter, r *http.Request) {
 	logger.DebugWithPrefix(h.servicePrefix, "getRelaysUsed request received")
-	relays, err := h.relaysUsedPort.GetRelaysUsed(h.ctx)
+	relays, err := h.relays.GetRelaysUsed(h.ctx)
 	if err != nil {
 		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching used relays: %v", err)
 		writeErrorResponse(w, "Error fetching used relays", http.StatusInternalServerError, err)

@@ -12,25 +12,22 @@ import (
 )
 
 type RelayCronService struct {
-	stakersUiUrl      string
-	relaysAllowedPort ports.RelaysAllowedPort
-	relaysUsedPort    ports.RelaysUsedPort
-	notifierPort      ports.NotifierPort
-	servicePrefix     string
+	stakersUiUrl  string
+	relays        ports.Relays
+	notifierPort  ports.NotifierPort
+	servicePrefix string
 }
 
 func NewRelayCronService(
 	stakersUiUrl string,
-	relaysAllowedPort ports.RelaysAllowedPort,
-	relaysUsedPort ports.RelaysUsedPort,
+	relays ports.Relays,
 	notifierPort ports.NotifierPort,
 ) *RelayCronService {
 	return &RelayCronService{
-		stakersUiUrl:      stakersUiUrl,
-		relaysAllowedPort: relaysAllowedPort,
-		relaysUsedPort:    relaysUsedPort,
-		notifierPort:      notifierPort,
-		servicePrefix:     "RelaysChecker",
+		stakersUiUrl:  stakersUiUrl,
+		relays:        relays,
+		notifierPort:  notifierPort,
+		servicePrefix: "RelaysChecker",
 	}
 }
 
@@ -61,13 +58,13 @@ func (rcs *RelayCronService) StartRelayMonitoringCron(ctx context.Context, inter
 
 func (rcs *RelayCronService) monitorRelays(ctx context.Context) error {
 	// Fetch allowed relays
-	allowedRelays, err := rcs.relaysAllowedPort.GetRelaysAllowList(ctx)
+	allowedRelays, err := rcs.relays.GetRelaysAllowList(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch allowed relays: %w", err)
 	}
 
 	// Fetch used relays
-	usedRelays, err := rcs.relaysUsedPort.GetRelaysUsed(ctx)
+	usedRelays, err := rcs.relays.GetRelaysUsed(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch used relays: %w", err)
 	}
