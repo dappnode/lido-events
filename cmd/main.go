@@ -58,7 +58,7 @@ func main() {
 
 	relays, err := relays.NewAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
 	if err != nil {
-		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
+		logger.Fatal("Failed to initialize relays: %v", err)
 	}
 	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
 	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
