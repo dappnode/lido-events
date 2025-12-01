@@ -88,7 +88,6 @@ func (h *APIServerService) SetupRoutes() {
 	h.router.HandleFunc("/api/v0/events_indexer/exit_requests", h.getExitRequests).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/relays_allowed", h.getRelaysAllowed).Methods("GET", "OPTIONS")
 	h.router.HandleFunc("/api/v0/events_indexer/relays_used", h.getRelaysUsed).Methods("GET", "OPTIONS")
-	h.router.HandleFunc("/api/v0/events_indexer/pending_hashes", h.getPendingHashes).Methods("GET", "OPTIONS")
 
 	// Add a generic OPTIONS handler to ensure preflight requests are handled
 	h.router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -97,64 +96,6 @@ func (h *APIServerService) SetupRoutes() {
 }
 
 // Handlers
-
-// getPendingHashes retrieves the list of pending hashes for a given operator ID
-func (h *APIServerService) getPendingHashes(w http.ResponseWriter, r *http.Request) {
-	logger.DebugWithPrefix(h.servicePrefix, "getPendingHashes request received")
-
-	operatorId := r.URL.Query().Get("operatorId")
-	if operatorId == "" {
-		logger.ErrorWithPrefix(h.servicePrefix, "Missing operatorId in getPendingHashes request")
-		writeErrorResponse(w, "operatorId is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	operatorIdNum := new(big.Int)
-	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
-		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getPendingHashes")
-		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Check if the operator ID exists
-	operatorIds, err := h.storagePort.GetOperatorIds()
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching operator IDs: %v", err)
-		writeErrorResponse(w, "Error fetching operator IDs", http.StatusInternalServerError, err)
-		return
-	}
-
-	found := false
-	for _, id := range operatorIds {
-		if id.String() == operatorId {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s not found", operatorId)
-		writeErrorResponse(w, "Operator ID not found", http.StatusNotFound, err)
-		return
-	}
-
-	pendingHashes, err := h.storagePort.GetPendingHashes(operatorIdNum)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error fetching pending hashes: %v", err)
-		writeErrorResponse(w, "Error fetching pending hashes", http.StatusInternalServerError, err)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(pendingHashes)
-	if err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error generating JSON response in getPendingHashes: %v", err)
-		writeErrorResponse(w, "Error generating JSON response", http.StatusInternalServerError, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
 
 // getRelaysAllowed retrieves the list of allowed relays
 func (h *APIServerService) getRelaysAllowed(w http.ResponseWriter, r *http.Request) {

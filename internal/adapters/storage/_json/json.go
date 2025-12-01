@@ -1,4 +1,4 @@
-package storage
+package _json
 
 import (
 	"encoding/json"
@@ -51,14 +51,7 @@ type Database struct {
 }
 
 type OperatorData struct {
-	DistributionLogsUpdated DistributionLogsUpdated `json:"distributionLogsUpdated"`
-	ExitsRequests           ExitsRequests           `json:"exitsRequests"`
-}
-
-type DistributionLogsUpdated struct {
-	LastProcessedBlock uint64   `json:"lastProcessedBlock"`
-	PendingHashes      []string `json:"pendingHashes"`
-	Reports            domain.Reports
+	ExitsRequests ExitsRequests `json:"exitsRequests"`
 }
 
 type ExitsRequests struct {

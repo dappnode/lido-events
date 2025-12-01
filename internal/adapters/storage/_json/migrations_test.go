@@ -1,10 +1,10 @@
 //go:build integration
 // +build integration
 
-package storage_test
+package _json_test
 
 import (
-	"lido-events/internal/adapters/storage"
+	"lido-events/internal/adapters/storage/_json"
 	"os"
 	"testing"
 
@@ -14,9 +14,9 @@ import (
 // Test migration when database exists but has no version field
 func TestMigrations_NoVersion(t *testing.T) {
 	// Create a simulated old database without the "version" field
-	initialData := &storage.Database{
+	initialData := &_json.Database{
 		// Note: **Version is intentionally omitted to simulate an old database**
-		Operators: map[string]storage.OperatorData{
+		Operators: map[string]_json.OperatorData{
 			"123": {},
 			"456": {},
 		},
@@ -27,10 +27,10 @@ func TestMigrations_NoVersion(t *testing.T) {
 	defer os.Remove(tmpFile.Name()) // Cleanup after test
 
 	// Initialize the storage adapter with the temp file
-	storageAdapter := &storage.Storage{DBFile: tmpFile.Name()}
+	storageAdapter := &_json.Storage{DBFile: tmpFile.Name()}
 
 	// Run migrations
-	err := storage.RunMigrations(storageAdapter)
+	err := _json.RunMigrations(storageAdapter)
 	assert.NoError(t, err)
 
 	// Reload the database after migration
@@ -41,7 +41,7 @@ func TestMigrations_NoVersion(t *testing.T) {
 	assert.Equal(t, 1, db.Version, "Database version should be updated to 1")
 
 	// Ensure operator IDs were retained but reset to empty OperatorData
-	expectedOperators := map[string]storage.OperatorData{
+	expectedOperators := map[string]_json.OperatorData{
 		"123": {},
 		"456": {},
 	}

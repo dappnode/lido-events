@@ -1,4 +1,4 @@
-package storage
+package _json
 
 import (
 	"fmt"

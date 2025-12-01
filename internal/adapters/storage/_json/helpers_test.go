@@ -1,19 +1,21 @@
 //go:build integration
 // +build integration
 
-package storage_test
+package _json_test
 
 import (
 	"encoding/json"
-	"lido-events/internal/adapters/storage"
+
 	"os"
 	"testing"
+
+	"lido-events/internal/adapters/storage/_json"
 
 	"github.com/stretchr/testify/require"
 )
 
 // CreateTempDatabaseFile creates a temporary database file with optional initial content for tests.
-func CreateTempDatabaseFile(t *testing.T, content *storage.Database) *os.File {
+func CreateTempDatabaseFile(t *testing.T, content *_json.Database) *os.File {
 	tmpFile, err := os.CreateTemp("", "db.json")
 	require.NoError(t, err)
 

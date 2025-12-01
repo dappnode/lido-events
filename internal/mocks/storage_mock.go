@@ -34,42 +34,6 @@ func (m *MockStoragePort) DeleteOperator(operatorID string) error {
 	return args.Error(0)
 }
 
-// Reports
-func (m *MockStoragePort) SaveReport(operatorID *big.Int, report domain.Report) error {
-	args := m.Called(operatorID, report)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) GetReports(operatorID *big.Int) (domain.Reports, error) {
-	args := m.Called(operatorID)
-	return args.Get(0).(domain.Reports), args.Error(1)
-}
-
-func (m *MockStoragePort) GetDistributionLogLastProcessedBlock(operatorID *big.Int) (uint64, error) {
-	args := m.Called(operatorID)
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-func (m *MockStoragePort) SaveDistributionLogLastProcessedBlock(operatorID *big.Int, block uint64) error {
-	args := m.Called(operatorID, block)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) AddPendingHash(operatorID *big.Int, hash string) error {
-	args := m.Called(operatorID, hash)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) DeletePendingHash(operatorID *big.Int, hash string) error {
-	args := m.Called(operatorID, hash)
-	return args.Error(0)
-}
-
-func (m *MockStoragePort) GetPendingHashes(operatorID *big.Int) ([]string, error) {
-	args := m.Called(operatorID)
-	return args.Get(0).([]string), args.Error(1)
-}
-
 // Exit Requests
 func (m *MockStoragePort) GetValidatorExitRequestLastProcessedBlock(operatorID *big.Int) (uint64, error) {
 	args := m.Called(operatorID)

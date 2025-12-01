@@ -1,4 +1,4 @@
-package storage
+package _json
 
 import (
 	"fmt"
@@ -21,11 +21,6 @@ func (fs *Storage) SaveOperatorId(operatorID string) error {
 	if _, exists := db.Operators[operatorID]; !exists {
 		// Initialize an empty OperatorData if this is a new operator ID
 		db.Operators[operatorID] = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{
-				Reports:            make(domain.Reports), // Initialize Reports map
-				PendingHashes:      []string{},           // Initialize PendingHashes slice
-				LastProcessedBlock: 0,
-			},
 			ExitsRequests: ExitsRequests{
 				Exits:              make(domain.ExitRequests), // Initialize Exits map
 				LastProcessedBlock: 0,
@@ -82,161 +77,6 @@ func (fs *Storage) GetOperatorIds() ([]*big.Int, error) {
 	return operatorIDs, nil
 }
 
-// SaveReport saves report data for a specific operator ID, using the frame from the report.
-func (fs *Storage) SaveReport(operatorID *big.Int, report domain.Report) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	if db.Operators == nil {
-		db.Operators = make(map[string]OperatorData)
-	}
-
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		operatorData = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{
-				Reports: make(map[string]domain.Report), // Initialize Reports map
-			},
-			ExitsRequests: ExitsRequests{},
-		}
-	} else if operatorData.DistributionLogsUpdated.Reports == nil {
-		// Initialize Reports if it's nil in an existing entry
-		operatorData.DistributionLogsUpdated.Reports = make(map[string]domain.Report)
-	}
-
-	// Construct the frame key as "startFrame-endFrame" from report.Frame
-	frameKey := fmt.Sprintf("%d-%d", report.Frame[0], report.Frame[1])
-
-	// Update the report data for the specified frame
-	operatorData.DistributionLogsUpdated.Reports[frameKey] = report
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// GetReports retrieves all report data for a specific operator ID.
-func (fs *Storage) GetReports(operatorID *big.Int) (domain.Reports, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return nil, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return nil, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	// Return all reports for the specified operator ID
-	return operatorData.DistributionLogsUpdated.Reports, nil
-}
-
-// GetDistributionLogLastProcessedBlock retrieves the last processed block for the DistributionLogUpdated event for a specific operator ID.
-func (fs *Storage) GetDistributionLogLastProcessedBlock(operatorID *big.Int) (uint64, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return 0, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return 0, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.DistributionLogsUpdated.LastProcessedBlock, nil
-}
-
-// SaveDistributionLogLastProcessedBlock updates the last processed block for the DistributionLogUpdated event for a specific operator ID.
-func (fs *Storage) SaveDistributionLogLastProcessedBlock(operatorID *big.Int, block uint64) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err // Return error if database load fails
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return fmt.Errorf("operator ID %s not found", opID) // Return error if operator ID not found
-	}
-
-	operatorData.DistributionLogsUpdated.LastProcessedBlock = block
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// AddPendingHash adds a hash to the PendingHashes array in DistributionLogUpdated if it does not already exist.
-func (fs *Storage) AddPendingHash(operatorID *big.Int, hash string) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	// Check if hash already exists
-	for _, h := range operatorData.DistributionLogsUpdated.PendingHashes {
-		if h == hash {
-			return nil // Hash already exists, no need to add
-		}
-	}
-
-	// Add hash to PendingHashes
-	operatorData.DistributionLogsUpdated.PendingHashes = append(operatorData.DistributionLogsUpdated.PendingHashes, hash)
-	db.Operators[opID] = operatorData
-
-	return fs.SaveDatabase(db)
-}
-
-// DeletePendingHash removes a hash from the PendingHashes array in DistributionLogUpdated.
-func (fs *Storage) DeletePendingHash(operatorID *big.Int, hash string) error {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	// Find and remove the hash
-	for i, h := range operatorData.DistributionLogsUpdated.PendingHashes {
-		if h == hash {
-			operatorData.DistributionLogsUpdated.PendingHashes = append(operatorData.DistributionLogsUpdated.PendingHashes[:i], operatorData.DistributionLogsUpdated.PendingHashes[i+1:]...)
-			db.Operators[opID] = operatorData
-			return fs.SaveDatabase(db)
-		}
-	}
-
-	return nil // Hash not found; nothing to delete
-}
-
-// GetPendingHashes retrieves all pending hashes from the DistributionLogUpdated event.
-func (fs *Storage) GetPendingHashes(operatorID *big.Int) ([]string, error) {
-	db, err := fs.LoadDatabase()
-	if err != nil {
-		return nil, err
-	}
-
-	opID := operatorID.String()
-	operatorData, exists := db.Operators[opID]
-	if !exists {
-		return nil, fmt.Errorf("operator ID %s not found", opID)
-	}
-
-	return operatorData.DistributionLogsUpdated.PendingHashes, nil
-}
-
 // GetValidatorExitRequestLastProcessedBlock retrieves the last processed block for the ValidatorExitRequest event for a specific operator ID.
 func (fs *Storage) GetValidatorExitRequestLastProcessedBlock(operatorID *big.Int) (uint64, error) {
 	db, err := fs.LoadDatabase()
@@ -288,8 +128,7 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			DistributionLogsUpdated: DistributionLogsUpdated{},
-			ExitsRequests:           ExitsRequests{},
+			ExitsRequests: ExitsRequests{},
 		}
 	}
 

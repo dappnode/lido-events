@@ -10,14 +10,6 @@ type StoragePort interface {
 	GetOperatorIds() ([]*big.Int, error)
 	SaveOperatorId(operatorID string) error
 	DeleteOperator(operatorID string) error
-	// reports
-	SaveReport(operatorID *big.Int, report domain.Report) error
-	GetReports(operatorID *big.Int) (domain.Reports, error)
-	GetDistributionLogLastProcessedBlock(operatorID *big.Int) (uint64, error)
-	SaveDistributionLogLastProcessedBlock(operatorID *big.Int, block uint64) error
-	AddPendingHash(operatorID *big.Int, hash string) error
-	DeletePendingHash(operatorID *big.Int, hash string) error
-	GetPendingHashes(operatorID *big.Int) ([]string, error)
 	// exit requests
 	GetValidatorExitRequestLastProcessedBlock(operatorID *big.Int) (uint64, error)
 	SaveValidatorExitRequestLastProcessedBlock(operatorID *big.Int, block uint64) error
