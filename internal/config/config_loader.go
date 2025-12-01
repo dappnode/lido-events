@@ -176,7 +176,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSMUIURL:                      "https://csm.testnet.fi",
 			StakersUiUrl:                  "http://my.dappnode/stakers/hoodi",
 			ApiPort:                       apiPort,
-			LidoDnpName:                   "llido-csm-holesky.dnp.dappnode.eth",
+			LidoDnpName:                   "llido-csm-hoodi.dnp.dappnode.eth",
 			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
