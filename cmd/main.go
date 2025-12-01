@@ -82,7 +82,7 @@ func main() {
 	// Initialize domain services
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, exitsStorage, notifier, exitValidatorAdapter, beaconchainAdapter)
-	pendingHashesLoaderService := services.NewPendingHashesLoader(exitsStorage, notifier, ipfsAdapter, networkConfig.MinGenesisTime)
+	pendingHashesLoaderService := services.NewHashesLoader(performanceStorage, notifier, csFeeDistributorAdapter, ipfsAdapter)
 	// Initialize API services
 	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, exitsStorage, performanceStorage, notifier, relaysUsedAdapter, relaysAllowedAdapter, validatorExitRequestScannerService, networkConfig.CORS)
 	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
@@ -94,9 +94,9 @@ func main() {
 	// Start domain services
 	// go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 
-	distributionLogUpdatedExecutionComplete := make(chan struct{})
-	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg, distributionLogUpdatedExecutionComplete)
+	go pendingHashesLoaderService.LoadHashesCron(ctx, 3*time.Hour, &wg)
 
+	// Add wait for config here?
 	exitRequestExecutionComplete := make(chan struct{})
 	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
