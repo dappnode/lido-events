@@ -128,8 +128,12 @@ func (fs *Storage) SaveExitRequest(operatorID *big.Int, validatorIndex string, e
 	operatorData, exists := db.Operators[opID]
 	if !exists {
 		operatorData = OperatorData{
-			ExitsRequests: ExitsRequests{},
+			ExitsRequests: ExitsRequests{
+				Exits: make(domain.ExitRequests),
+			},
 		}
+	} else if operatorData.ExitsRequests.Exits == nil {
+		operatorData.ExitsRequests.Exits = make(domain.ExitRequests)
 	}
 
 	// Add or update the exit request for the given validator index

@@ -18,11 +18,3 @@ type VeboValidatorExitRequest struct {
 	Timestamp       *big.Int
 	Raw             types.Log // Blockchain specific contextual infos
 }
-
-// VeboReportSubmitted represents a ReportSubmitted event raised by the Vebo contract.
-type VeboReportSubmitted struct {
-	RefSlot                *big.Int
-	Hash                   [32]byte
-	ProcessingDeadlineTime *big.Int
-	Raw                    types.Log // Blockchain specific contextual infos
-}

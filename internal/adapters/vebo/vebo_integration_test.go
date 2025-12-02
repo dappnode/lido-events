@@ -34,9 +34,9 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 	mockStorage := new(mocks.MockStoragePort)
 
 	// Define initial operator IDs as required by the test
-	mockStorage.On("GetOperatorIds").Return([]*big.Int{big.NewInt(2535)}, nil)
+	mockStorage.On("GetOperatorIds").Return([]*big.Int{big.NewInt(38)}, nil)
 
-	veboAddress := common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb")
+	veboAddress := common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2")
 
 	blockChunkSize := uint64(10000)
 
@@ -52,7 +52,7 @@ func TestScanVeboValidatorExitRequestEventIntegration(t *testing.T) {
 	t.Skip()
 	adapter, mockStorage, err := setupVeboAdapter(t)
 	assert.NoError(t, err)
-	operatorId := big.NewInt(2535)
+	operatorId := big.NewInt(38)
 
 	// Set the start and end blocks for the scan
 	start := uint64(2689810)

@@ -49,7 +49,7 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 		return fmt.Errorf("end block cannot be nil")
 	}
 
-	veboContract, err := bindings.NewVebo(va.VeboAddress, va.RpcClient)
+	veboContract, err := bindings.NewBindings(va.VeboAddress, va.RpcClient)
 	if err != nil {
 		return fmt.Errorf("failed to create Vebo contract instance: %w", err)
 	}
@@ -59,8 +59,8 @@ func (va *VeboAdapter) ScanVeboValidatorExitRequestEvent(
 		validatorExitRequestEvents, err := veboContract.FilterValidatorExitRequest(
 			&bind.FilterOpts{Context: ctx, Start: chunkStart, End: &chunkEnd},
 			[]*big.Int{va.stakingModuleId},
-			[]*big.Int{operatorId},
-			[]*big.Int{}, // validatorIndex
+			[]*big.Int{operatorId}, // nodeOperatorId
+			[]*big.Int{},           // validatorIndex
 		)
 		if err != nil {
 			return fmt.Errorf("failed to filter ValidatorExitRequest events for block range %d to %d: %w", chunkStart, chunkEnd, err)

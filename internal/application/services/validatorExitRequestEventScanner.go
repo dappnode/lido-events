@@ -115,6 +115,7 @@ func (vs *ValidatorExitRequestEventScanner) RunScan(ctx context.Context) error {
 	}
 
 	for _, operatorID := range operatorIDs {
+		logger.InfoWithPrefix(vs.servicePrefix, "Scanning ValidatorExitRequest events for operator ID %s", operatorID.String())
 		// Retrieve start and end blocks for scanning
 		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
 		if err != nil {
@@ -134,6 +135,7 @@ func (vs *ValidatorExitRequestEventScanner) RunScan(ctx context.Context) error {
 		}
 
 		// Perform the scan
+		logger.DebugWithPrefix(vs.servicePrefix, "Scanning ValidatorExitRequest events from block %d to %d for operator ID %s", start, end, operatorID.String())
 		if err := vs.veboPort.ScanVeboValidatorExitRequestEvent(ctx, operatorID, start, &end, vs.HandleValidatorExitRequestEvent); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
 			return err

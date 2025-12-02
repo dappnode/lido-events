@@ -12,15 +12,6 @@ type MockVeboPort struct {
 	mock.Mock
 }
 
-// WatchReportSubmittedEvents simulates watching for ReportSubmitted events
-func (m *MockVeboPort) WatchReportSubmittedEvents(
-	ctx context.Context,
-	handleReportSubmittedEvent func(*domain.VeboReportSubmitted) error,
-) error {
-	args := m.Called(ctx, handleReportSubmittedEvent)
-	return args.Error(0)
-}
-
 // ScanVeboValidatorExitRequestEvent simulates scanning for ValidatorExitRequest events
 func (m *MockVeboPort) ScanVeboValidatorExitRequestEvent(
 	ctx context.Context,
