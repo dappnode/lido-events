@@ -4,6 +4,7 @@ import (
 	"lido-events/internal/logger"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ type Config struct {
 	Network string
 
 	DBDirectory        string
+	PerformanceDBPath  string
 	MevBoostDnpName    string
 	DappmanagerUrl     string
 	SignerUrl          string
@@ -85,6 +87,7 @@ func LoadNetworkConfig() (Config, error) {
 		}
 		dbDirectory = cwd
 	}
+	performanceDbPath := filepath.Join(dbDirectory, "performance.db")
 
 	apiPortStr := os.Getenv("API_PORT")
 	apiPort := uint64(8080)
@@ -164,6 +167,7 @@ func LoadNetworkConfig() (Config, error) {
 		config = Config{
 			Network:                       network,
 			DBDirectory:                   dbDirectory,
+			PerformanceDBPath:             performanceDbPath,
 			MevBoostDnpName:               "mev-boost-hoodi.dnp.dappnode.eth",
 			DappmanagerUrl:                dappmanagerUrl,
 			SignerUrl:                     "http://signer.hoodi.dncore.dappnode:9000",
@@ -200,6 +204,7 @@ func LoadNetworkConfig() (Config, error) {
 		config = Config{
 			Network:                       network,
 			DBDirectory:                   dbDirectory,
+			PerformanceDBPath:             performanceDbPath,
 			MevBoostDnpName:               "mev-boost.dnp.dappnode.eth",
 			DappmanagerUrl:                dappmanagerUrl,
 			SignerUrl:                     "http://signer.mainnet.dncore.dappnode:9000",

@@ -34,7 +34,7 @@ func NewAdapter(dbPath string) (*Adapter, error) {
 func (a *Adapter) migrate() error {
 	const createTable = `
 CREATE TABLE IF NOT EXISTS performance (
-	log_cid TEXT PRIMARY KEY,
+	log_cid TEXT NOT NULL,
 	frame_start INTEGER NOT NULL,
 	frame_end INTEGER NOT NULL,
 	no_id TEXT NOT NULL,
