@@ -48,7 +48,6 @@ type Config struct {
 	ProxyApiPort   uint64
 
 	// Blockchain
-	MinGenesisTime          uint64
 	BlockChunkSize          uint64
 	BlockScannerMinDistance uint64
 }
@@ -185,11 +184,10 @@ func LoadNetworkConfig() (Config, error) {
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
 			MEVBoostRelaysAllowListAddres: common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
-			VeboBlockDeployment:           uint64(750),
+			VeboBlockDeployment:           uint64(1),
 			CSModuleTxReceipt:             common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
 			LidoKeysApiUrl:                "https://keys-api-hoodi.testnet.fi",
 			ProxyApiPort:                  proxyApiPort,
-			MinGenesisTime:                uint64(1742277084), // timestamp when the CSFeeDistributorAddress SC was deployed:  https://hoodi.etherscan.io/tx/0xb5bf7cc66bc3b04eee6fb8ec650dd699d23b4ff53028fa5ec333d8e8fbe5201e
 			BlockChunkSize:                blockChunkSize,
 			BlockScannerMinDistance:       blockScannerMinDistance,
 		}
@@ -226,7 +224,6 @@ func LoadNetworkConfig() (Config, error) {
 			CSModuleTxReceipt:             common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                "https://keys-api.lido.fi",
 			ProxyApiPort:                  proxyApiPort,
-			MinGenesisTime:                uint64(1606824023),
 			BlockChunkSize:                blockChunkSize,
 			BlockScannerMinDistance:       blockScannerMinDistance,
 		}
