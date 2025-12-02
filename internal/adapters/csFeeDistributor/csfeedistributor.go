@@ -10,23 +10,23 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type CsFeeDistributorAdapter struct {
+type CsFeeDistributor struct {
 	rpcClient               *ethclient.Client
 	csFeeDistributorAddress common.Address
 }
 
-func NewCsFeeDistributorAdapter(
+func NewCsFeeDistributor(
 	rpcClient *ethclient.Client,
 	csFeeDistributorAddress common.Address,
-) (*CsFeeDistributorAdapter, error) {
-	return &CsFeeDistributorAdapter{
+) (*CsFeeDistributor, error) {
+	return &CsFeeDistributor{
 		rpcClient:               rpcClient,
 		csFeeDistributorAddress: csFeeDistributorAddress,
 	}, nil
 }
 
 // GetAllLogCids retrieves all historical log CIDs from the CsFeeDistributor contract.
-func (cs *CsFeeDistributorAdapter) GetAllLogCids(ctx context.Context) ([]string, error) {
+func (cs *CsFeeDistributor) GetAllLogCids(ctx context.Context) ([]string, error) {
 	contract, err := bindings.NewBindings(cs.csFeeDistributorAddress, cs.rpcClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CsFeeDistributor contract instance: %w", err)

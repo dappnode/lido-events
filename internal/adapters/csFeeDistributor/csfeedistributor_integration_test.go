@@ -17,7 +17,7 @@ import (
 )
 
 // setupCsFeeDistributorAdapter initializes CsFeeDistributorAdapter using RPC_URL and NETWORK env vars.
-func setupCsFeeDistributorAdapter(t *testing.T) (*csfeedistributor.CsFeeDistributorAdapter, error) {
+func setupCsFeeDistributorAdapter(t *testing.T) (*csfeedistributor.CsFeeDistributor, error) {
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
@@ -43,7 +43,7 @@ func setupCsFeeDistributorAdapter(t *testing.T) (*csfeedistributor.CsFeeDistribu
 		t.Fatalf("unsupported NETWORK value: %s", network)
 	}
 
-	adapter, err := csfeedistributor.NewCsFeeDistributorAdapter(rpcClient, csFeeDistributorAddress)
+	adapter, err := csfeedistributor.NewCsFeeDistributor(rpcClient, csFeeDistributorAddress)
 	return adapter, err
 }
 

@@ -5,22 +5,22 @@ import (
 	"lido-events/internal/adapters/beaconchain" // Import the BeaconchainAdapter package
 )
 
-// ExitValidatorAdapter orchestrates the exit validator process using Signer and BeaconChain adapters
-type ExitValidatorAdapter struct {
-	beaconChainAdapter *beaconchain.BeaconchainAdapter // Dependency injection for the BeaconchainAdapter
+// ExitValidator orchestrates the exit validator process using Signer and BeaconChain adapters
+type ExitValidator struct {
+	beaconChainAdapter *beaconchain.Beaconchain // Dependency injection for the BeaconchainAdapter
 	signerUrl          string
 }
 
-// NewExitValidatorAdapter creates a new instance of ExitValidatorAdapter with provided Beaconchain and Signer adapters
-func NewExitValidatorAdapter(beaconChainAdapter *beaconchain.BeaconchainAdapter, signerUrl string) *ExitValidatorAdapter {
-	return &ExitValidatorAdapter{
+// NewExitValidator creates a new instance of ExitValidator with provided Beaconchain and Signer adapters
+func NewExitValidator(beaconChainAdapter *beaconchain.Beaconchain, signerUrl string) *ExitValidator {
+	return &ExitValidator{
 		beaconChainAdapter: beaconChainAdapter,
 		signerUrl:          signerUrl,
 	}
 }
 
 // ExitValidator orchestrates the voluntary exit process for a validator
-func (e *ExitValidatorAdapter) ExitValidator(pubKey, validatorIndex string) error {
+func (e *ExitValidator) ExitValidator(pubKey, validatorIndex string) error {
 	// Step 1: Get the fork information
 	forkInfo, err := e.beaconChainAdapter.GetStateFork("head")
 	if err != nil {

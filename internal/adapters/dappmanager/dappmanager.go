@@ -9,16 +9,16 @@ import (
 	"lido-events/internal/application/domain"
 )
 
-// DappManagerAdapter is the adapter to interact with the DappManager API
-type DappManagerAdapter struct {
+// DappManager is the adapter to interact with the DappManager API
+type DappManager struct {
 	baseURL       string
 	signerDnpName string
 	client        *http.Client
 }
 
-// NewDappManagerAdapter creates a new DappManagerAdapter
-func NewDappManagerAdapter(baseURL string, dnpName string) *DappManagerAdapter {
-	return &DappManagerAdapter{
+// NewDappManager creates a new DappManager instance
+func NewDappManager(baseURL string, dnpName string) *DappManager {
+	return &DappManager{
 		baseURL:       baseURL,
 		signerDnpName: dnpName,
 		client:        &http.Client{},
@@ -47,7 +47,7 @@ type CustomEndpoint struct {
 }
 
 // GetNotificationsEnabled retrieves the notifications from the DappManager API
-func (d *DappManagerAdapter) GetNotificationsEnabled(ctx context.Context) (domain.LidoNotificationsEnabled, error) {
+func (d *DappManager) GetNotificationsEnabled(ctx context.Context) (domain.LidoNotificationsEnabled, error) {
 	customEndpoints, err := d.getSignerManifestNotifications(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get notifications from signer manifest: %w", err)
@@ -71,7 +71,7 @@ func (d *DappManagerAdapter) GetNotificationsEnabled(ctx context.Context) (domai
 }
 
 // getSignerManifestNotifications gets the notifications from the Signer package manifest
-func (d *DappManagerAdapter) getSignerManifestNotifications(ctx context.Context) ([]CustomEndpoint, error) {
+func (d *DappManager) getSignerManifestNotifications(ctx context.Context) ([]CustomEndpoint, error) {
 	url := d.baseURL + "/package-manifest/" + d.signerDnpName
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

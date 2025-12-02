@@ -17,7 +17,7 @@ func TestFetchAndParseIpfs(t *testing.T) {
 	}
 
 	// Initialize the IPFS adapter with the gateway URL
-	adapter := ipfs.NewIPFSAdapter(ipfsURL)
+	adapter := ipfs.NewIPFS(ipfsURL)
 
 	cids := []string{
 		"QmTzK9hcbX8VHeUZWX1iQpJ9oKXRR15HsaLoS4oXUZ7MRe",

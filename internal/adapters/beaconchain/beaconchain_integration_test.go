@@ -13,19 +13,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// setupBeaconchainAdapter initializes the BeaconchainAdapter
-func setupBeaconchainAdapter(t *testing.T) *beaconchain.BeaconchainAdapter {
+// setupBeaconchain initializes the BeaconchainAdapter
+func setupBeaconchain(t *testing.T) *beaconchain.Beaconchain {
 	beaconchainURL := os.Getenv("BEACONCHAIN_URL")
 	if beaconchainURL == "" {
 		t.Fatal("BEACONCHAIN_URL environment variable not set")
 	}
 
-	return beaconchain.NewBeaconchainAdapter(beaconchainURL)
+	return beaconchain.NewBeaconchain(beaconchainURL)
 }
 
 func TestGetValidatorStatusIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Test a slashed validator
 	pubkeyExited := "0x972255d9a5085d082d485f1e17999b38967e022057aba66a477cd93bce5cfa980bc42df82b208987ed46b9cdbc7b5fcb"
@@ -36,7 +36,7 @@ func TestGetValidatorStatusIntegration(t *testing.T) {
 
 func TestPostStateValidatorsIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Test with active and slashed validators
 	ids := []string{
@@ -52,7 +52,7 @@ func TestPostStateValidatorsIntegration(t *testing.T) {
 
 func TestSubmitPoolVoluntaryExitIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Example voluntary exit submission (modify epoch and validatorIndex accordingly)
 	err := adapter.SubmitPoolVoluntaryExit("10", "886680", "0x...")
@@ -61,7 +61,7 @@ func TestSubmitPoolVoluntaryExitIntegration(t *testing.T) {
 
 func TestGetStateForkIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Retrieve fork for "head"
 	response, err := adapter.GetStateFork("head")
@@ -72,7 +72,7 @@ func TestGetStateForkIntegration(t *testing.T) {
 
 func TestGetGenesisIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Retrieve genesis data
 	response, err := adapter.GetGenesis()
@@ -83,7 +83,7 @@ func TestGetGenesisIntegration(t *testing.T) {
 
 func TestGetBlockHeaderIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Retrieve block header for "finalized"
 	response, err := adapter.GetBlockHeader("finalized")
@@ -94,7 +94,7 @@ func TestGetBlockHeaderIntegration(t *testing.T) {
 
 func TestGetEpochHeaderIntegration(t *testing.T) {
 	t.Skip()
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Retrieve epoch header for "finalized"
 	epoch, err := adapter.GetEpochHeader("finalized")
@@ -105,7 +105,7 @@ func TestGetEpochHeaderIntegration(t *testing.T) {
 
 // TestGetSyncingStatusIntegration tests the GetSyncingStatus method of the BeaconchainAdapter
 func TestGetSyncingStatusIntegration(t *testing.T) {
-	adapter := setupBeaconchainAdapter(t)
+	adapter := setupBeaconchain(t)
 
 	// Call the GetSyncingStatus method
 	isSyncing, err := adapter.GetSyncingStatus()

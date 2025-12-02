@@ -15,22 +15,22 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// Adapter combines access to the relays allow list smart contract and
+// Relays combines access to the relays allow list smart contract and
 // the currently used relays configured in the MEV Boost DNP.
-type Adapter struct {
+type Relays struct {
 	rpcClient                      *ethclient.Client
 	mevBoostRelaysAllowListAddress common.Address
 	dappmanagerURL                 string
 	mevBoostDnpName                string
 }
 
-func NewAdapter(
+func NewARelays(
 	rpcClient *ethclient.Client,
 	mevBoostRelaysAllowListAddress common.Address,
 	dappmanagerURL string,
 	mevBoostDnpName string,
-) (*Adapter, error) {
-	return &Adapter{
+) (*Relays, error) {
+	return &Relays{
 		rpcClient:                      rpcClient,
 		mevBoostRelaysAllowListAddress: mevBoostRelaysAllowListAddress,
 		dappmanagerURL:                 dappmanagerURL,
@@ -39,7 +39,7 @@ func NewAdapter(
 }
 
 // GetRelaysAllowList fetches the relays allow list from the smart contract.
-func (a *Adapter) GetRelaysAllowList(ctx context.Context) ([]domain.RelayAllowed, error) {
+func (a *Relays) GetRelaysAllowList(ctx context.Context) ([]domain.RelayAllowed, error) {
 	contract, err := bindings.NewBindings(a.mevBoostRelaysAllowListAddress, a.rpcClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create MevBoostRelaysAllowList contract instance: %w", err)
@@ -54,7 +54,7 @@ func (a *Adapter) GetRelaysAllowList(ctx context.Context) ([]domain.RelayAllowed
 }
 
 // GetRelaysUsed fetches the RELAYS env from the MEV Boost DNP via Dappmanager.
-func (a *Adapter) GetRelaysUsed(ctx context.Context) ([]string, error) {
+func (a *Relays) GetRelaysUsed(ctx context.Context) ([]string, error) {
 	url := fmt.Sprintf("%s/env/%s?envName=RELAYS", a.dappmanagerURL, a.mevBoostDnpName)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

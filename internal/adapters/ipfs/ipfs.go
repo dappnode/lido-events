@@ -8,18 +8,18 @@ import (
 	"net/http"
 )
 
-type IPFSAdapter struct {
+type IPFS struct {
 	GatewayURL string
 }
 
-func NewIPFSAdapter(gatewayURL string) *IPFSAdapter {
-	return &IPFSAdapter{
+func NewIPFS(gatewayURL string) *IPFS {
+	return &IPFS{
 		GatewayURL: gatewayURL,
 	}
 }
 
 // FetchAndParseIpfs fetches data from IPFS using a CID and parses the JSON content as a Report.
-func (ia *IPFSAdapter) FetchAndParseIpfs(cid string) (domain.Report, error) {
+func (ia *IPFS) FetchAndParseIpfs(cid string) (domain.Report, error) {
 	// Construct the URL without any format query parameter
 	url := fmt.Sprintf("%s/ipfs/%s", ia.GatewayURL, cid)
 	req, err := http.NewRequest("GET", url, nil)

@@ -8,20 +8,20 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Adapter wraps a sqlite DB connection used to store performance reports.
-type Adapter struct {
+// Performance wraps a sqlite DB connection used to store performance reports.
+type Performance struct {
 	db *sql.DB
 }
 
-// NewAdapter opens (or creates) the sqlite database at dbPath and ensures the
+// NewPerformance opens (or creates) the sqlite database at dbPath and ensures the
 // required schema exists.
-func NewAdapter(dbPath string) (*Adapter, error) {
+func NewPerformance(dbPath string) (*Performance, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}
 
-	adapter := &Adapter{db: db}
+	adapter := &Performance{db: db}
 	if err := adapter.migrate(); err != nil {
 		_ = db.Close()
 		return nil, err
@@ -31,7 +31,7 @@ func NewAdapter(dbPath string) (*Adapter, error) {
 }
 
 // migrate creates the performance table if it does not exist.
-func (a *Adapter) migrate() error {
+func (a *Performance) migrate() error {
 	const createTable = `
 CREATE TABLE IF NOT EXISTS performance (
 	log_cid TEXT NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS performance (
 }
 
 // Close closes the underlying database connection.
-func (a *Adapter) Close() error {
+func (a *Performance) Close() error {
 	if a.db == nil {
 		return nil
 	}
@@ -62,7 +62,7 @@ func (a *Adapter) Close() error {
 
 // SaveReport stores all operator/validator rows for a given logCid and report.
 // Existing rows for the same logCid will be removed before inserting.
-func (a *Adapter) SaveReport(logCid string, report *domain.Report) error {
+func (a *Performance) SaveReport(logCid string, report *domain.Report) error {
 	tx, err := a.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -125,7 +125,7 @@ INSERT INTO performance (
 // GetNoPerformance retrieves all performance rows for a given node operator ID (noID)
 // and returns them as a slice of domain.Report structs (one per log CID),
 // omitting the log CID from the response type.
-func (a *Adapter) GetNoPerformance(noID string) ([]*domain.Report, error) {
+func (a *Performance) GetNoPerformance(noID string) ([]*domain.Report, error) {
 	rows, err := a.db.Query(`
 SELECT log_cid, frame_start, frame_end, validator_index,
 	performance, slashed, strikes, threshold

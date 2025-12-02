@@ -34,52 +34,52 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Load configurations
-	networkConfig, err := config.LoadNetworkConfig()
+	config, err := config.LoadNetworkConfig()
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to load network configuration: %v", err)
 	}
-	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
+	logger.DebugWithPrefix(logPrefix, "Network config: %+v", config)
 
 	// Initiate RPC Ethereum clients
-	rpcClient, err := ethclient.Dial(networkConfig.RpcUrl)
+	rpcClient, err := ethclient.Dial(config.RpcUrl)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize RPC client: %v", err)
 	}
 
-	exitsStorage, err := exits.NewAdapter(networkConfig.DBDirectory)
+	exitsStorage, err := exits.NewJson(config.DBDirectory)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
 	}
-	performanceStorage, err := performance.NewAdapter(networkConfig.PerformanceDBPath)
+	performanceStorage, err := performance.NewPerformance(config.PerformanceDBPath)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}
-	notifier := notifier.NewNotifier(networkConfig.Network, networkConfig.LidoDnpName)
+	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName)
 
-	relays, err := relays.NewAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	relays, err := relays.NewARelays(rpcClient, config.MEVBoostRelaysAllowListAddres, config.DappmanagerUrl, config.MevBoostDnpName)
 	if err != nil {
 		logger.Fatal("Failed to initialize relays: %v", err)
 	}
-	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
-	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
-	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
-	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(rpcClient, networkConfig.CSFeeDistributorProxyAddress)
+	ipfs := ipfs.NewIPFS(config.IpfsUrl)
+	beaconchain := beaconchain.NewBeaconchain(config.BeaconchainURL)
+	execution := execution.NewExecution(config.RpcUrl)
+	exitValidator := exitvalidator.NewExitValidator(beaconchain, config.SignerUrl)
+	csFeeDistributor, err := csfeedistributor.NewCsFeeDistributor(rpcClient, config.CSFeeDistributorProxyAddress)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
-	veboAdapter, err := vebo.NewVeboAdapter(rpcClient, networkConfig.VEBOAddress, exitsStorage, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
+	vebo, err := vebo.NewVeboAdapter(rpcClient, config.VEBOAddress, exitsStorage, config.BlockChunkSize, config.CSMStakingModuleID)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
 
 	// Initialize services
-	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
-	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, exitsStorage, notifier, exitValidatorAdapter, beaconchainAdapter)
-	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributorAdapter, ipfsAdapter)
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, exitsStorage, performanceStorage, notifier, relays, validatorExitRequestScannerService, networkConfig.CORS)
-	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
-	relaysCheckerService := services.NewRelayCronService(networkConfig.StakersUiUrl, relays, notifier)
+	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
+	validatorEjectorService := services.NewValidatorEjectorService(config.BeaconchaUrl, exitsStorage, notifier, exitValidator, beaconchain)
+	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
+	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, notifier, relays, validatorExitRequestScannerService, config.CORS)
+	proxyService := services.NewProxyAPIServerService(config.ProxyApiPort, config.LidoKeysApiUrl, config.CORS)
+	relaysCheckerService := services.NewRelayCronService(config.StakersUiUrl, relays, notifier)
 
 	// Start servers
 	apiService.Start(&wg)

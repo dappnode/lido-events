@@ -16,8 +16,8 @@ type Storage struct {
 	mu     sync.RWMutex // RWMutex for concurrent access
 }
 
-// NewAdapter creates a new instance of Storage and ensures the DB directory exists
-func NewAdapter(dbDirectory string) (*Storage, error) {
+// NewJson creates a new instance of Storage and ensures the DB directory exists
+func NewJson(dbDirectory string) (*Storage, error) {
 	// Trim any trailing slash from the directory path
 	dbDirectory = strings.TrimRight(dbDirectory, "/")
 

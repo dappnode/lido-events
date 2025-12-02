@@ -9,20 +9,20 @@ import (
 	"net/http"
 )
 
-// BeaconchainAdapter orchestrates the exit validator process using Signer and BeaconChain adapters.
-type BeaconchainAdapter struct {
+// Beaconchain orchestrates the exit validator process using Signer and BeaconChain adapters.
+type Beaconchain struct {
 	beaconChainUrl string
 }
 
-// NewBeaconchainAdapter creates a new instance of ExitValidatorAdapter with provided beaconChain and signer adapters.
-func NewBeaconchainAdapter(beaconChainUrl string) *BeaconchainAdapter {
-	return &BeaconchainAdapter{
+// NewBeaconchain creates a new instance of Beaconchain with provided beaconChain and signer adapters.
+func NewBeaconchain(beaconChainUrl string) *Beaconchain {
+	return &Beaconchain{
 		beaconChainUrl: beaconChainUrl,
 	}
 }
 
 // GetSyncingStatus checks if the beacon node is syncing.
-func (b *BeaconchainAdapter) GetSyncingStatus() (bool, error) {
+func (b *Beaconchain) GetSyncingStatus() (bool, error) {
 	url := fmt.Sprintf("%s/eth/v1/node/syncing", b.beaconChainUrl)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -47,7 +47,7 @@ func (b *BeaconchainAdapter) GetSyncingStatus() (bool, error) {
 	return result.Data.IsSyncing, nil
 }
 
-func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error) {
+func (b *Beaconchain) GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error) {
 
 	allStatuses := []domain.ValidatorStatus{
 		domain.StatusPendingInitialized,
@@ -75,7 +75,7 @@ func (b *BeaconchainAdapter) GetValidatorStatus(pubkey string) (domain.Validator
 
 // PostStateValidators sends a POST request to fetch validator data based on provided ids and statuses.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/postStateValidators
-func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, statuses []domain.ValidatorStatus) (*ValidatorsResponse, error) {
+func (b *Beaconchain) PostStateValidators(stateID string, ids []string, statuses []domain.ValidatorStatus) (*ValidatorsResponse, error) {
 	body := map[string]interface{}{
 		"ids":      ids,
 		"statuses": statuses,
@@ -114,7 +114,7 @@ func (b *BeaconchainAdapter) PostStateValidators(stateID string, ids []string, s
 
 // SubmitPoolVoluntaryExit submits a voluntary exit message to the Beacon chain pool.
 // It takes epoch, validatorIndex, and signature as arguments.
-func (b *BeaconchainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature string) error {
+func (b *Beaconchain) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature string) error {
 	body := map[string]interface{}{
 		"message": map[string]string{
 			"epoch":           epoch,
@@ -151,7 +151,7 @@ func (b *BeaconchainAdapter) SubmitPoolVoluntaryExit(epoch, validatorIndex, sign
 
 // GetStateFork retrieves the state fork for a specified state_id.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getStateFork
-func (b *BeaconchainAdapter) GetStateFork(stateID string) (*StateForkResponse, error) {
+func (b *Beaconchain) GetStateFork(stateID string) (*StateForkResponse, error) {
 	url := fmt.Sprintf("%s/eth/v1/beacon/states/%s/fork", b.beaconChainUrl, stateID)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -169,7 +169,7 @@ func (b *BeaconchainAdapter) GetStateFork(stateID string) (*StateForkResponse, e
 
 // GetGenesis retrieves the genesis data.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getGenesis
-func (b *BeaconchainAdapter) GetGenesis() (*GenesisResponse, error) {
+func (b *Beaconchain) GetGenesis() (*GenesisResponse, error) {
 	url := fmt.Sprintf("%s/eth/v1/beacon/genesis", b.beaconChainUrl)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -188,7 +188,7 @@ func (b *BeaconchainAdapter) GetGenesis() (*GenesisResponse, error) {
 // GetBlockHeader retrieves the block header for a given block ID.
 // Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockHeader
-func (b *BeaconchainAdapter) GetBlockHeader(blockID string) (*BlockHeaderResponse, error) {
+func (b *Beaconchain) GetBlockHeader(blockID string) (*BlockHeaderResponse, error) {
 	url := fmt.Sprintf("%s/eth/v1/beacon/headers/%s", b.beaconChainUrl, blockID)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -204,7 +204,7 @@ func (b *BeaconchainAdapter) GetBlockHeader(blockID string) (*BlockHeaderRespons
 	return &result, nil
 }
 
-func (b *BeaconchainAdapter) GetEpochHeader(blockID string) (uint64, error) {
+func (b *Beaconchain) GetEpochHeader(blockID string) (uint64, error) {
 	header, err := b.GetBlockHeader(blockID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get block header for blockID %s: %w", blockID, err)

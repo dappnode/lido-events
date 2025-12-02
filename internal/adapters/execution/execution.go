@@ -10,20 +10,20 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-// ExecutionAdapter interacts with the Ethereum execution client to fetch block information.
-type ExecutionAdapter struct {
+// Execution interacts with the Ethereum execution client to fetch block information.
+type Execution struct {
 	rpcURL string
 }
 
-// NewExecutionAdapter creates a new instance of ExecutionAdapter with the provided execution client URL.
-func NewExecutionAdapter(rpcURL string) *ExecutionAdapter {
-	return &ExecutionAdapter{
+// NewExecution creates a new instance of ExecutionAdapter with the provided execution client URL.
+func NewExecution(rpcURL string) *Execution {
+	return &Execution{
 		rpcURL: rpcURL,
 	}
 }
 
 // GetMostRecentBlockNumber retrieves the most recent block number from the Ethereum execution client.
-func (e *ExecutionAdapter) GetMostRecentBlockNumber() (uint64, error) {
+func (e *Execution) GetMostRecentBlockNumber() (uint64, error) {
 	// Create the request payload for eth_blockNumber
 	payload := map[string]interface{}{
 		"jsonrpc": "2.0",
@@ -67,7 +67,7 @@ func (e *ExecutionAdapter) GetMostRecentBlockNumber() (uint64, error) {
 }
 
 // GetBlockTimestampByNumber retrieves the timestamp of the block with the specified number from the Ethereum execution client.
-func (e *ExecutionAdapter) GetBlockTimestampByNumber(blockNumber uint64) (uint64, error) {
+func (e *Execution) GetBlockTimestampByNumber(blockNumber uint64) (uint64, error) {
 	// Convert block number to hexadecimal
 	blockNumberHex := fmt.Sprintf("0x%x", blockNumber)
 
@@ -117,7 +117,7 @@ func (e *ExecutionAdapter) GetBlockTimestampByNumber(blockNumber uint64) (uint64
 }
 
 // IsSyncing checks if the Ethereum execution client is currently syncing.
-func (e *ExecutionAdapter) IsSyncing() (bool, error) {
+func (e *Execution) IsSyncing() (bool, error) {
 	// Create the request payload for eth_syncing
 	payload := map[string]interface{}{
 		"jsonrpc": "2.0",
@@ -161,7 +161,7 @@ func (e *ExecutionAdapter) IsSyncing() (bool, error) {
 }
 
 // GetTransactionReceipt retrieves the transaction receipt for a given transaction hash.
-func (e *ExecutionAdapter) GetTransactionReceipt(txHash common.Hash) (map[string]interface{}, error) {
+func (e *Execution) GetTransactionReceipt(txHash common.Hash) (map[string]interface{}, error) {
 	// Create the request payload for eth_getTransactionReceipt
 	payload := map[string]interface{}{
 		"jsonrpc": "2.0",
@@ -204,9 +204,9 @@ func (e *ExecutionAdapter) GetTransactionReceipt(txHash common.Hash) (map[string
 }
 
 // GetTransactionReceiptExists checks if the transaction receipt exists for a given transaction hash.
-// - Reth running as fullnode returns "result": null if the transaction receipt does not exist in the database. 
+// - Reth running as fullnode returns "result": null if the transaction receipt does not exist in the database.
 // TODO: test erigon response running it with config not to store receipts
-func (e *ExecutionAdapter) GetTransactionReceiptExists(txHash common.Hash) (bool, error) {
+func (e *Execution) GetTransactionReceiptExists(txHash common.Hash) (bool, error) {
 	receipt, err := e.GetTransactionReceipt(txHash)
 	if err != nil {
 		return false, err

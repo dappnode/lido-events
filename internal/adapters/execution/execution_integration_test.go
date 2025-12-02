@@ -14,13 +14,13 @@ import (
 )
 
 // setupExecutionAdapter initializes the ExecutionAdapter
-func setupExecutionAdapter(t *testing.T) (*execution.ExecutionAdapter, error) {
+func setupExecutionAdapter(t *testing.T) (*execution.Execution, error) {
 	rpcUrl := os.Getenv("RPC_URL")
 	if rpcUrl == "" {
 		t.Fatal("RPC_URL environment variable not set")
 	}
 	// Initialize the adapter
-	adapter := execution.NewExecutionAdapter(rpcUrl)
+	adapter := execution.NewExecution(rpcUrl)
 	return adapter, nil
 }
 
