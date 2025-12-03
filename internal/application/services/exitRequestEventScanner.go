@@ -39,8 +39,8 @@ func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort por
 	}
 }
 
-// ScanValidatorExitRequestEventsCron runs a periodic scan for ValidatorExitRequest events
-func (vs *ExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+// ScanExitRequestEventsCron runs a periodic scan for ValidatorExitRequest events
+func (vs *ExitRequestEventScanner) ScanExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
 
