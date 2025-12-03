@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}
-	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl)
+	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl, config.BeaconchaUrl)
 
 	relays, err := relays.NewARelays(rpcClient, config.MEVBoostRelaysAllowListAddres, config.DappmanagerUrl, config.MevBoostDnpName)
 	if err != nil {
@@ -75,7 +75,7 @@ func main() {
 
 	// Initialize services
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
-	validatorEjectorService := services.NewValidatorEjectorService(config.BeaconchaUrl, exitsStorage, notifier, exitValidator, beaconchain)
+	validatorEjectorService := services.NewValidatorEjectorService(exitsStorage, notifier, exitValidator, beaconchain)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
 	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)
 	proxyService := services.NewProxyAPIServerService(config.ProxyApiPort, config.LidoKeysApiUrl, config.CORS)

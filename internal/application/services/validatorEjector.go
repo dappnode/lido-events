@@ -12,7 +12,6 @@ import (
 )
 
 type ValidatorEjector struct {
-	beaconchaUrl      string
 	storagePort       ports.ExitsStorage
 	notifierPort      ports.NotifierPort
 	exitValidatorPort ports.ExitValidator
@@ -20,9 +19,8 @@ type ValidatorEjector struct {
 	servicePrefix     string
 }
 
-func NewValidatorEjectorService(beaconchaUrl string, storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *ValidatorEjector {
+func NewValidatorEjectorService(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, exitValidatorPort ports.ExitValidator, beaconchainPort ports.Beaconchain) *ValidatorEjector {
 	return &ValidatorEjector{
-		beaconchaUrl,
 		storagePort,
 		notifierPort,
 		exitValidatorPort,
@@ -176,8 +174,8 @@ func (ve *ValidatorEjector) EjectValidator() error {
 
 				if validatorStatus == domain.StatusActiveExiting || validatorStatus == domain.StatusExitedUnslashed || validatorStatus == domain.StatusExitedSlashed {
 					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has entered the exit queue", exitRequest.Event.ValidatorIndex)
-					message := fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required. See details here: %s/validator/%s", exitRequest.Event.ValidatorIndex, ve.beaconchaUrl, exitRequest.Event.ValidatorIndex)
-					if err := ve.notifierPort.SendValidatorSucceedExitNotification(message); err != nil {
+					message := fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required.", exitRequest.Event.ValidatorIndex)
+					if err := ve.notifierPort.SendValidatorSucceedExitNotification(message, exitRequest.Event.ValidatorIndex); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}
 

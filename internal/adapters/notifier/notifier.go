@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -15,10 +16,11 @@ type Notifier struct {
 	LidoDnpName  string
 	BrainUrl     string
 	StakersUiUrl string
+	BeaconchaUrl string
 	HTTPClient   *http.Client
 }
 
-func NewNotifier(network, lidoDnpName, brainUrl, stakersUiUrl string) *Notifier {
+func NewNotifier(network, lidoDnpName, brainUrl, stakersUiUrl, beaconchaUrl string) *Notifier {
 	category := Category(strings.ToLower(network))
 	if network == "mainnet" {
 		category = Ethereum
@@ -29,6 +31,7 @@ func NewNotifier(network, lidoDnpName, brainUrl, stakersUiUrl string) *Notifier 
 		LidoDnpName:  lidoDnpName,
 		BrainUrl:     brainUrl,
 		StakersUiUrl: stakersUiUrl,
+		BeaconchaUrl: beaconchaUrl,
 		HTTPClient:   &http.Client{Timeout: 3 * time.Second},
 	}
 }
@@ -138,7 +141,7 @@ func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := "validator_exit_failed"; return &s }(),
 		CallToAction: &CallToAction{
-			Title: "Manual exit validator",
+			Title: "Exit validator manually",
 			URL:   n.BrainUrl,
 		},
 	}
@@ -146,7 +149,7 @@ func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
 }
 
 // SendValidatorSucceedExitNotification sends a notification about a validator successful exit.
-func (n *Notifier) SendValidatorSucceedExitNotification(message string) error {
+func (n *Notifier) SendValidatorSucceedExitNotification(message string, validatorIndex *big.Int) error {
 	payload := NotificationPayload{
 		Title:         "✅  Lido CSM: Validator Exit Succeeded",
 		Body:          message,
@@ -156,7 +159,7 @@ func (n *Notifier) SendValidatorSucceedExitNotification(message string) error {
 		CorrelationId: func() *string { s := "validator_exit_succeeded"; return &s }(),
 		CallToAction: &CallToAction{
 			Title: "View validator details",
-			URL:   n.StakersUiUrl,
+			URL:   fmt.Sprintf("%s/validator/%s", n.BeaconchaUrl, validatorIndex.String()),
 		},
 	}
 	return n.sendNotification(payload)
