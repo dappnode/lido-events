@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"lido-events/internal/adapters/beaconchain"
-	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
+	"lido-events/internal/adapters/csfeedistributor"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
@@ -74,7 +74,7 @@ func main() {
 	}
 
 	// Initialize services
-	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
+	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(exitsStorage, notifier, exitValidator, beaconchain)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
 	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)

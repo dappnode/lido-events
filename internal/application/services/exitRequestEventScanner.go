@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type ValidatorExitRequestEventScanner struct {
+type ExitRequestEventScanner struct {
 	storagePort         ports.ExitsStorage
 	notifierPort        ports.NotifierPort
 	veboPort            ports.VeboPort
@@ -25,8 +25,8 @@ type ValidatorExitRequestEventScanner struct {
 	servicePrefix       string
 }
 
-func NewValidatorExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64, csModuleTxReceipt common.Hash) *ValidatorExitRequestEventScanner {
-	return &ValidatorExitRequestEventScanner{
+func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64, csModuleTxReceipt common.Hash) *ExitRequestEventScanner {
+	return &ExitRequestEventScanner{
 		storagePort,
 		notifierPort,
 		veboPort,
@@ -40,7 +40,7 @@ func NewValidatorExitRequestEventScanner(storagePort ports.ExitsStorage, notifie
 }
 
 // ScanValidatorExitRequestEventsCron runs a periodic scan for ValidatorExitRequest events
-func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
+func (vs *ExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
 
@@ -65,7 +65,7 @@ func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(c
 }
 
 // RunScan contains the execution logic for scanning ValidatorExitRequest events
-func (vs *ValidatorExitRequestEventScanner) RunScan(ctx context.Context) error {
+func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 	vs.mu.Lock()         // Lock mutex to ensure only one execution at a time
 	defer vs.mu.Unlock() // Unlock when function exits
 
@@ -150,7 +150,7 @@ func (vs *ValidatorExitRequestEventScanner) RunScan(ctx context.Context) error {
 }
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
-func (vs *ValidatorExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
+func (vs *ExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
 	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event for node operatror id %s and validator index %s", validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex)
 
 	pubkeyHex := "0x" + hex.EncodeToString(validatorExitEvent.ValidatorPubkey) // This is exactly the format that signer needs for the pubkey to be when signing the exit message

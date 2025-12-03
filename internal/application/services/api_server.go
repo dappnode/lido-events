@@ -23,12 +23,12 @@ type APIServerService struct {
 	exitsStorage                     ports.ExitsStorage
 	performanceStorage               ports.PerformanceStorage
 	relays                           ports.Relays
-	validatorExitRequestEventScanner *ValidatorExitRequestEventScanner
+	validatorExitRequestEventScanner *ExitRequestEventScanner
 	router                           *mux.Router
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, relays ports.Relays, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, relays ports.Relays, validatorExitRequestEventScanner *ExitRequestEventScanner, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                           &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                    "API",
