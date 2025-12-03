@@ -10,22 +10,26 @@ import (
 )
 
 type Notifier struct {
-	Network     string
-	Category    Category
-	LidoDnpName string
-	HTTPClient  *http.Client
+	Network      string
+	Category     Category
+	LidoDnpName  string
+	BrainUrl     string
+	StakersUiUrl string
+	HTTPClient   *http.Client
 }
 
-func NewNotifier(network, lidoDnpName string) *Notifier {
+func NewNotifier(network, lidoDnpName, brainUrl, stakersUiUrl string) *Notifier {
 	category := Category(strings.ToLower(network))
 	if network == "mainnet" {
 		category = Ethereum
 	}
 	return &Notifier{
-		Network:     network,
-		Category:    category,
-		LidoDnpName: lidoDnpName,
-		HTTPClient:  &http.Client{Timeout: 3 * time.Second},
+		Network:      network,
+		Category:     category,
+		LidoDnpName:  lidoDnpName,
+		BrainUrl:     brainUrl,
+		StakersUiUrl: stakersUiUrl,
+		HTTPClient:   &http.Client{Timeout: 3 * time.Second},
 	}
 }
 
@@ -97,11 +101,16 @@ func (n *Notifier) sendNotification(payload NotificationPayload) error {
 // SendMisingLogReceiptsNotification sends a notification about missing log receipts.
 func (n *Notifier) SendMissingLogReceiptsNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "⚠️ Missing Log Receipts Detected",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := High; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "⚠️ Lido CSM: Execution client missing Log Receipts detected",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := High; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "missing_log_receipts"; return &s }(),
+		CallToAction: &CallToAction{
+			Title: "Switch your execution client",
+			URL:   n.StakersUiUrl,
+		},
 	}
 	return n.sendNotification(payload)
 }
@@ -109,23 +118,12 @@ func (n *Notifier) SendMissingLogReceiptsNotification(message string) error {
 // SendValidatorExitRequestedNotification sends a notification about a validator exit request.
 func (n *Notifier) SendValidatorExitRequestedNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "🚪 Validator Exit Requested",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := Medium; return &p }(),
-		DnpName:  &n.LidoDnpName,
-	}
-	return n.sendNotification(payload)
-}
-
-// SendValidatorExecutingExitNotification sends a notification about a validator executing exit.
-func (n *Notifier) SendValidatorExecutingExitNotification(message string) error {
-	payload := NotificationPayload{
-		Title:    "🏃 Validator Executing Exit",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := Medium; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "🚪 Lido CSM: Validator Exit Requested",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := Medium; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "validator_exit_requested"; return &s }(),
 	}
 	return n.sendNotification(payload)
 }
@@ -133,11 +131,16 @@ func (n *Notifier) SendValidatorExecutingExitNotification(message string) error 
 // SendValidatorFailedExitNotification sends a notification about a validator failed exit.
 func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "❌ Validator Exit Failed",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := High; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "❌ Lido CSM: Validator Exit Failed",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := Critical; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "validator_exit_failed"; return &s }(),
+		CallToAction: &CallToAction{
+			Title: "Manual exit validator",
+			URL:   n.BrainUrl,
+		},
 	}
 	return n.sendNotification(payload)
 }
@@ -145,11 +148,16 @@ func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
 // SendValidatorSucceedExitNotification sends a notification about a validator successful exit.
 func (n *Notifier) SendValidatorSucceedExitNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "✅ Validator Exit Succeeded",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := Medium; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "✅  Lido CSM: Validator Exit Succeeded",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := Medium; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "validator_exit_succeeded"; return &s }(),
+		CallToAction: &CallToAction{
+			Title: "View validator details",
+			URL:   n.StakersUiUrl,
+		},
 	}
 	return n.sendNotification(payload)
 }
@@ -157,11 +165,16 @@ func (n *Notifier) SendValidatorSucceedExitNotification(message string) error {
 // SendBlackListedNotification sends a notification about blacklisted relays.
 func (n *Notifier) SendBlackListedNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "🚨 Blacklisted Relays Detected",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := High; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "🚨 Lido CSM: Blacklisted Relays Detected",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := High; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "blacklisted_relays"; return &s }(),
+		CallToAction: &CallToAction{
+			Title: "Review relays configuration",
+			URL:   n.StakersUiUrl,
+		},
 	}
 	return n.sendNotification(payload)
 }
@@ -169,11 +182,16 @@ func (n *Notifier) SendBlackListedNotification(message string) error {
 // SendMissingRelayNotification sends a notification about missing mandatory relays.
 func (n *Notifier) SendMissingRelayNotification(message string) error {
 	payload := NotificationPayload{
-		Title:    "⚠️ No Mandatory Relays in Use",
-		Body:     message,
-		Category: &n.Category,
-		Priority: func() *Priority { p := Medium; return &p }(),
-		DnpName:  &n.LidoDnpName,
+		Title:         "⚠️ Lido CSM: No Mandatory Relays in Use",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := High; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := "missing_mandatory_relays"; return &s }(),
+		CallToAction: &CallToAction{
+			Title: "Update relays configuration",
+			URL:   n.StakersUiUrl,
+		},
 	}
 	return n.sendNotification(payload)
 }

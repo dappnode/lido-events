@@ -146,17 +146,12 @@ func (ve *ValidatorEjector) EjectValidator() error {
 				return
 			}
 
-			message := fmt.Sprintf("- 🚨 Your validator %s is requested to exit. Executing automatic exit.", exitRequest.Event.ValidatorIndex)
-			if err := ve.notifierPort.SendValidatorExecutingExitNotification(message); err != nil {
-				logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
-			}
-
 			logger.InfoWithPrefix(ve.servicePrefix, "Exiting validator %s with status %s", exitRequest.Event.ValidatorIndex, exitRequest.Status)
 			if err := ve.exitValidatorPort.ExitValidator(exitRequest.ValidatorPubkeyHex, exitRequest.Event.ValidatorIndex.String()); err != nil {
 				logger.WarnWithPrefix(ve.servicePrefix, "Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
 				// send notification with manual exit link and skip on errror
 				// TODO: wait for PR in docs to add the proper link
-				message = fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to learn how to do the exit manually %s", exitRequest.Event.ValidatorIndex, "https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui")
+				message := fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to learn how to do the exit manually %s", exitRequest.Event.ValidatorIndex, "https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui")
 				if err := ve.notifierPort.SendValidatorFailedExitNotification(message); err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error sending manual exit notification", err)
 				}
@@ -181,7 +176,7 @@ func (ve *ValidatorEjector) EjectValidator() error {
 
 				if validatorStatus == domain.StatusActiveExiting || validatorStatus == domain.StatusExitedUnslashed || validatorStatus == domain.StatusExitedSlashed {
 					logger.InfoWithPrefix(ve.servicePrefix, "Validator %s has entered the exit queue", exitRequest.Event.ValidatorIndex)
-					message = fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required. See details here: %s/validator/%s", exitRequest.Event.ValidatorIndex, ve.beaconchaUrl, exitRequest.Event.ValidatorIndex)
+					message := fmt.Sprintf("- 🚪 Validator %s has entered the exit queue automatically, no manual action required. See details here: %s/validator/%s", exitRequest.Event.ValidatorIndex, ve.beaconchaUrl, exitRequest.Event.ValidatorIndex)
 					if err := ve.notifierPort.SendValidatorSucceedExitNotification(message); err != nil {
 						logger.ErrorWithPrefix(ve.servicePrefix, "Error sending exit notification", err)
 					}

@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}
-	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName)
+	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl)
 
 	relays, err := relays.NewARelays(rpcClient, config.MEVBoostRelaysAllowListAddres, config.DappmanagerUrl, config.MevBoostDnpName)
 	if err != nil {

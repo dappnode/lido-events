@@ -27,6 +27,7 @@ type Config struct {
 	BeaconchaUrl       string
 	CSMUIURL           string
 	StakersUiUrl       string
+	BrainUrl           string
 	ApiPort            uint64
 	LidoDnpName        string
 
@@ -178,6 +179,7 @@ func LoadNetworkConfig() (Config, error) {
 			BeaconchaUrl:                  "https://hoodi.beaconcha.in",
 			CSMUIURL:                      "https://csm.testnet.fi",
 			StakersUiUrl:                  "http://my.dappnode/stakers/hoodi",
+			BrainUrl:                      "http://brain.web3signer-hoodi.dappnode",
 			ApiPort:                       apiPort,
 			LidoDnpName:                   "llido-csm-hoodi.dnp.dappnode.eth",
 			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
@@ -214,6 +216,7 @@ func LoadNetworkConfig() (Config, error) {
 			BeaconchaUrl:                  "https://beaconcha.in",
 			CSMUIURL:                      "https://csm.lido.fi",
 			StakersUiUrl:                  "http://my.dappnode/stakers/ethereum",
+			BrainUrl:                      "http://brain.web3signer.dappnode",
 			LidoDnpName:                   "llido-csm-mainnet.dnp.dappnode.eth",
 			ApiPort:                       apiPort,
 			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
