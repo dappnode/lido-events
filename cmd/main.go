@@ -77,7 +77,7 @@ func main() {
 	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(config.BeaconchaUrl, exitsStorage, notifier, exitValidator, beaconchain)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
-	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, notifier, relays, validatorExitRequestScannerService, config.CORS)
+	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)
 	proxyService := services.NewProxyAPIServerService(config.ProxyApiPort, config.LidoKeysApiUrl, config.CORS)
 	relaysCheckerService := services.NewRelayCronService(config.StakersUiUrl, relays, notifier)
 

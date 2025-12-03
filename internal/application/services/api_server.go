@@ -22,22 +22,19 @@ type APIServerService struct {
 	ctx                              context.Context
 	exitsStorage                     ports.ExitsStorage
 	performanceStorage               ports.PerformanceStorage
-	notifierPort                     ports.NotifierPort
 	relays                           ports.Relays
 	validatorExitRequestEventScanner *ValidatorExitRequestEventScanner
 	router                           *mux.Router
-	processingExitRequests           sync.Map // To track exit requests being processed by operator ID
 }
 
 // NewAPIServerService initializes the API server
-func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, notifierPort ports.NotifierPort, relays ports.Relays, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
+func NewAPIServerService(ctx context.Context, port uint64, exitsStorage ports.ExitsStorage, performanceStorage ports.PerformanceStorage, relays ports.Relays, validatorExitRequestEventScanner *ValidatorExitRequestEventScanner, allowedOrigins []string) *APIServerService {
 	apiServer := &APIServerService{
 		server:                           &http.Server{Addr: ":" + strconv.FormatUint(port, 10)},
 		servicePrefix:                    "API",
 		ctx:                              ctx,
 		exitsStorage:                     exitsStorage,
 		performanceStorage:               performanceStorage,
-		notifierPort:                     notifierPort,
 		relays:                           relays,
 		validatorExitRequestEventScanner: validatorExitRequestEventScanner,
 		router:                           mux.NewRouter(),
@@ -229,6 +226,13 @@ func (h *APIServerService) addOperator(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trigger exit scanner asynchronously after successfully saving the operator ID
+	go func() {
+		if err := h.validatorExitRequestEventScanner.RunScan(h.ctx); err != nil {
+			logger.ErrorWithPrefix(h.servicePrefix, "Async exit events scanner after addOperator failed: %v", err)
+		}
+	}()
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -277,26 +281,6 @@ func (h *APIServerService) getExitRequests(w http.ResponseWriter, r *http.Reques
 	if _, ok := operatorIdNum.SetString(operatorId, 10); !ok {
 		logger.ErrorWithPrefix(h.servicePrefix, "Invalid operatorId format in getExitRequests")
 		writeErrorResponse(w, "Invalid operator ID", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Check if the operator ID is already being processed
-	if _, exists := h.processingExitRequests.Load(operatorIdNum.String()); exists {
-		logger.DebugWithPrefix(h.servicePrefix, "Operator ID %s is already being processed", operatorIdNum.String())
-		// If processing, return a 202 response
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("Request is being processed"))
-		return
-	}
-
-	// Mark the operator ID as being processed
-	h.processingExitRequests.Store(operatorIdNum.String(), struct{}{})
-	defer h.processingExitRequests.Delete(operatorIdNum.String()) // Clear operator ID when done
-
-	// Perform the scanning (synchronously)
-	if err := h.validatorExitRequestEventScanner.RunScan(h.ctx); err != nil {
-		logger.ErrorWithPrefix(h.servicePrefix, "Error scanning ValidatorExitRequest events: %v", err)
-		writeErrorResponse(w, "Error scanning ValidatorExitRequest events", http.StatusInternalServerError, err)
 		return
 	}
 
