@@ -1,5 +1,5 @@
 - [ ] Review all the smart contracts
 - [ ] Consider implementing composite adapters for:
   - [ ] exit validator. Do not use beaconchain and exit adapters but instead use a wrapper that uses both.
-- [ ] When receiving POST add operator request the scanner must be retriggered
 - [ ] Review config: blockDeployment, blockdistance, genesis, etc
+- [ ] Check if performance log cid is stored so don't need to recalculate
