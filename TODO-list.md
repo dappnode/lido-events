@@ -4,4 +4,4 @@
 - [ ] Review config: blockDeployment, blockdistance, genesis, etc
 - [ ] Check if performance log cid is stored so don't need to recalculate
 - [ ] Ask lido to trigger exit event for testing purposes.
-- [ ] Review CRONs
+- [ ] Review CRONs timers

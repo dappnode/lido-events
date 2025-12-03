@@ -88,9 +88,8 @@ func main() {
 	// Start services
 	go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
 	go pendingHashesLoaderService.LoadHashesCron(ctx, 3*time.Hour, &wg)
-	exitRequestExecutionComplete := make(chan struct{})
-	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
+	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg)
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
 
 	// Handle OS signals for shutdown
 	handleShutdown(cancel, apiService, proxyService)

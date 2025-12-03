@@ -40,16 +40,14 @@ func NewValidatorExitRequestEventScanner(storagePort ports.ExitsStorage, notifie
 }
 
 // ScanValidatorExitRequestEventsCron runs a periodic scan for ValidatorExitRequest events
-func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup, firstExecutionComplete chan struct{}) {
+func (vs *ValidatorExitRequestEventScanner) ScanValidatorExitRequestEventsCron(ctx context.Context, interval time.Duration, wg *sync.WaitGroup) {
 	defer wg.Done() // Decrement the counter when the goroutine finishes
 	wg.Add(1)       // Increment the WaitGroup counter
 
 	// Run the scan logic immediately
 	vs.RunScan(ctx)
 
-	logger.DebugWithPrefix(vs.servicePrefix, "First execution complete, sending signal to start periodic ejector cron for ValidatorExitRequest events")
-	// Signal that the first execution is complete
-	close(firstExecutionComplete)
+	logger.DebugWithPrefix(vs.servicePrefix, "Starting periodic cron scan for ValidatorExitRequest events")
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
