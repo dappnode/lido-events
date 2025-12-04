@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
+	"lido-events/internal/adapters/csfeedistributor"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
