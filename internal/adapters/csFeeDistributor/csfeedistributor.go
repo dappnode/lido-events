@@ -3,7 +3,7 @@ package csfeedistributor
 import (
 	"context"
 	"fmt"
-	"lido-events/internal/adapters/csFeeDistributor/bindings"
+	"lido-events/internal/adapters/csfeedistributor/bindings"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
