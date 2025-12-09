@@ -31,7 +31,7 @@ func (phl *AllHashesLoader) LoadHashesCron(ctx context.Context, interval time.Du
 	wg.Add(1)       // Increment the WaitGroup counter
 
 	// Execute immediately on startup
-	if err := phl.loadHashes(); err != nil {
+	if err := phl.loadHashes(ctx); err != nil {
 		logger.InfoWithPrefix(phl.servicePrefix, "Error loading hashes: %v", err)
 	}
 
@@ -42,7 +42,7 @@ func (phl *AllHashesLoader) LoadHashesCron(ctx context.Context, interval time.Du
 		select {
 		case <-ticker.C:
 			// Call the load method periodically
-			if err := phl.loadHashes(); err != nil {
+			if err := phl.loadHashes(ctx); err != nil {
 				logger.InfoWithPrefix(phl.servicePrefix, "Error loading hashes: %v", err)
 				continue
 			}
@@ -56,11 +56,10 @@ func (phl *AllHashesLoader) LoadHashesCron(ctx context.Context, interval time.Du
 
 // loadHashes fetches all log CIDs from the CsFeeDistributor,
 // retrieves each report from IPFS, and stores it in the performance DB.
-func (phl *AllHashesLoader) loadHashes() error {
+func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 	logger.DebugWithPrefix(phl.servicePrefix, "Starting hashes load")
 
 	// 1. Get all log CIDs from the CsFeeDistributor port.
-	ctx := context.Background()
 	logCids, err := phl.csfeeDistributor.GetAllLogCids(ctx)
 	if err != nil {
 		logger.ErrorWithPrefix(phl.servicePrefix, "Error getting log CIDs from CsFeeDistributor: %v", err)

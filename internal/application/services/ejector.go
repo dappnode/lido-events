@@ -37,7 +37,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 	logger.DebugWithPrefix(ve.servicePrefix, "Starting periodic ejector for ValidatorExitRequest events")
 
 	// Execute immediately on startup
-	if err := ve.EjectValidator(); err != nil {
+	if err := ve.EjectValidator(ctx); err != nil {
 		logger.ErrorWithPrefix(ve.servicePrefix, "Error ejecting validators: %v", err)
 	}
 
@@ -48,7 +48,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 		select {
 		case <-ticker.C:
 			// Call the scan method periodically
-			if err := ve.EjectValidator(); err != nil {
+			if err := ve.EjectValidator(ctx); err != nil {
 				logger.ErrorWithPrefix(ve.servicePrefix, "Error ejecting validators: %v", err)
 			}
 		case <-ctx.Done():
@@ -60,7 +60,7 @@ func (ve *ValidatorEjector) ValidatorEjectorCron(ctx context.Context, interval t
 }
 
 // EjectValidator orchestrates the voluntary exit process for a validator
-func (ve *ValidatorEjector) EjectValidator() error {
+func (ve *ValidatorEjector) EjectValidator(ctx context.Context) error {
 	logger.DebugWithPrefix(ve.servicePrefix, "Validator Ejector cron started")
 
 	// skip if beacon syncing
