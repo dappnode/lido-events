@@ -143,6 +143,19 @@ func (b *Beaconchain) SubmitPoolVoluntaryExit(epoch, validatorIndex, signature s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		var apiErrMsg string
+		if resp.Body != nil {
+			var buf bytes.Buffer
+			if _, readErr := buf.ReadFrom(resp.Body); readErr == nil {
+				apiErrMsg = buf.String()
+			}
+		}
+
+		// Include API error message if available. i.e {"message":"Invalid exit: validator has not been active long enough to exit: 182 of 256 epochs. Validator will be eligible for exit at epoch 58995","code":400}
+		if apiErrMsg != "" {
+			return fmt.Errorf("unexpected status code %d submitting voluntary exit: %s", resp.StatusCode, apiErrMsg)
+		}
+
 		return fmt.Errorf("unexpected status code %d submitting voluntary exit", resp.StatusCode)
 	}
 
