@@ -114,9 +114,9 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v. Defaulting to %d seconds", err, allowedExitDelay.Uint64())
 	}
 
-	// Multiply it by 4 to be sure we cover the entire exit delay window
-	allowedExitDelaySeconds := allowedExitDelay.Uint64() * 4
-	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 4 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
+	// Multiply it by 2 to be sure we cover the entire exit delay window
+	allowedExitDelaySeconds := allowedExitDelay.Uint64() * 2
+	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 2 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
 
 	// calculate its timetamp slot
 	currentTime := uint64(time.Now().Unix())
