@@ -13,17 +13,20 @@ import (
 )
 
 type ExitRequestEventScanner struct {
-	storagePort      ports.ExitsStorage
-	notifierPort     ports.NotifierPort
-	veboPort         ports.VeboPort
-	executionPort    ports.ExecutionPort
-	beaconchainPort  ports.Beaconchain
-	csParametersPort ports.CsParametersPort
-	mu               sync.Mutex
-	servicePrefix    string
+	storagePort             ports.ExitsStorage
+	notifierPort            ports.NotifierPort
+	veboPort                ports.VeboPort
+	executionPort           ports.ExecutionPort
+	beaconchainPort         ports.Beaconchain
+	csParametersPort        ports.CsParametersPort
+	secondsPerSlot          uint64
+	defaultAllowedExitDelay uint64
+	exitDelayMultiplier     uint64
+	mu                      sync.Mutex
+	servicePrefix           string
 }
 
-func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, csParametersPort ports.CsParametersPort) *ExitRequestEventScanner {
+func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, csParametersPort ports.CsParametersPort, secondsPerSlot uint64, defaultAllowedExitDelay uint64, exitDelayMultiplier uint64) *ExitRequestEventScanner {
 	return &ExitRequestEventScanner{
 		storagePort,
 		notifierPort,
@@ -31,6 +34,9 @@ func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort por
 		executionPort,
 		beaconchainPort,
 		csParametersPort,
+		secondsPerSlot,
+		defaultAllowedExitDelay,
+		exitDelayMultiplier,
 		sync.Mutex{},
 		"ValidatorExitRequestEventScanner",
 	}
@@ -66,6 +72,18 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 	vs.mu.Lock()         // Lock mutex to ensure only one execution at a time
 	defer vs.mu.Unlock() // Unlock when function exits
 
+	if err := vs.ensureNodesInSync(); err != nil {
+		return err
+	}
+
+	if err := vs.scanOperators(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (vs *ExitRequestEventScanner) ensureNodesInSync() error {
 	// Skip if execution or beaconchain nodes are syncing
 	executionSyncing, err := vs.executionPort.IsSyncing()
 	if err != nil {
@@ -76,6 +94,7 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		logger.InfoWithPrefix(vs.servicePrefix, "Execution node is syncing, skipping ValidatorExitRequest event scan")
 		return fmt.Errorf("execution node is syncing")
 	}
+
 	beaconchainSyncing, err := vs.beaconchainPort.GetSyncingStatus()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if beaconchain node is syncing: %v", err)
@@ -86,6 +105,10 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		return fmt.Errorf("beaconchain node is syncing")
 	}
 
+	return nil
+}
+
+func (vs *ExitRequestEventScanner) computeAllowedExitDelayBlock(ctx context.Context) (uint64, error) {
 	// get allowed exit delay from csParameters contract
 	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
 	if err != nil {
@@ -106,21 +129,37 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 	genesisTime, err := vs.beaconchainPort.GetGenesisTime()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting genesis time from beaconchain: %v", err)
-		return err
+		return 0, err
 	}
-	slotsSinceGenesis := (allowedExitDelayTimestamp - genesisTime) / 12 // assuming 12 seconds per slot
-	allowedExitDelaySlot := slotsSinceGenesis
-	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay timestamp: %d corresponds to slot: %d", allowedExitDelayTimestamp, allowedExitDelaySlot)
+
+	var slotsSinceGenesis uint64
+	if allowedExitDelayTimestamp <= genesisTime {
+		slotsSinceGenesis = 0
+	} else {
+		slotsSinceGenesis = (allowedExitDelayTimestamp - genesisTime) / vs.secondsPerSlot
+	}
+
+	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay timestamp: %d corresponds to slot: %d", allowedExitDelayTimestamp, slotsSinceGenesis)
 
 	// get the corresponding block number for the allowed exit delay timestamp slot
-	blockNumber, err := vs.beaconchainPort.GetBlockNumber(fmt.Sprintf("%d", allowedExitDelaySlot))
+	blockNumber, err := vs.beaconchainPort.GetBlockNumber(fmt.Sprintf("%d", slotsSinceGenesis))
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting allowed exit delay slot block number: %v", err)
-		return err
+		return 0, err
 	}
-	// print the allowed exit delay slot and block number
-	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay slot: %d, block number: %d", allowedExitDelaySlot, blockNumber)
 
+	// print the allowed exit delay slot and block number
+	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay slot: %d, block number: %d", slotsSinceGenesis, blockNumber)
+
+	// ensure block has receipts
+	if err := vs.ensureBlockHasReceipts(blockNumber); err != nil {
+		return 0, err
+	}
+
+	return blockNumber, nil
+}
+
+func (vs *ExitRequestEventScanner) ensureBlockHasReceipts(blockNumber uint64) error {
 	// Skip if the block does not have tx receipts which means the execution client does not store log receipts
 	blockID := fmt.Sprintf("0x%x", blockNumber) // convert block number to hex
 	receiptExists, err := vs.executionPort.GetBlockHasReceipts(blockID)
@@ -135,9 +174,13 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		if err := vs.notifierPort.SendMissingLogReceiptsNotification(message); err != nil {
 			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
 		}
-		return fmt.Errorf("transaction receipt for csModule deployment not found")
+		return fmt.Errorf("block %s does not have transaction receipts", blockID)
 	}
 
+	return nil
+}
+
+func (vs *ExitRequestEventScanner) scanOperators(ctx context.Context) error {
 	// Iterate over operator ids
 	operatorIDs, err := vs.storagePort.GetOperatorIds()
 	if err != nil {
@@ -153,13 +196,22 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		// See: https://csm.lido.fi/type/parameters
 		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
 		if err != nil {
-			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using allowed exit delay block number %d: %v", blockNumber, err)
-			start = blockNumber
+			start, err = vs.computeAllowedExitDelayBlock(ctx)
+			if err != nil {
+				logger.ErrorWithPrefix(vs.servicePrefix, "Error computing allowed exit delay block: %v", err)
+				return err
+			}
+			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using allowed exit delay block number %d: %v", start, err)
+
 		}
 
 		if start == 0 {
-			logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using allowed exit delay block number %d", blockNumber)
-			start = blockNumber
+			start, err = vs.computeAllowedExitDelayBlock(ctx)
+			if err != nil {
+				logger.ErrorWithPrefix(vs.servicePrefix, "Error computing allowed exit delay block: %v", err)
+				return err
+			}
+			logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using allowed exit delay block number %d", start)
 		}
 
 		end, err := vs.executionPort.GetMostRecentBlockNumber()

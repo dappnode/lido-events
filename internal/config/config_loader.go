@@ -39,10 +39,13 @@ type Config struct {
 	CSParametersRegistryAddress   common.Address
 
 	// Lido specifics
-	LidoKeysApiUrl string
-	ProxyApiPort   uint64
+	LidoKeysApiUrl          string
+	ProxyApiPort            uint64
+	DefaultAllowedExitDelay uint64
+	ExitDelayMultiplier     uint64
 
 	// Blockchain
+	SecondsPerSlot          uint64
 	BlockChunkSize          uint64
 	BlockScannerMinDistance uint64
 }
@@ -145,6 +148,32 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	}
 
+	defaultAllowedExitDelay := uint64(345600) // 4 days in seconds
+	defaultAllowedExitDelayStr := os.Getenv("DEFAULT_ALLOWED_EXIT_DELAY")
+	if defaultAllowedExitDelayStr != "" {
+		// Try to parse the default allowed exit delay as uint64
+		if delay, err := strconv.ParseUint(defaultAllowedExitDelayStr, 10, 64); err == nil {
+			defaultAllowedExitDelay = delay
+		} else {
+			logger.Fatal("Invalid DEFAULT_ALLOWED_EXIT_DELAY value: %s", defaultAllowedExitDelayStr)
+		}
+	}
+
+	// must be integer and greater than 1
+	exitDelayMultiplier := uint64(2)
+	exitDelayMultiplierStr := os.Getenv("EXIT_DELAY_MULTIPLIER")
+	if exitDelayMultiplierStr != "" {
+		// Try to parse the exit delay multiplier as uint64
+		if multiplier, err := strconv.ParseUint(exitDelayMultiplierStr, 10, 64); err == nil {
+			if multiplier < 1 {
+				logger.Fatal("EXIT_DELAY_MULTIPLIER must be greater than or equal to 1")
+			}
+			exitDelayMultiplier = multiplier
+		} else {
+			logger.Fatal("Invalid EXIT_DELAY_MULTIPLIER value: %s", exitDelayMultiplierStr)
+		}
+	}
+
 	corsEnv := os.Getenv("CORS")
 	var config Config
 
@@ -181,6 +210,9 @@ func LoadNetworkConfig() (Config, error) {
 			CSParametersRegistryAddress:   common.HexToAddress("0xA4aD5236963f9Fe4229864712269D8d79B65C5Ad"),
 			LidoKeysApiUrl:                "https://keys-api-hoodi.testnet.fi",
 			ProxyApiPort:                  proxyApiPort,
+			DefaultAllowedExitDelay:       defaultAllowedExitDelay,
+			ExitDelayMultiplier:           exitDelayMultiplier,
+			SecondsPerSlot:                12,
 			BlockChunkSize:                blockChunkSize,
 			BlockScannerMinDistance:       blockScannerMinDistance,
 		}
@@ -216,6 +248,9 @@ func LoadNetworkConfig() (Config, error) {
 			CSParametersRegistryAddress:   common.HexToAddress("0x9D28ad303C90DF524BA960d7a2DAC56DcC31e428"),
 			LidoKeysApiUrl:                "https://keys-api.lido.fi",
 			ProxyApiPort:                  proxyApiPort,
+			DefaultAllowedExitDelay:       defaultAllowedExitDelay,
+			ExitDelayMultiplier:           exitDelayMultiplier,
+			SecondsPerSlot:                12,
 			BlockChunkSize:                blockChunkSize,
 			BlockScannerMinDistance:       blockScannerMinDistance,
 		}

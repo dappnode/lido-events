@@ -12,7 +12,7 @@ import (
 	"lido-events/internal/adapters/csfeedistributor"
 	"lido-events/internal/adapters/csparameters"
 	"lido-events/internal/adapters/execution"
-	exitvalidator "lido-events/internal/adapters/exitValidator"
+	"lido-events/internal/adapters/exitvalidator"
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
 	"lido-events/internal/adapters/relays"
@@ -68,7 +68,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
-	csParameters , err := csparameters.NewCsParameters(rpcClient, config.CSParametersRegistryAddress)
+	csParameters, err := csparameters.NewCsParameters(rpcClient, config.CSParametersRegistryAddress)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsParametersAdapter: %v", err)
 	}
@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// Initialize services
-	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, csParameters,)
+	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, csParameters, config.SecondsPerSlot, config.DefaultAllowedExitDelay, config.ExitDelayMultiplier)
 	validatorEjectorService := services.NewValidatorEjectorService(exitsStorage, notifier, exitValidator, beaconchain)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
 	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)
