@@ -7,6 +7,7 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
+	"math/big"
 	"sync"
 	"time"
 
@@ -108,13 +109,14 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 	// get allowed exit delay from csParameters contract
 	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
 	if err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v", err)
-		return err
+		// continue on error and default to 4 days in seconds
+		allowedExitDelay = big.NewInt(345600)
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v. Defaulting to %d seconds", err, allowedExitDelay.Uint64())
 	}
 
 	// Multiply it by 4 to be sure we cover the entire exit delay window
 	allowedExitDelaySeconds := allowedExitDelay.Uint64() * 4
-	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay from csParameters contract: %d seconds", allowedExitDelaySeconds)
+	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 4 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
 
 	// calculate its timetamp slot
 	currentTime := uint64(time.Now().Unix())
