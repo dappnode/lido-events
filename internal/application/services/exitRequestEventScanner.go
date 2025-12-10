@@ -113,12 +113,12 @@ func (vs *ExitRequestEventScanner) computeAllowedExitDelayBlock(ctx context.Cont
 	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
 	if err != nil {
 		// continue on error and default to 4 days in seconds
-		allowedExitDelay = big.NewInt(345600)
+		allowedExitDelay = big.NewInt(int64(vs.defaultAllowedExitDelay))
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v. Defaulting to %d seconds", err, allowedExitDelay.Uint64())
 	}
 
 	// Multiply it by 2 to be sure we cover the entire exit delay window
-	allowedExitDelaySeconds := allowedExitDelay.Uint64() * 2
+	allowedExitDelaySeconds := allowedExitDelay.Uint64() * vs.exitDelayMultiplier
 	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 2 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
 
 	// calculate its timetamp slot

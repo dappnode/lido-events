@@ -60,31 +60,47 @@ func TestIsSyncingIntegration(t *testing.T) {
 	}
 }
 
-// TestGetBlockReceiptsIntegration tests retrieving block receipts for a given block.
-// This is a dummy test that queries block 1 and logs the response.
+// TestGetBlockReceiptsIntegration tests retrieving block receipts for blocks
+// that are known to have or not have receipts.
 func TestGetBlockReceiptsIntegration(t *testing.T) {
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
 
-	// Block identifier for block 1693623 as a hex quantity.
-	blockID := "0x19f0d7"
-
-	receipts, err := adapter.GetBlockReceipts(blockID)
+	// Block 0x1E240 should have receipts.
+	blockWithReceipts := "0x1e240"
+	receipts, err := adapter.GetBlockReceipts(blockWithReceipts)
 	assert.NoError(t, err)
+	assert.NotNil(t, receipts)
+	assert.Greater(t, len(receipts), 0, "expected block %s to have receipts", blockWithReceipts)
+	t.Logf("Block receipts for block %s: %+v", blockWithReceipts, receipts)
 
-	t.Logf("Block receipts for block %s: %+v", blockID, receipts)
+	// Block 0x3039 should not have receipts.
+	blockWithoutReceipts := "0x3039"
+	receipts, err = adapter.GetBlockReceipts(blockWithoutReceipts)
+	assert.NoError(t, err)
+	if receipts != nil {
+		assert.Equal(t, 0, len(receipts), "expected block %s to have no receipts", blockWithoutReceipts)
+	}
+	t.Logf("Block receipts for block %s: %+v", blockWithoutReceipts, receipts)
 }
 
-// TestGetBlockHasReceiptsIntegration tests checking whether a block has any
-// receipts using eth_getBlockReceipts. This is a dummy test for block 1.
+// TestGetBlockHasReceiptsIntegration tests checking whether blocks have any
+// receipts using eth_getBlockReceipts.
 func TestGetBlockHasReceiptsIntegration(t *testing.T) {
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
 
-	blockID := "0x19f0d7"
-
-	hasReceipts, err := adapter.GetBlockHasReceipts(blockID)
+	// Block 0x1E240 should have receipts.
+	blockWithReceipts := "0x1e240"
+	hasReceipts, err := adapter.GetBlockHasReceipts(blockWithReceipts)
 	assert.NoError(t, err)
+	assert.True(t, hasReceipts, "expected block %s to have receipts", blockWithReceipts)
+	t.Logf("Block %s has receipts: %v", blockWithReceipts, hasReceipts)
 
-	t.Logf("Block %s has receipts: %v", blockID, hasReceipts)
+	// Block 0x3039 should not have receipts.
+	blockWithoutReceipts := "0x3039"
+	hasReceipts, err = adapter.GetBlockHasReceipts(blockWithoutReceipts)
+	assert.NoError(t, err)
+	assert.False(t, hasReceipts, "expected block %s to have no receipts", blockWithoutReceipts)
+	t.Logf("Block %s has receipts: %v", blockWithoutReceipts, hasReceipts)
 }
