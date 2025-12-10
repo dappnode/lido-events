@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -66,56 +65,6 @@ func (e *Execution) GetMostRecentBlockNumber() (uint64, error) {
 	return blockNumber, nil
 }
 
-// GetBlockTimestampByNumber retrieves the timestamp of the block with the specified number from the Ethereum execution client.
-func (e *Execution) GetBlockTimestampByNumber(blockNumber uint64) (uint64, error) {
-	// Convert block number to hexadecimal
-	blockNumberHex := fmt.Sprintf("0x%x", blockNumber)
-
-	// Create the request payload for eth_getBlockByNumber
-	payload := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "eth_getBlockByNumber",
-		"params":  []interface{}{blockNumberHex, false}, // `false` indicates we don't need full transaction objects
-		"id":      1,
-	}
-
-	// Marshal the payload to JSON
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		return 0, fmt.Errorf("failed to marshal request payload for eth_getBlockByNumber: %w", err)
-	}
-
-	// Send the request to the execution client
-	resp, err := http.Post(e.rpcURL, "application/json", bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		return 0, fmt.Errorf("failed to send request to execution client at %s: %w", e.rpcURL, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("unexpected status code %d received from execution client", resp.StatusCode)
-	}
-
-	// Parse the response
-	var result struct {
-		Result struct {
-			Timestamp string `json:"timestamp"`
-		} `json:"result"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return 0, fmt.Errorf("failed to decode response from execution client: %w", err)
-	}
-
-	// Convert the hexadecimal timestamp to uint64
-	var timestamp uint64
-	_, err = fmt.Sscanf(result.Result.Timestamp, "0x%x", &timestamp)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse timestamp from result %s: %w", result.Result.Timestamp, err)
-	}
-
-	return timestamp, nil
-}
-
 // IsSyncing checks if the Ethereum execution client is currently syncing.
 func (e *Execution) IsSyncing() (bool, error) {
 	// Create the request payload for eth_syncing
@@ -160,20 +109,23 @@ func (e *Execution) IsSyncing() (bool, error) {
 	return true, nil
 }
 
-// GetTransactionReceipt retrieves the transaction receipt for a given transaction hash.
-func (e *Execution) GetTransactionReceipt(txHash common.Hash) (map[string]interface{}, error) {
-	// Create the request payload for eth_getTransactionReceipt
+// GetBlockReceipts retrieves all transaction receipts for a given block
+// identifier using the eth_getBlockReceipts RPC method. The block identifier
+// can be a hex-encoded block number (e.g. "0x1"), a block hash, or tags such
+// as "latest".
+func (e *Execution) GetBlockReceipts(blockID string) ([]map[string]interface{}, error) {
+	// Create the request payload for eth_getBlockReceipts
 	payload := map[string]interface{}{
 		"jsonrpc": "2.0",
-		"method":  "eth_getTransactionReceipt",
-		"params":  []interface{}{txHash},
+		"method":  "eth_getBlockReceipts",
+		"params":  []interface{}{blockID},
 		"id":      1,
 	}
 
 	// Marshal the payload to JSON
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request payload for eth_getTransactionReceipt: %w", err)
+		return nil, fmt.Errorf("failed to marshal request payload for eth_getBlockReceipts: %w", err)
 	}
 
 	// Send the request to the execution client
@@ -189,44 +141,30 @@ func (e *Execution) GetTransactionReceipt(txHash common.Hash) (map[string]interf
 
 	// Parse the response
 	var result struct {
-		Result map[string]interface{} `json:"result"`
+		Result []map[string]interface{} `json:"result"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response from execution client: %w", err)
 	}
 
-	// Check if the result is null
+	// If result is nil, treat it as no receipts
 	if result.Result == nil {
-		return nil, nil // Returning nil to indicate no receipt is available
+		return nil, nil
 	}
 
 	return result.Result, nil
 }
 
-// GetTransactionReceiptExists checks if the transaction receipt exists for a given transaction hash.
-// - Reth running as fullnode returns "result": null if the transaction receipt does not exist in the database.
-// TODO: test erigon response running it with config not to store receipts
-func (e *Execution) GetTransactionReceiptExists(txHash common.Hash) (bool, error) {
-	receipt, err := e.GetTransactionReceipt(txHash)
+// GetBlockHasReceipts checks if any transaction receipts are available for a
+// given block identifier using eth_getBlockReceipts. It returns true if the
+// RPC call succeeds and the returned list of receipts is non-empty.
+func (e *Execution) GetBlockHasReceipts(blockID string) (bool, error) {
+	receipts, err := e.GetBlockReceipts(blockID)
 	if err != nil {
 		return false, err
 	}
 
-	// Check if the receipt is nil
-	if receipt == nil {
-		return false, nil
-	}
-
-	// Check if the receipt is an empty map
-	if len(receipt) == 0 {
-		return false, nil
-	}
-
-	// Check specific fields in the receipt to ensure it is valid
-	if _, ok := receipt["transactionHash"]; !ok {
-		return false, nil
-	}
-	if _, ok := receipt["blockNumber"]; !ok {
+	if len(receipts) == 0 {
 		return false, nil
 	}
 

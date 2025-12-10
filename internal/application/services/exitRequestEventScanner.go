@@ -10,23 +10,20 @@ import (
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type ExitRequestEventScanner struct {
-	storagePort          ports.ExitsStorage
-	notifierPort         ports.NotifierPort
-	veboPort             ports.VeboPort
-	executionPort        ports.ExecutionPort
-	beaconchainPort      ports.Beaconchain
-	csParametersPort     ports.CsParametersPort
-	csModuleTxReceipt    common.Hash
-	mu                   sync.Mutex
-	servicePrefix        string
+	storagePort      ports.ExitsStorage
+	notifierPort     ports.NotifierPort
+	veboPort         ports.VeboPort
+	executionPort    ports.ExecutionPort
+	beaconchainPort  ports.Beaconchain
+	csParametersPort ports.CsParametersPort
+	mu               sync.Mutex
+	servicePrefix    string
 }
 
-func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, csParametersPort ports.CsParametersPort, csModuleTxReceipt common.Hash) *ExitRequestEventScanner {
+func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, csParametersPort ports.CsParametersPort) *ExitRequestEventScanner {
 	return &ExitRequestEventScanner{
 		storagePort,
 		notifierPort,
@@ -34,7 +31,6 @@ func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort por
 		executionPort,
 		beaconchainPort,
 		csParametersPort,
-		csModuleTxReceipt,
 		sync.Mutex{},
 		"ValidatorExitRequestEventScanner",
 	}
@@ -90,22 +86,6 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		return fmt.Errorf("beaconchain node is syncing")
 	}
 
-	// Skip if tx receipt not found. This means that the node does not store log receipts and there are no logs at all
-	receiptExists, err := vs.executionPort.GetTransactionReceiptExists(vs.csModuleTxReceipt)
-	if err != nil {
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if transaction receipt exists: %v", err)
-		return err
-	}
-	if !receiptExists {
-		logger.WarnWithPrefix(vs.servicePrefix, "Transaction receipt for csModule deployment not found. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping ValidatorExitRequests event scan")
-		// notify the user to switch to an execution client that does store the log receipts
-		message := "- 🚨 Your Execution Client appears to be missing log receipt storage. As a result, ValidatorExitRequest events cannot be scanned. To resolve this issue, consider switching to an Execution Client that supports log receipt storage or updating your node configuration to enable this feature"
-		if err := vs.notifierPort.SendMissingLogReceiptsNotification(message); err != nil {
-			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
-		}
-		return fmt.Errorf("transaction receipt for csModule deployment not found")
-	}
-
 	// get allowed exit delay from csParameters contract
 	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
 	if err != nil {
@@ -130,6 +110,23 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 	}
 	// print the allowed exit delay slot and block number
 	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay slot: %d, block number: %d", allowedExitDelaySlot, blockNumber)
+
+	// Skip if the block does not have tx receipts which means the execution client does not store log receipts
+	blockID := fmt.Sprintf("0x%x", blockNumber) // convert block number to hex
+	receiptExists, err := vs.executionPort.GetBlockHasReceipts(blockID)
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error checking if block has receipts: %v", err)
+		return err
+	}
+	if !receiptExists {
+		logger.WarnWithPrefix(vs.servicePrefix, "Block %s does not have transaction receipts. This probably means your node does not store log receipts, check out the official documentation of your node and configure the node to store them. Skipping ValidatorExitRequests event scan", blockID)
+		// notify the user to switch to an execution client that does store the log receipts
+		message := "- 🚨 Your Execution Client appears to be missing log receipt storage. As a result, ValidatorExitRequest events cannot be scanned. To resolve this issue, consider switching to an Execution Client that supports log receipt storage or updating your node configuration to enable this feature"
+		if err := vs.notifierPort.SendMissingLogReceiptsNotification(message); err != nil {
+			logger.ErrorWithPrefix(vs.servicePrefix, "Error sending notification: %v", err)
+		}
+		return fmt.Errorf("transaction receipt for csModule deployment not found")
+	}
 
 	// Iterate over operator ids
 	operatorIDs, err := vs.storagePort.GetOperatorIds()

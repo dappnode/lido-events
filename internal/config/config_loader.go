@@ -38,9 +38,6 @@ type Config struct {
 	MEVBoostRelaysAllowListAddres common.Address
 	CSParametersRegistryAddress   common.Address
 
-	// tx receipts
-	CSModuleTxReceipt common.Hash
-
 	// Lido specifics
 	LidoKeysApiUrl string
 	ProxyApiPort   uint64
@@ -182,7 +179,6 @@ func LoadNetworkConfig() (Config, error) {
 			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
 			MEVBoostRelaysAllowListAddres: common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
 			CSParametersRegistryAddress:   common.HexToAddress("0xA4aD5236963f9Fe4229864712269D8d79B65C5Ad"),
-			CSModuleTxReceipt:             common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
 			LidoKeysApiUrl:                "https://keys-api-hoodi.testnet.fi",
 			ProxyApiPort:                  proxyApiPort,
 			BlockChunkSize:                blockChunkSize,
@@ -218,7 +214,6 @@ func LoadNetworkConfig() (Config, error) {
 			VEBOAddress:                   common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
 			MEVBoostRelaysAllowListAddres: common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
 			CSParametersRegistryAddress:   common.HexToAddress("0x9D28ad303C90DF524BA960d7a2DAC56DcC31e428"),
-			CSModuleTxReceipt:             common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                "https://keys-api.lido.fi",
 			ProxyApiPort:                  proxyApiPort,
 			BlockChunkSize:                blockChunkSize,
