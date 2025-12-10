@@ -198,6 +198,21 @@ func (b *Beaconchain) GetGenesis() (*GenesisResponse, error) {
 	return &result, nil
 }
 
+// GetGenesisTime retrieves the genesis time from the beacon chain.
+func (b *Beaconchain) GetGenesisTime() (uint64, error) {
+	genesisData, err := b.GetGenesis()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get genesis data: %w", err)
+	}
+
+	var genesisTime uint64
+	if _, err := fmt.Sscanf(genesisData.Data.GenesisTime, "%d", &genesisTime); err != nil {
+		return 0, fmt.Errorf("failed to parse genesis time %q: %w", genesisData.Data.GenesisTime, err)
+	}
+
+	return genesisTime, nil
+}
+
 // GetBlockHeader retrieves the block header for a given block ID.
 // Block identifier. Can be one of: "head" (canonical head in node's view), "genesis", "finalized", <slot>, <hex encoded blockRoot with 0x prefix>.
 // API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockHeader

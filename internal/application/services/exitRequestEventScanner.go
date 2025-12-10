@@ -100,7 +100,17 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 
 	// calculate its timetamp slot
 	currentTime := uint64(time.Now().Unix())
-	allowedExitDelaySlot := currentTime - allowedExitDelaySeconds
+	allowedExitDelayTimestamp := currentTime - allowedExitDelaySeconds
+
+	// calculate allowedExitDelaySlot based on the timestamp using the genesis
+	genesisTime, err := vs.beaconchainPort.GetGenesisTime()
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting genesis time from beaconchain: %v", err)
+		return err
+	}
+	slotsSinceGenesis := (allowedExitDelayTimestamp - genesisTime) / 12 // assuming 12 seconds per slot
+	allowedExitDelaySlot := slotsSinceGenesis
+	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay timestamp: %d corresponds to slot: %d", allowedExitDelayTimestamp, allowedExitDelaySlot)
 
 	// get the corresponding block number for the allowed exit delay timestamp slot
 	blockNumber, err := vs.beaconchainPort.GetBlockNumber(fmt.Sprintf("%d", allowedExitDelaySlot))
