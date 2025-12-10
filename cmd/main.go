@@ -50,7 +50,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
 	}
-	performanceStorage, err := performance.NewPerformance(config.PerformanceDBPath)
+	performanceStorage, err := performance.NewPerformance(config.DBDirectory)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}

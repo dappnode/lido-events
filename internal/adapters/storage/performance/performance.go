@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"lido-events/internal/application/domain"
+	"os"
+	"path/filepath"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -13,9 +16,23 @@ type Performance struct {
 	db *sql.DB
 }
 
-// NewPerformance opens (or creates) the sqlite database at dbPath and ensures the
+// NewPerformance opens (or creates) the sqlite database under the given
+// directory, using a fixed file name ("performance.db"), and ensures the
 // required schema exists.
-func NewPerformance(dbPath string) (*Performance, error) {
+func NewPerformance(dbDirectory string) (*Performance, error) {
+	// Trim any trailing slash from the directory path to keep joins consistent.
+	dbDirectory = strings.TrimRight(dbDirectory, "/")
+
+	// Ensure the directory exists, mirroring the behavior of the JSON storage
+	// adapter so callers can simply pass a directory path.
+	if _, err := os.Stat(dbDirectory); os.IsNotExist(err) {
+		if err := os.MkdirAll(dbDirectory, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", dbDirectory, err)
+		}
+	}
+
+	dbPath := filepath.Join(dbDirectory, "performance.db")
+
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
