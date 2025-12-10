@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -37,9 +38,7 @@ type Config struct {
 	CSFeeDistributorProxyAddress  common.Address
 	VEBOAddress                   common.Address
 	MEVBoostRelaysAllowListAddres common.Address
-
-	// Block number of the deployment of the VEBO contract
-	VeboBlockDeployment uint64
+	CSParametersRegistryAddress   common.Address
 
 	// tx receipts
 	CSModuleTxReceipt common.Hash
@@ -186,7 +185,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
 			MEVBoostRelaysAllowListAddres: common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
-			VeboBlockDeployment:           uint64(1),
+			CSParametersRegistryAddress:   common.HexToAddress("0xA4aD5236963f9Fe4229864712269D8d79B65C5Ad"),
 			CSModuleTxReceipt:             common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
 			LidoKeysApiUrl:                "https://keys-api-hoodi.testnet.fi",
 			ProxyApiPort:                  proxyApiPort,
@@ -223,7 +222,7 @@ func LoadNetworkConfig() (Config, error) {
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
 			VEBOAddress:                   common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
 			MEVBoostRelaysAllowListAddres: common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
-			VeboBlockDeployment:           uint64(17172556),
+			CSParametersRegistryAddress:   common.HexToAddress("0x9D28ad303C90DF524BA960d7a2DAC56DcC31e428"),
 			CSModuleTxReceipt:             common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
 			LidoKeysApiUrl:                "https://keys-api.lido.fi",
 			ProxyApiPort:                  proxyApiPort,
@@ -234,5 +233,21 @@ func LoadNetworkConfig() (Config, error) {
 		logger.Fatal("Unknown network: %s", network)
 	}
 
+	logConfig(config)
+
 	return config, nil
+}
+
+// logConfig iterates over all fields of Config to ensure nothing is missed
+// when logging. This avoids having to maintain a manual list when new fields
+// are added.
+func logConfig(cfg Config) {
+	v := reflect.ValueOf(cfg)
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := t.Field(i)
+		value := v.Field(i).Interface()
+		logger.DebugWithPrefix("CONFIG", "Config.%s: %v", field.Name, value)
+	}
 }

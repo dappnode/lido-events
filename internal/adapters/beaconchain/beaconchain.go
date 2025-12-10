@@ -228,6 +228,46 @@ func (b *Beaconchain) GetEpochHeader(blockID string) (uint64, error) {
 	return epoch, nil
 }
 
+// GetBlockNumber retrieves the execution layer block number for a given beacon
+// block identifier via the v2 block endpoint.
+// API docs: https://ethereum.github.io/beacon-APIs/#/Beacon/getBlockV2
+func (b *Beaconchain) GetBlockNumber(blockID string) (uint64, error) {
+	url := fmt.Sprintf("%s/eth/v2/beacon/blocks/%s", b.beaconChainUrl, blockID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send request to Beaconchain at %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("unexpected status code %d received from Beaconchain", resp.StatusCode)
+	}
+
+	var result struct {
+		Data struct {
+			Message struct {
+				Body struct {
+					ExecutionPayload struct {
+						BlockNumber string `json:"block_number"`
+					} `json:"execution_payload"`
+				} `json:"body"`
+			} `json:"message"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return 0, fmt.Errorf("failed to decode response for GetBlockNumber: %w", err)
+	}
+
+	// Parse the execution payload block number from string to uint64.
+	var blockNumber uint64
+	if _, err := fmt.Sscanf(result.Data.Message.Body.ExecutionPayload.BlockNumber, "%d", &blockNumber); err != nil {
+		return 0, fmt.Errorf("failed to parse block_number %q: %w", result.Data.Message.Body.ExecutionPayload.BlockNumber, err)
+	}
+
+	return blockNumber, nil
+}
+
 func getEpochFromSlot(slot string) uint64 {
 	const slotsPerEpoch = 32
 	slotInt := parseInt(slot)

@@ -10,6 +10,7 @@ import (
 
 	"lido-events/internal/adapters/beaconchain"
 	"lido-events/internal/adapters/csfeedistributor"
+	"lido-events/internal/adapters/csparameters"
 	"lido-events/internal/adapters/execution"
 	exitvalidator "lido-events/internal/adapters/exitValidator"
 	"lido-events/internal/adapters/ipfs"
@@ -38,7 +39,6 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to load network configuration: %v", err)
 	}
-	logger.DebugWithPrefix(logPrefix, "Network config: %+v", config)
 
 	// Initiate RPC Ethereum clients
 	rpcClient, err := ethclient.Dial(config.RpcUrl)
@@ -68,13 +68,17 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
+	csParameters , err := csparameters.NewCsParameters(rpcClient, config.CSParametersRegistryAddress)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsParametersAdapter: %v", err)
+	}
 	vebo, err := vebo.NewVeboAdapter(rpcClient, config.VEBOAddress, exitsStorage, config.BlockChunkSize, config.CSMStakingModuleID)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
 	}
 
 	// Initialize services
-	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, config.VeboBlockDeployment, config.CSModuleTxReceipt)
+	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, csParameters, config.CSModuleTxReceipt)
 	validatorEjectorService := services.NewValidatorEjectorService(exitsStorage, notifier, exitValidator, beaconchain)
 	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
 	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)

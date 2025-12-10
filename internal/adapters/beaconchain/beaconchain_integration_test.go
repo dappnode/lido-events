@@ -103,6 +103,18 @@ func TestGetEpochHeaderIntegration(t *testing.T) {
 	t.Logf("Epoch for finalized block: %d", epoch)
 }
 
+func TestGetBlockNumberIntegration(t *testing.T) {
+	t.Skip()
+	adapter := setupBeaconchain(t)
+
+	blockNumber, err := adapter.GetBlockNumber("1850442")
+	assert.NoError(t, err)
+	// assert it is 1720511
+	assert.Equal(t, uint64(1720511), blockNumber)
+
+	t.Logf("Block number for '1850442' is %d", blockNumber)
+}
+
 // TestGetSyncingStatusIntegration tests the GetSyncingStatus method of the BeaconchainAdapter
 func TestGetSyncingStatusIntegration(t *testing.T) {
 	adapter := setupBeaconchain(t)

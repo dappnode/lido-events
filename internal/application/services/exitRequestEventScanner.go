@@ -14,25 +14,25 @@ import (
 )
 
 type ExitRequestEventScanner struct {
-	storagePort         ports.ExitsStorage
-	notifierPort        ports.NotifierPort
-	veboPort            ports.VeboPort
-	executionPort       ports.ExecutionPort
-	beaconchainPort     ports.Beaconchain
-	veboBlockDeployment uint64
-	csModuleTxReceipt   common.Hash
-	mu                  sync.Mutex
-	servicePrefix       string
+	storagePort          ports.ExitsStorage
+	notifierPort         ports.NotifierPort
+	veboPort             ports.VeboPort
+	executionPort        ports.ExecutionPort
+	beaconchainPort      ports.Beaconchain
+	csParametersPort     ports.CsParametersPort
+	csModuleTxReceipt    common.Hash
+	mu                   sync.Mutex
+	servicePrefix        string
 }
 
-func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, veboBlockDeployment uint64, csModuleTxReceipt common.Hash) *ExitRequestEventScanner {
+func NewExitRequestEventScanner(storagePort ports.ExitsStorage, notifierPort ports.NotifierPort, veboPort ports.VeboPort, executionPort ports.ExecutionPort, beaconchainPort ports.Beaconchain, csParametersPort ports.CsParametersPort, csModuleTxReceipt common.Hash) *ExitRequestEventScanner {
 	return &ExitRequestEventScanner{
 		storagePort,
 		notifierPort,
 		veboPort,
 		executionPort,
 		beaconchainPort,
-		veboBlockDeployment,
+		csParametersPort,
 		csModuleTxReceipt,
 		sync.Mutex{},
 		"ValidatorExitRequestEventScanner",
@@ -105,7 +105,31 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 		return fmt.Errorf("transaction receipt for csModule deployment not found")
 	}
 
-	// Iterrate over operator ids
+	// get allowed exit delay from csParameters contract
+	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v", err)
+		return err
+	}
+
+	// Multiply it by 4 to be sure we cover the entire exit delay window
+	allowedExitDelaySeconds := allowedExitDelay.Uint64() * 4
+	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay from csParameters contract: %d seconds", allowedExitDelaySeconds)
+
+	// calculate its timetamp slot
+	currentTime := uint64(time.Now().Unix())
+	allowedExitDelaySlot := currentTime - allowedExitDelaySeconds
+
+	// get the corresponding block number for the allowed exit delay timestamp slot
+	blockNumber, err := vs.beaconchainPort.GetBlockNumber(fmt.Sprintf("%d", allowedExitDelaySlot))
+	if err != nil {
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting allowed exit delay slot block number: %v", err)
+		return err
+	}
+	// print the allowed exit delay slot and block number
+	logger.InfoWithPrefix(vs.servicePrefix, "Allowed exit delay slot: %d, block number: %d", allowedExitDelaySlot, blockNumber)
+
+	// Iterate over operator ids
 	operatorIDs, err := vs.storagePort.GetOperatorIds()
 	if err != nil {
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting operator ids: %v", err)
@@ -114,16 +138,19 @@ func (vs *ExitRequestEventScanner) RunScan(ctx context.Context) error {
 
 	for _, operatorID := range operatorIDs {
 		logger.InfoWithPrefix(vs.servicePrefix, "Scanning ValidatorExitRequest events for operator ID %s", operatorID.String())
-		// Retrieve start and end blocks for scanning
+		// Retrieve start and end blocks for scanning.
+		// If we don't have a last processed block, we approximate by using the
+		// "allowed exit delay" window (Lido CSM specifies an exit delay of ~4/5 days).
+		// See: https://csm.lido.fi/type/parameters
 		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
 		if err != nil {
-			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using deployment block %d: %v", vs.veboBlockDeployment, err)
-			start = vs.veboBlockDeployment
+			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using allowed exit delay block number %d: %v", blockNumber, err)
+			start = blockNumber
 		}
 
 		if start == 0 {
-			logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using deployment block %d", vs.veboBlockDeployment)
-			start = vs.veboBlockDeployment
+			logger.InfoWithPrefix(vs.servicePrefix, "No last processed block found, using allowed exit delay block number %d", blockNumber)
+			start = blockNumber
 		}
 
 		end, err := vs.executionPort.GetMostRecentBlockNumber()
