@@ -147,7 +147,7 @@ func (ve *ValidatorEjector) EjectValidator(ctx context.Context) error {
 				logger.WarnWithPrefix(ve.servicePrefix, "Failed to exit validator %s, a manual exit is required: %v", exitRequest.Event.ValidatorIndex, err)
 				// send notification with manual exit link and skip on errror
 				// TODO: wait for PR in docs to add the proper link
-				message := fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to learn how to do the exit manually %s", exitRequest.Event.ValidatorIndex, "https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui")
+				message := fmt.Sprintf("- 🚪 Validator %s failed to exit, a manual exit is required. Click here to [learn how to do the exit manually](https://docs.dappnode.io/docs/user/staking/gnosis-chain/solo#1-exit-the-validator-from-the-dappnode-ui)", exitRequest.Event.ValidatorIndex)
 				if err := ve.notifierPort.SendValidatorFailedExitNotification(message); err != nil {
 					logger.ErrorWithPrefix(ve.servicePrefix, "Error sending manual exit notification", err)
 				}

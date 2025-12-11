@@ -104,14 +104,14 @@ func (n *Notifier) sendNotification(payload NotificationPayload) error {
 // SendMisingLogReceiptsNotification sends a notification about missing log receipts.
 func (n *Notifier) SendMissingLogReceiptsNotification(message string) error {
 	payload := NotificationPayload{
-		Title:         "⚠️ Lido CSM: Execution client missing Log Receipts detected",
+		Title:         "⚠️ Lido CSM: Execution client missing Log Receipts",
 		Body:          message,
 		Category:      &n.Category,
 		Priority:      func() *Priority { p := High; return &p }(),
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := "missing_log_receipts"; return &s }(),
 		CallToAction: &CallToAction{
-			Title: "Switch your execution client",
+			Title: "Switch execution",
 			URL:   n.StakersUiUrl,
 		},
 	}
@@ -158,7 +158,7 @@ func (n *Notifier) SendValidatorSucceedExitNotification(message string, validato
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := "validator_exit_succeeded"; return &s }(),
 		CallToAction: &CallToAction{
-			Title: "View validator details",
+			Title: "View validator",
 			URL:   fmt.Sprintf("%s/validator/%s", n.BeaconchaUrl, validatorIndex.String()),
 		},
 	}
@@ -175,7 +175,7 @@ func (n *Notifier) SendBlackListedNotification(message string) error {
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := "blacklisted_relays"; return &s }(),
 		CallToAction: &CallToAction{
-			Title: "Review relays configuration",
+			Title: "Review relays",
 			URL:   n.StakersUiUrl,
 		},
 	}
@@ -192,7 +192,7 @@ func (n *Notifier) SendMissingRelayNotification(message string) error {
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := "missing_mandatory_relays"; return &s }(),
 		CallToAction: &CallToAction{
-			Title: "Update relays configuration",
+			Title: "Review relays",
 			URL:   n.StakersUiUrl,
 		},
 	}
