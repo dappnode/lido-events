@@ -222,6 +222,35 @@ ORDER BY frame_start, log_cid;
 	return reports, nil
 }
 
+// GetUniqueLogCids returns all distinct log_cid values present in the
+// performance table, ordered lexicographically.
+func (a *Performance) GetUniqueLogCids() ([]string, error) {
+	rows, err := a.db.Query(`
+SELECT DISTINCT log_cid
+FROM performance
+ORDER BY log_cid;
+`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query unique log_cids: %w", err)
+	}
+	defer rows.Close()
+
+	var logCids []string
+	for rows.Next() {
+		var logCid string
+		if err := rows.Scan(&logCid); err != nil {
+			return nil, fmt.Errorf("failed to scan log_cid: %w", err)
+		}
+		logCids = append(logCids, logCid)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iteration error while querying unique log_cids: %w", err)
+	}
+
+	return logCids, nil
+}
+
 func boolToInt(b bool) int {
 	if b {
 		return 1

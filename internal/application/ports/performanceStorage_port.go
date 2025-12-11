@@ -7,4 +7,5 @@ import (
 type PerformanceStorage interface {
 	SaveReport(logCid string, report *domain.Report) error
 	GetNoPerformance(noID string) ([]*domain.Report, error)
+	GetUniqueLogCids() ([]string, error)
 }

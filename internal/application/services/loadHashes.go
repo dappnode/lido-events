@@ -59,6 +59,18 @@ func (phl *AllHashesLoader) LoadHashesCron(ctx context.Context, interval time.Du
 func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 	logger.DebugWithPrefix(phl.servicePrefix, "Starting hashes load")
 
+	// 0. Fetch existing log CIDs from performance storage and build a fast lookup set
+	existingLogCids, err := phl.performanceStorage.GetUniqueLogCids()
+	if err != nil {
+		logger.ErrorWithPrefix(phl.servicePrefix, "Error getting existing log CIDs from performance storage: %v", err)
+		return err
+	}
+
+	existingSet := make(map[string]struct{}, len(existingLogCids))
+	for _, cid := range existingLogCids {
+		existingSet[cid] = struct{}{}
+	}
+
 	// 1. Get all log CIDs from the CsFeeDistributor port.
 	logCids, err := phl.csfeeDistributor.GetAllLogCids(ctx)
 	if err != nil {
@@ -73,6 +85,12 @@ func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 
 	// 2. For each CID: fetch and parse from IPFS, then store in performance storage.
 	for _, cid := range logCids {
+		// Skip CIDs that are already present in the performance DB
+		if _, ok := existingSet[cid]; ok {
+			logger.DebugWithPrefix(phl.servicePrefix, "Skipping CID %s: already stored in performance DB", cid)
+			continue
+		}
+
 		report, err := phl.ipfsPort.FetchAndParseIpfs(cid)
 		if err != nil {
 			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to fetch/parse IPFS report for CID %s: %v", cid, err)
@@ -83,6 +101,9 @@ func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to save performance report for CID %s: %v", cid, err)
 			continue
 		}
+
+		// Mark CID as stored to avoid processing duplicates within the same run
+		existingSet[cid] = struct{}{}
 
 		logger.DebugWithPrefix(phl.servicePrefix, "Successfully stored performance report for CID %s", cid)
 	}
