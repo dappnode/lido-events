@@ -3,7 +3,6 @@ package csparameters
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"lido-events/internal/adapters/csparameters/bindings"
 
@@ -13,8 +12,8 @@ import (
 
 // CsParameters is a thin adapter around the CSParametersRegistry contract bindings.
 type CsParameters struct {
-	rpcClient            *ethclient.Client
-	csParametersAddress  common.Address
+	rpcClient           *ethclient.Client
+	csParametersAddress common.Address
 }
 
 // NewCsParameters creates a new CsParameters adapter instance.
@@ -30,16 +29,16 @@ func NewCsParameters(
 
 // GetDefaultAllowedExitDelay retrieves the defaultAllowedExitDelay value from the
 // CSParametersRegistry contract.
-func (cs *CsParameters) GetDefaultAllowedExitDelay(ctx context.Context) (*big.Int, error) {
+func (cs *CsParameters) GetDefaultAllowedExitDelay(ctx context.Context) (uint64, error) {
 	contract, err := bindings.NewBindings(cs.csParametersAddress, cs.rpcClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create CsParameters contract instance: %w", err)
+		return 0, fmt.Errorf("failed to create CsParameters contract instance: %w", err)
 	}
 
 	delay, err := contract.DefaultAllowedExitDelay(nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get defaultAllowedExitDelay: %w", err)
+		return 0, fmt.Errorf("failed to get defaultAllowedExitDelay: %w", err)
 	}
 
-	return delay, nil
+	return delay.Uint64(), nil
 }

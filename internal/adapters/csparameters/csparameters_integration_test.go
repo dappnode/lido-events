@@ -51,7 +51,6 @@ func TestGetDefaultAllowedExitDelayIntegration(t *testing.T) {
 	delay, err := adapter.GetDefaultAllowedExitDelay(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, delay)
-	assert.True(t, delay.Sign() >= 0)
 
-	t.Logf("GetDefaultAllowedExitDelay returned: %s", delay.String())
+	t.Logf("GetDefaultAllowedExitDelay returned: %d", delay)
 }

@@ -7,7 +7,6 @@ import (
 	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
-	"math/big"
 	"sync"
 	"time"
 )
@@ -108,17 +107,18 @@ func (vs *ExitRequestEventScanner) ensureNodesInSync() error {
 	return nil
 }
 
+// computeAllowedExitDelayBlock computes the block number corresponding to the allowed exit delay window (approximately 4 days ago from now multiplied by 2 to be safe)
 func (vs *ExitRequestEventScanner) computeAllowedExitDelayBlock(ctx context.Context) (uint64, error) {
 	// get allowed exit delay from csParameters contract
 	allowedExitDelay, err := vs.csParametersPort.GetDefaultAllowedExitDelay(ctx)
 	if err != nil {
 		// continue on error and default to 4 days in seconds
-		allowedExitDelay = big.NewInt(int64(vs.defaultAllowedExitDelay))
-		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v. Defaulting to %d seconds", err, allowedExitDelay.Uint64())
+		allowedExitDelay = vs.defaultAllowedExitDelay
+		logger.ErrorWithPrefix(vs.servicePrefix, "Error getting default allowed exit delay from csParameters contract: %v. Defaulting to %d seconds", err, allowedExitDelay)
 	}
 
 	// Multiply it by 2 to be sure we cover the entire exit delay window
-	allowedExitDelaySeconds := allowedExitDelay.Uint64() * vs.exitDelayMultiplier
+	allowedExitDelaySeconds := allowedExitDelay * vs.exitDelayMultiplier
 	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 2 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
 
 	// calculate its timetamp slot
@@ -191,21 +191,11 @@ func (vs *ExitRequestEventScanner) scanOperators(ctx context.Context) error {
 	for _, operatorID := range operatorIDs {
 		logger.InfoWithPrefix(vs.servicePrefix, "Scanning ValidatorExitRequest events for operator ID %s", operatorID.String())
 		// Retrieve start and end blocks for scanning.
-		// If we don't have a last processed block, we approximate by using the
-		// "allowed exit delay" window (Lido CSM specifies an exit delay of ~4/5 days).
-		// See: https://csm.lido.fi/type/parameters
 		start, err := vs.storagePort.GetValidatorExitRequestLastProcessedBlock(operatorID)
-		if err != nil {
-			start, err = vs.computeAllowedExitDelayBlock(ctx)
-			if err != nil {
-				logger.ErrorWithPrefix(vs.servicePrefix, "Error computing allowed exit delay block: %v", err)
-				return err
-			}
-			logger.WarnWithPrefix(vs.servicePrefix, "Failed to get last processed block, using allowed exit delay block number %d: %v", start, err)
-
-		}
-
-		if start == 0 {
+		if start == 0 || err != nil {
+			// If we don't have a last processed block, we approximate by using the
+			// "allowed exit delay" window (Lido CSM specifies an exit delay of ~4/5 days).
+			// See: https://csm.lido.fi/type/parameters
 			start, err = vs.computeAllowedExitDelayBlock(ctx)
 			if err != nil {
 				logger.ErrorWithPrefix(vs.servicePrefix, "Error computing allowed exit delay block: %v", err)

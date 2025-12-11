@@ -2,9 +2,8 @@ package ports
 
 import (
 	"context"
-	"math/big"
 )
 
 type CsParametersPort interface {
-	GetDefaultAllowedExitDelay(ctx context.Context) (*big.Int, error)
+	GetDefaultAllowedExitDelay(ctx context.Context) (uint64, error)
 }
