@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// setupVeboAdapter initializes VeboAdapter with a mocked StoragePort
-func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, error) {
+// setupVeboAdapter initializes VeboAdapter with a mocked ExitsStorage
+func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockExitsStorage, error) {
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
 		t.Fatal("RPC_URL environment variable not set")
@@ -30,8 +30,8 @@ func setupVeboAdapter(t *testing.T) (*vebo.VeboAdapter, *mocks.MockStoragePort, 
 		return nil, nil, err
 	}
 
-	// Create the mock StoragePort
-	mockStorage := new(mocks.MockStoragePort)
+	// Create the mock ExitsStorage
+	mockStorage := new(mocks.MockExitsStorage)
 
 	// Define initial operator IDs as required by the test
 	mockStorage.On("GetOperatorIds").Return([]*big.Int{big.NewInt(38)}, nil)
