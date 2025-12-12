@@ -159,7 +159,7 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	}
 
-	// must be integer and greater than 1
+	// must be integer and greater than or equal to 1
 	exitDelayMultiplier := uint64(2)
 	exitDelayMultiplierStr := os.Getenv("EXIT_DELAY_MULTIPLIER")
 	if exitDelayMultiplierStr != "" {
