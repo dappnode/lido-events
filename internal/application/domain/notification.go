@@ -10,6 +10,7 @@ type LidoNotifications struct {
 	RelaysBlacklist      LidoNotification
 	RleaysMissing        LidoNotification
 	MissingLogReceipts   LidoNotification
+	NewPerformanceReport LidoNotification
 }
 
 var Notifications LidoNotifications
@@ -22,5 +23,6 @@ func InitNotifications(network string) {
 		RelaysBlacklist:      LidoNotification(prefix + "relays-blacklist"),
 		RleaysMissing:        LidoNotification(prefix + "relays-missing"),
 		MissingLogReceipts:   LidoNotification(prefix + "missing-log-receipts"),
+		NewPerformanceReport: LidoNotification(prefix + "new-performance-report"),
 	}
 }
