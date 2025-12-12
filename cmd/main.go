@@ -19,6 +19,7 @@ import (
 	"lido-events/internal/adapters/storage/exits"
 	"lido-events/internal/adapters/storage/performance"
 	"lido-events/internal/adapters/vebo"
+	"lido-events/internal/application/domain"
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
 	"lido-events/internal/logger"
@@ -40,6 +41,9 @@ func main() {
 		logger.FatalWithPrefix(logPrefix, "Failed to load network configuration: %v", err)
 	}
 
+	// Initialize domain-level notification identifiers based on network
+	domain.InitNotifications(config.Network)
+
 	// Initiate RPC Ethereum clients
 	rpcClient, err := ethclient.Dial(config.RpcUrl)
 	if err != nil {
@@ -54,7 +58,7 @@ func main() {
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}
-	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl, config.BeaconchaUrl)
+	notifier := notifier.NewNotifier(ctx, config.Network, config.DappmanagerUrl, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl, config.BeaconchaUrl)
 
 	relays, err := relays.NewARelays(rpcClient, config.MEVBoostRelaysAllowListAddres, config.DappmanagerUrl, config.MevBoostDnpName)
 	if err != nil {

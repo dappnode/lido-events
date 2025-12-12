@@ -5,17 +5,22 @@ type LidoNotificationsEnabled map[LidoNotification]bool
 type LidoNotification string
 
 type LidoNotifications struct {
-	Exit        LidoNotification
-	Relay       LidoNotification
-	Performance LidoNotification
+	ValidatorExitRequest LidoNotification
+	ValidatorExit        LidoNotification
+	RelaysBlacklist      LidoNotification
+	RleaysMissing        LidoNotification
+	MissingLogReceipts   LidoNotification
 }
 
 var Notifications LidoNotifications
 
 func InitNotifications(network string) {
+	prefix := network + "-"
 	Notifications = LidoNotifications{
-		Exit:        LidoNotification(network + "exit"),
-		Relay:       LidoNotification(network + "relay"),
-		Performance: LidoNotification(network + "performance"),
+		ValidatorExitRequest: LidoNotification(prefix + "validator-exit-request"),
+		ValidatorExit:        LidoNotification(prefix + "validator-exit"),
+		RelaysBlacklist:      LidoNotification(prefix + "relays-blacklist"),
+		RleaysMissing:        LidoNotification(prefix + "relays-missing"),
+		MissingLogReceipts:   LidoNotification(prefix + "missing-log-receipts"),
 	}
 }
