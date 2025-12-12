@@ -1,8 +1,8 @@
 # Use a specific version of Go with Alpine for building
 FROM golang:1.23.3-alpine AS builder
 
-# Install build tools and dependencies
-RUN apk add --no-cache git
+# Install build tools and dependencies (cgo + SQLite headers for go-sqlite3)
+RUN apk add --no-cache git build-base sqlite-dev
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -16,8 +16,8 @@ RUN go mod download
 # Copy the rest of the application code
 COPY . .
 
-# Set environment variables for Go
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+# Set environment variables for Go (cgo enabled so go-sqlite3 works)
+ENV CGO_ENABLED=1 GOOS=linux GOARCH=amd64
 
 # Build the Go application
 RUN go build -o main ./cmd
@@ -25,8 +25,8 @@ RUN go build -o main ./cmd
 # Use an Alpine image for runtime
 FROM alpine:latest
 
-# Install CA certificates for HTTPS
-RUN apk add --no-cache ca-certificates
+# Install CA certificates for HTTPS and SQLite runtime libs (if linked dynamically)
+RUN apk add --no-cache ca-certificates sqlite-libs
 
 # Set the working directory inside the container
 WORKDIR /app
