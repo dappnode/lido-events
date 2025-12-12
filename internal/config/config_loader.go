@@ -4,6 +4,7 @@ import (
 	"lido-events/internal/logger"
 	"math/big"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -11,12 +12,13 @@ import (
 )
 
 type Config struct {
+	Network string
+
 	DBDirectory        string
 	MevBoostDnpName    string
 	DappmanagerUrl     string
 	SignerUrl          string
 	IpfsUrl            string
-	WsURL              string
 	RpcUrl             string
 	CSMStakingModuleID *big.Int
 	EtherscanURL       string
@@ -24,32 +26,26 @@ type Config struct {
 	BeaconchaUrl       string
 	CSMUIURL           string
 	StakersUiUrl       string
+	BrainUrl           string
 	ApiPort            uint64
+	LidoDnpName        string
 
 	CORS []string
 
 	// Individual contract addresses
-	CSFeeOracleAddress            common.Address
-	CSAccountingAddress           common.Address
-	CSFeeDistributorAddress       common.Address
-	CSFeeDistributorImplAddress   common.Address
+	CSFeeDistributorProxyAddress  common.Address
 	VEBOAddress                   common.Address
-	CSModuleAddress               common.Address
 	MEVBoostRelaysAllowListAddres common.Address
-
-	// Block number of the deployment of the VEBO contract and the CSFeeDistributor contract
-	VeboBlockDeployment             uint64
-	CsFeeDistributorBlockDeployment uint64
-
-	// tx receipts
-	CSModuleTxReceipt common.Hash
+	CSParametersRegistryAddress   common.Address
 
 	// Lido specifics
-	LidoKeysApiUrl string
-	ProxyApiPort   uint64
+	LidoKeysApiUrl          string
+	ProxyApiPort            uint64
+	DefaultAllowedExitDelay uint64
+	ExitDelayMultiplier     uint64
 
 	// Blockchain
-	MinGenesisTime          uint64
+	SecondsPerSlot          uint64
 	BlockChunkSize          uint64
 	BlockScannerMinDistance uint64
 }
@@ -124,7 +120,6 @@ func LoadNetworkConfig() (Config, error) {
 	}
 
 	// Retrieve other necessary environment variables
-	wsURL := os.Getenv("WS_URL")
 	rpcURL := os.Getenv("RPC_URL")
 	beaconchainURL := os.Getenv("BEACONCHAIN_URL")
 	logLevel := os.Getenv("LOG_LEVEL")
@@ -153,15 +148,38 @@ func LoadNetworkConfig() (Config, error) {
 		}
 	}
 
+	defaultAllowedExitDelay := uint64(345600) // 4 days in seconds
+	defaultAllowedExitDelayStr := os.Getenv("DEFAULT_ALLOWED_EXIT_DELAY")
+	if defaultAllowedExitDelayStr != "" {
+		// Try to parse the default allowed exit delay as uint64
+		if delay, err := strconv.ParseUint(defaultAllowedExitDelayStr, 10, 64); err == nil {
+			defaultAllowedExitDelay = delay
+		} else {
+			logger.Fatal("Invalid DEFAULT_ALLOWED_EXIT_DELAY value: %s", defaultAllowedExitDelayStr)
+		}
+	}
+
+	// must be integer and greater than or equal to 1
+	exitDelayMultiplier := uint64(2)
+	exitDelayMultiplierStr := os.Getenv("EXIT_DELAY_MULTIPLIER")
+	if exitDelayMultiplierStr != "" {
+		// Try to parse the exit delay multiplier as uint64
+		if multiplier, err := strconv.ParseUint(exitDelayMultiplierStr, 10, 64); err == nil {
+			if multiplier < 1 {
+				logger.Fatal("EXIT_DELAY_MULTIPLIER must be greater than or equal to 1")
+			}
+			exitDelayMultiplier = multiplier
+		} else {
+			logger.Fatal("Invalid EXIT_DELAY_MULTIPLIER value: %s", exitDelayMultiplierStr)
+		}
+	}
+
 	corsEnv := os.Getenv("CORS")
 	var config Config
 
 	switch network {
 	case "hoodi":
 		// Configure default values for the hoodi network
-		if wsURL == "" {
-			wsURL = "ws://execution.hoodi.dncore.dappnode:8546"
-		}
 		if rpcURL == "" {
 			rpcURL = "http://execution.hoodi.dncore.dappnode:8545"
 		}
@@ -169,83 +187,37 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.hoodi.dncore.dappnode:3500"
 		}
 		config = Config{
-			DBDirectory:                     dbDirectory,
-			MevBoostDnpName:                 "mev-boost-hoodi.dnp.dappnode.eth",
-			DappmanagerUrl:                  dappmanagerUrl,
-			SignerUrl:                       "http://signer.hoodi.dncore.dappnode:9000",
-			IpfsUrl:                         ipfsUrl,
-			WsURL:                           wsURL,
-			RpcUrl:                          rpcURL,
-			CSMStakingModuleID:              big.NewInt(4),
-			EtherscanURL:                    "https://hoodi.etherscan.io",
-			BeaconchainURL:                  beaconchainURL,
-			BeaconchaUrl:                    "https://hoodi.beaconcha.in",
-			CSMUIURL:                        "https://csm.testnet.fi",
-			StakersUiUrl:                    "http://my.dappnode/stakers/hoodi",
-			ApiPort:                         apiPort,
-			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0xe7314f561B2e72f9543F1004e741bab6Fc51028B"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
-			CSFeeDistributorImplAddress:     common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
-			VEBOAddress:                     common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
-			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
-			VeboBlockDeployment:             uint64(750),
-			CsFeeDistributorBlockDeployment: uint64(4980),
-			CSModuleAddress:                 common.HexToAddress("0x79CEf36D84743222f37765204Bec41E92a93E59d"),
-			CSModuleTxReceipt:               common.HexToHash("0xebc45a0fa30a3f9badbcc4448ea22cef1a5d18b97825802a70df31cecb59127d"),
-			LidoKeysApiUrl:                  "https://keys-api-hoodi.testnet.fi",
-			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1742277084), // timestamp when the CSFeeDistributorAddress SC was deployed:  https://hoodi.etherscan.io/tx/0xb5bf7cc66bc3b04eee6fb8ec650dd699d23b4ff53028fa5ec333d8e8fbe5201e
-			BlockChunkSize:                  blockChunkSize,
-			BlockScannerMinDistance:         blockScannerMinDistance,
-		}
-	case "holesky":
-		// Configure default values for the holesky network
-		if wsURL == "" {
-			wsURL = "ws://execution.holesky.dncore.dappnode:8546"
-		}
-		if rpcURL == "" {
-			rpcURL = "http://execution.holesky.dncore.dappnode:8545"
-		}
-		if beaconchainURL == "" {
-			beaconchainURL = "http://beacon-chain.holesky.dncore.dappnode:3500"
-		}
-		config = Config{
-			DBDirectory:                     dbDirectory,
-			MevBoostDnpName:                 "mev-boost-holesky.dnp.dappnode.eth",
-			DappmanagerUrl:                  dappmanagerUrl,
-			SignerUrl:                       "http://signer.holesky.dncore.dappnode:9000",
-			IpfsUrl:                         ipfsUrl,
-			WsURL:                           wsURL,
-			RpcUrl:                          rpcURL,
-			CSMStakingModuleID:              big.NewInt(4),
-			EtherscanURL:                    "https://holesky.etherscan.io",
-			BeaconchainURL:                  beaconchainURL,
-			BeaconchaUrl:                    "https://holesky.beaconcha.in",
-			CSMUIURL:                        "https://csm-holesky.testnet.fi",
-			StakersUiUrl:                    "http://my.dappnode/stakers/holesky",
-			ApiPort:                         apiPort,
-			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-holesky.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0xaF57326C7d513085051b50912D51809ECC5d98Ee"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xD7ba648C8F72669C6aE649648B516ec03D07c8ED"),
-			CSFeeDistributorImplAddress:     common.HexToAddress("0xe1863C61d2AF2899f06223152ebaaf993C29aEa7"),
-			VEBOAddress:                     common.HexToAddress("0xffDDF7025410412deaa05E3E1cE68FE53208afcb"),
-			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0x2d86C5855581194a386941806E38cA119E50aEA3"),
-			VeboBlockDeployment:             uint64(30701),
-			CsFeeDistributorBlockDeployment: uint64(1774650),
-			CSModuleAddress:                 common.HexToAddress("0x4562c3e63c2e586cD1651B958C22F88135aCAd4f"),
-			CSModuleTxReceipt:               common.HexToHash("0x1475719ecbb73b28bc531bb54b37695df1bf6b71c6d2bf1d28b4efa404867e26"),
-			LidoKeysApiUrl:                  "https://keys-api-holesky.testnet.fi",
-			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1695902400),
-			BlockChunkSize:                  blockChunkSize,
-			BlockScannerMinDistance:         blockScannerMinDistance,
+			Network:                       network,
+			DBDirectory:                   dbDirectory,
+			MevBoostDnpName:               "mev-boost-hoodi.dnp.dappnode.eth",
+			DappmanagerUrl:                dappmanagerUrl,
+			SignerUrl:                     "http://signer.hoodi.dncore.dappnode:9000",
+			IpfsUrl:                       ipfsUrl,
+			RpcUrl:                        rpcURL,
+			CSMStakingModuleID:            big.NewInt(4),
+			EtherscanURL:                  "https://hoodi.etherscan.io",
+			BeaconchainURL:                beaconchainURL,
+			BeaconchaUrl:                  "https://hoodi.beaconcha.in",
+			CSMUIURL:                      "https://csm.testnet.fi",
+			StakersUiUrl:                  "http://my.dappnode/stakers/hoodi",
+			BrainUrl:                      "http://brain.web3signer-hoodi.dappnode",
+			ApiPort:                       apiPort,
+			LidoDnpName:                   "llido-csm-hoodi.dnp.dappnode.eth",
+			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
+			CSFeeDistributorProxyAddress:  common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
+			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
+			MEVBoostRelaysAllowListAddres: common.HexToAddress("0x279d3A456212a1294DaEd0faEE98675a52E8A4Bf"),
+			CSParametersRegistryAddress:   common.HexToAddress("0xA4aD5236963f9Fe4229864712269D8d79B65C5Ad"),
+			LidoKeysApiUrl:                "https://keys-api-hoodi.testnet.fi",
+			ProxyApiPort:                  proxyApiPort,
+			DefaultAllowedExitDelay:       defaultAllowedExitDelay,
+			ExitDelayMultiplier:           exitDelayMultiplier,
+			SecondsPerSlot:                12,
+			BlockChunkSize:                blockChunkSize,
+			BlockScannerMinDistance:       blockScannerMinDistance,
 		}
 	case "mainnet":
 		// Configure default values for the mainnet
-		if wsURL == "" {
-			wsURL = "ws://execution.mainnet.dncore.dappnode:8546"
-		}
 		if rpcURL == "" {
 			rpcURL = "http://execution.mainnet.dncore.dappnode:8545"
 		}
@@ -253,39 +225,54 @@ func LoadNetworkConfig() (Config, error) {
 			beaconchainURL = "http://beacon-chain.mainnet.dncore.dappnode:3500"
 		}
 		config = Config{
-			DBDirectory:                     dbDirectory,
-			MevBoostDnpName:                 "mev-boost.dnp.dappnode.eth",
-			DappmanagerUrl:                  dappmanagerUrl,
-			SignerUrl:                       "http://signer.mainnet.dncore.dappnode:9000",
-			IpfsUrl:                         ipfsUrl,
-			WsURL:                           wsURL,
-			RpcUrl:                          rpcURL,
-			CSMStakingModuleID:              big.NewInt(3),
-			EtherscanURL:                    "https://etherscan.io",
-			BeaconchainURL:                  beaconchainURL,
-			BeaconchaUrl:                    "https://beaconcha.in",
-			CSMUIURL:                        "https://csm.lido.fi",
-			StakersUiUrl:                    "http://my.dappnode/stakers/ethereum",
-			ApiPort:                         apiPort,
-			CORS:                            parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
-			CSFeeOracleAddress:              common.HexToAddress("0x4D4074628678Bd302921c20573EEa1ed38DdF7FB"),
-			CSFeeDistributorAddress:         common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
-			CSFeeDistributorImplAddress:     common.HexToAddress("0x17Fc610ecbbAc3f99751b3B2aAc1bA2b22E444f0"),
-			VEBOAddress:                     common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
-			MEVBoostRelaysAllowListAddres:   common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
-			VeboBlockDeployment:             uint64(17172556),
-			CsFeeDistributorBlockDeployment: uint64(20935462),
-			CSModuleAddress:                 common.HexToAddress("0xdA7dE2ECdDfccC6c3AF10108Db212ACBBf9EA83F"),
-			CSModuleTxReceipt:               common.HexToHash("0xf5330dbcf09885ed145c4435e356b5d8a10054751bb8009d3a2605d476ac173f"),
-			LidoKeysApiUrl:                  "https://keys-api.lido.fi",
-			ProxyApiPort:                    proxyApiPort,
-			MinGenesisTime:                  uint64(1606824023),
-			BlockChunkSize:                  blockChunkSize,
-			BlockScannerMinDistance:         blockScannerMinDistance,
+			Network:                       network,
+			DBDirectory:                   dbDirectory,
+			MevBoostDnpName:               "mev-boost.dnp.dappnode.eth",
+			DappmanagerUrl:                dappmanagerUrl,
+			SignerUrl:                     "http://signer.mainnet.dncore.dappnode:9000",
+			IpfsUrl:                       ipfsUrl,
+			RpcUrl:                        rpcURL,
+			CSMStakingModuleID:            big.NewInt(3),
+			EtherscanURL:                  "https://etherscan.io",
+			BeaconchainURL:                beaconchainURL,
+			BeaconchaUrl:                  "https://beaconcha.in",
+			CSMUIURL:                      "https://csm.lido.fi",
+			StakersUiUrl:                  "http://my.dappnode/stakers/ethereum",
+			BrainUrl:                      "http://brain.web3signer.dappnode",
+			LidoDnpName:                   "llido-csm-mainnet.dnp.dappnode.eth",
+			ApiPort:                       apiPort,
+			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
+			CSFeeDistributorProxyAddress:  common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),
+			VEBOAddress:                   common.HexToAddress("0x0De4Ea0184c2ad0BacA7183356Aea5B8d5Bf5c6e"),
+			MEVBoostRelaysAllowListAddres: common.HexToAddress("0xF95f069F9AD107938F6ba802a3da87892298610E"),
+			CSParametersRegistryAddress:   common.HexToAddress("0x9D28ad303C90DF524BA960d7a2DAC56DcC31e428"),
+			LidoKeysApiUrl:                "https://keys-api.lido.fi",
+			ProxyApiPort:                  proxyApiPort,
+			DefaultAllowedExitDelay:       defaultAllowedExitDelay,
+			ExitDelayMultiplier:           exitDelayMultiplier,
+			SecondsPerSlot:                12,
+			BlockChunkSize:                blockChunkSize,
+			BlockScannerMinDistance:       blockScannerMinDistance,
 		}
 	default:
 		logger.Fatal("Unknown network: %s", network)
 	}
 
+	logConfig(config)
+
 	return config, nil
+}
+
+// logConfig iterates over all fields of Config to ensure nothing is missed
+// when logging. This avoids having to maintain a manual list when new fields
+// are added.
+func logConfig(cfg Config) {
+	v := reflect.ValueOf(cfg)
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := t.Field(i)
+		value := v.Field(i).Interface()
+		logger.DebugWithPrefix("CONFIG", "Config.%s: %v", field.Name, value)
+	}
 }

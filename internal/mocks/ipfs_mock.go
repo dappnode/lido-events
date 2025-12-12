@@ -12,7 +12,7 @@ type MockIpfsPort struct {
 }
 
 // FetchAndParseIpfs simulates fetching and parsing an IPFS content by CID
-func (m *MockIpfsPort) FetchAndParseIpfs(cid string) (domain.OriginalReport, error) {
+func (m *MockIpfsPort) FetchAndParseIpfs(cid string) (domain.Report, error) {
 	args := m.Called(cid)
-	return args.Get(0).(domain.OriginalReport), args.Error(1)
+	return args.Get(0).(domain.Report), args.Error(1)
 }

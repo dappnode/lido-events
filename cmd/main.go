@@ -9,17 +9,15 @@ import (
 	"time"
 
 	"lido-events/internal/adapters/beaconchain"
-	csfeedistributor "lido-events/internal/adapters/csFeeDistributor"
-	csfeedistributorimpl "lido-events/internal/adapters/csFeeDistributorImpl"
-	csfeeoracle "lido-events/internal/adapters/csFeeOracle"
-	csmodule "lido-events/internal/adapters/csModule"
+	"lido-events/internal/adapters/csfeedistributor"
+	"lido-events/internal/adapters/csparameters"
 	"lido-events/internal/adapters/execution"
-	exitvalidator "lido-events/internal/adapters/exitValidator"
+	"lido-events/internal/adapters/exitvalidator"
 	"lido-events/internal/adapters/ipfs"
 	"lido-events/internal/adapters/notifier"
-	relaysallowed "lido-events/internal/adapters/relaysAllowed"
-	relaysused "lido-events/internal/adapters/relaysUsed"
-	"lido-events/internal/adapters/storage"
+	"lido-events/internal/adapters/relays"
+	"lido-events/internal/adapters/storage/exits"
+	"lido-events/internal/adapters/storage/performance"
 	"lido-events/internal/adapters/vebo"
 	"lido-events/internal/application/services"
 	"lido-events/internal/config"
@@ -37,95 +35,65 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Load configurations
-	networkConfig, err := config.LoadNetworkConfig()
+	config, err := config.LoadNetworkConfig()
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to load network configuration: %v", err)
 	}
-	logger.DebugWithPrefix(logPrefix, "Network config: %+v", networkConfig)
 
-	// Initiate RPC and Ws Ethereum clients
-	rpcClient, err := ethclient.Dial(networkConfig.RpcUrl)
+	// Initiate RPC Ethereum clients
+	rpcClient, err := ethclient.Dial(config.RpcUrl)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize RPC client: %v", err)
 	}
-	wsClient, err := ethclient.Dial(networkConfig.WsURL)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize WS client: %v", err)
-	}
 
-	storageAdapter, err := storage.NewStorageAdapter(networkConfig.DBDirectory)
+	exitsStorage, err := exits.NewJson(config.DBDirectory)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize storage adapter: %v", err)
 	}
-	notifierAdapter, err := notifier.NewNotifierAdapter(ctx, storageAdapter)
+	performanceStorage, err := performance.NewPerformance(config.DBDirectory)
 	if err != nil {
-		logger.WarnWithPrefix(logPrefix, "Telegram notifier not initialized: %v", err)
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize performance storage adapter: %v", err)
 	}
-	relaysUsedAdapter := relaysused.NewRelaysUsedAdapter(networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
-	relaysAllowedAdapter, err := relaysallowed.NewRelaysAllowedAdapter(rpcClient, networkConfig.MEVBoostRelaysAllowListAddres, networkConfig.DappmanagerUrl, networkConfig.MevBoostDnpName)
+	notifier := notifier.NewNotifier(config.Network, config.LidoDnpName, config.BrainUrl, config.StakersUiUrl, config.BeaconchaUrl)
+
+	relays, err := relays.NewARelays(rpcClient, config.MEVBoostRelaysAllowListAddres, config.DappmanagerUrl, config.MevBoostDnpName)
 	if err != nil {
-		logger.Fatal("Failed to initialize relaysAllowedAdapter: %v", err)
+		logger.Fatal("Failed to initialize relays: %v", err)
 	}
-	ipfsAdapter := ipfs.NewIPFSAdapter(networkConfig.IpfsUrl)
-	beaconchainAdapter := beaconchain.NewBeaconchainAdapter(networkConfig.BeaconchainURL)
-	executionAdapter := execution.NewExecutionAdapter(networkConfig.RpcUrl)
-	exitValidatorAdapter := exitvalidator.NewExitValidatorAdapter(beaconchainAdapter, networkConfig.SignerUrl)
-	csFeeDistributorImplAdapter, err := csfeedistributorimpl.NewCsFeeDistributorImplAdapter(rpcClient, networkConfig.CSFeeDistributorAddress, networkConfig.BlockChunkSize)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorImplAdapter: %v", err)
-	}
-	veboAdapter, err := vebo.NewVeboAdapter(wsClient, rpcClient, networkConfig.VEBOAddress, storageAdapter, networkConfig.BlockChunkSize, networkConfig.CSMStakingModuleID)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
-	}
-	csFeeOracleAdapter, err := csfeeoracle.NewCsFeeOracleAdapter(rpcClient, networkConfig.CSFeeOracleAddress, networkConfig.BlockChunkSize)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeOracleAdapter: %v", err)
-	}
-	csModuleAdapter, err := csmodule.NewCsModuleAdapter(wsClient, rpcClient, networkConfig.CSModuleAddress, storageAdapter, networkConfig.BlockChunkSize)
-	if err != nil {
-		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsModuleAdapter: %v", err)
-	}
-	csFeeDistributorAdapter, err := csfeedistributor.NewCsFeeDistributorAdapter(networkConfig.WsURL, networkConfig.CSFeeDistributorAddress)
+	ipfs := ipfs.NewIPFS(config.IpfsUrl)
+	beaconchain := beaconchain.NewBeaconchain(config.BeaconchainURL)
+	execution := execution.NewExecution(config.RpcUrl)
+	exitValidator := exitvalidator.NewExitValidator(beaconchain, config.SignerUrl)
+	csFeeDistributor, err := csfeedistributor.NewCsFeeDistributor(rpcClient, config.CSFeeDistributorProxyAddress)
 	if err != nil {
 		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsFeeDistributorAdapter: %v", err)
 	}
+	csParameters, err := csparameters.NewCsParameters(rpcClient, config.CSParametersRegistryAddress)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize CsParametersAdapter: %v", err)
+	}
+	vebo, err := vebo.NewVeboAdapter(rpcClient, config.VEBOAddress, exitsStorage, config.BlockChunkSize, config.CSMStakingModuleID)
+	if err != nil {
+		logger.FatalWithPrefix(logPrefix, "Failed to initialize VeboAdapter: %v", err)
+	}
 
-	// Initialize domain services
-	eventsWatcherService := services.NewEventsWatcherService(veboAdapter, csModuleAdapter, csFeeDistributorAdapter, notifierAdapter)
-	distributionLogUpdatedScannerService := services.NewDistributionLogUpdatedEventScanner(storageAdapter, notifierAdapter, executionAdapter, csFeeDistributorImplAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt)
-	validatorExitRequestScannerService := services.NewValidatorExitRequestEventScanner(storageAdapter, notifierAdapter, veboAdapter, executionAdapter, beaconchainAdapter, networkConfig.VeboBlockDeployment, networkConfig.CSModuleTxReceipt)
-	validatorEjectorService := services.NewValidatorEjectorService(networkConfig.BeaconchaUrl, storageAdapter, notifierAdapter, exitValidatorAdapter, beaconchainAdapter)
-	pendingHashesLoaderService := services.NewPendingHashesLoader(storageAdapter, notifierAdapter, ipfsAdapter, networkConfig.MinGenesisTime)
-	csModuleEventsScannerService := services.NewCsModuleEventsScanner(storageAdapter, executionAdapter, csModuleAdapter, networkConfig.CsFeeDistributorBlockDeployment, networkConfig.CSModuleTxReceipt, networkConfig.BlockScannerMinDistance)
-	csFeeOracleEventsScannerService := services.NewCsFeeOracleEventsScanner(storageAdapter, executionAdapter, csFeeOracleAdapter, networkConfig.CsFeeDistributorBlockDeployment)
-	// relaysCheckerService := services.NewRelayCronService(relaysAllowedAdapter, relaysUsedAdapter, notifierAdapter)
+	// Initialize services
+	validatorExitRequestScannerService := services.NewExitRequestEventScanner(exitsStorage, notifier, vebo, execution, beaconchain, csParameters, config.SecondsPerSlot, config.DefaultAllowedExitDelay, config.ExitDelayMultiplier)
+	validatorEjectorService := services.NewValidatorEjectorService(exitsStorage, notifier, exitValidator, beaconchain)
+	pendingHashesLoaderService := services.NewAllHashesLoader(performanceStorage, notifier, csFeeDistributor, ipfs)
+	apiService := services.NewAPIServerService(ctx, config.ApiPort, exitsStorage, performanceStorage, relays, validatorExitRequestScannerService, config.CORS)
+	proxyService := services.NewProxyAPIServerService(config.ProxyApiPort, config.LidoKeysApiUrl, config.CORS)
+	relaysCheckerService := services.NewRelayCronService(config.StakersUiUrl, relays, notifier)
 
-	// Initialize API services
-	apiService := services.NewAPIServerService(ctx, networkConfig.ApiPort, storageAdapter, notifierAdapter, relaysUsedAdapter, relaysAllowedAdapter, csFeeOracleEventsScannerService, csModuleEventsScannerService, distributionLogUpdatedScannerService, validatorExitRequestScannerService, pendingHashesLoaderService, networkConfig.CORS)
-	proxyService := services.NewProxyAPIServerService(networkConfig.ProxyApiPort, networkConfig.LidoKeysApiUrl, networkConfig.CORS)
-
-	// Start API services
+	// Start servers
 	apiService.Start(&wg)
 	proxyService.Start(&wg)
 
-	// Wait for and validate initial configuration
-	if err := waitForConfig(ctx, storageAdapter); err != nil {
-		logger.FatalWithPrefix(logPrefix, "Application shutting down due to configuration validation failure: %v", err)
-	}
-
-	// Start domain services
-	// go relaysCheckerService.StartRelayMonitoringCron(ctx, 5*time.Minute, &wg)
-
-	distributionLogUpdatedExecutionComplete := make(chan struct{})
-	go distributionLogUpdatedScannerService.ScanDistributionLogUpdatedEventsCron(ctx, 384*time.Second, &wg, distributionLogUpdatedExecutionComplete)
-	go pendingHashesLoaderService.LoadPendingHashesCron(ctx, 3*time.Hour, &wg, distributionLogUpdatedExecutionComplete)
-
-	exitRequestExecutionComplete := make(chan struct{})
-	go validatorExitRequestScannerService.ScanValidatorExitRequestEventsCron(ctx, 384*time.Second, &wg, exitRequestExecutionComplete)
-	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg, exitRequestExecutionComplete)
-
-	go eventsWatcherService.WatchAllEvents(ctx, &wg)
+	// Start services
+	go relaysCheckerService.StartRelayMonitoringCron(ctx, 1*time.Hour, &wg)
+	go pendingHashesLoaderService.LoadHashesCron(ctx, 24*time.Hour, &wg)
+	go validatorExitRequestScannerService.ScanExitRequestEventsCron(ctx, 384*time.Second, &wg)
+	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
 
 	// Handle OS signals for shutdown
 	handleShutdown(cancel, apiService, proxyService)
@@ -133,28 +101,6 @@ func main() {
 	// Wait for all goroutines to finish
 	wg.Wait()
 	logger.InfoWithPrefix(logPrefix, "All services stopped. Shutting down application.")
-}
-
-// Helper function to check if operator IDs and Telegram config are available
-func waitForConfig(ctx context.Context, storageAdapter *storage.Storage) error {
-	for {
-		select {
-		case <-ctx.Done(): // Exit if the context is canceled
-			logger.InfoWithPrefix(logPrefix, "Context canceled before configuration was ready.")
-			return ctx.Err()
-		default:
-			// Check for operator IDs
-			operatorIds, err := storageAdapter.GetOperatorIds()
-			if err != nil || len(operatorIds) == 0 {
-				logger.InfoWithPrefix(logPrefix, "Waiting for operator IDs to be set...")
-			} else {
-				// Operator IDs are set
-				logger.InfoWithPrefix(logPrefix, "Operator IDs are set. Proceeding with initialization.")
-				return nil
-			}
-			time.Sleep(2 * time.Second) // Poll every 2 seconds
-		}
-	}
 }
 
 // handleShutdown manages graceful shutdown for services

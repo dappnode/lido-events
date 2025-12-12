@@ -6,4 +6,6 @@ type Beaconchain interface {
 	GetValidatorStatus(pubkey string) (domain.ValidatorStatus, error)
 	GetEpochHeader(blockID string) (uint64, error)
 	GetSyncingStatus() (bool, error)
+	GetBlockNumber(blockID string) (uint64, error)
+	GetGenesisTime() (uint64, error)
 }

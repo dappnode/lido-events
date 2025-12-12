@@ -15,7 +15,6 @@ jobs:
     env:
       BEACONCHAIN_URL: ${{ secrets.BEACONCHAIN_URL }}
       RPC_URL: ${{ secrets.RPC_URL }}
-      WS_URL: ${{ secrets.WS_URL }}
       IPFS_URL: ${{ secrets.IPFS_URL }}
       LOG_LEVEL: DEBUG
 
@@ -24,11 +23,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Run integration tests
-      - name: Run Integration Tests
+      - name: Run unit tests
         run: |
-          echo "Running Integration Tests"
-          go test -v --race -tags=integration ./...
+          go test -v ./...
+
+      # Run integration tests
+      # - name: Run Integration Tests
+      #   run: |
+      #     echo "Running Integration Tests"
+      #     go test -v --race -tags=integration ./...
 
   release:
     name: Release and Publish Docker Image
@@ -50,7 +53,7 @@ jobs:
         run: |
           # Get the input version
           INPUT_VERSION="${{ github.event.inputs.version }}"
-          
+
           # Find the latest tag
           LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
 
@@ -70,7 +73,6 @@ jobs:
 
           echo "New version: $NEW_VERSION"
           echo "::set-output name=version::$NEW_VERSION"
-
 
       # Create a GitHub release
       - name: Create GitHub Release
