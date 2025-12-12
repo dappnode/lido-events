@@ -3,6 +3,7 @@ package mocks
 import (
 	"context"
 	"lido-events/internal/application/domain"
+	"math/big"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -15,10 +16,11 @@ type MockVeboPort struct {
 // ScanVeboValidatorExitRequestEvent simulates scanning for ValidatorExitRequest events
 func (m *MockVeboPort) ScanVeboValidatorExitRequestEvent(
 	ctx context.Context,
+	operatorId *big.Int,
 	start uint64,
 	end *uint64,
 	handleExitRequestEvent func(*domain.VeboValidatorExitRequest) error,
 ) error {
-	args := m.Called(ctx, start, end, handleExitRequestEvent)
+	args := m.Called(ctx, operatorId, start, end, handleExitRequestEvent)
 	return args.Error(0)
 }
