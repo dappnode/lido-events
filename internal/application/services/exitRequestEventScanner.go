@@ -239,7 +239,7 @@ func (vs *ExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExit
 
 	// If validator is active and not exiting (ongoing or slashed), send a notification. We don't send a notification if the validator is already exiting or has already exited
 	if validatorStatus == domain.StatusActiveOngoing || validatorStatus == domain.StatusActiveSlashed {
-		logger.InfoWithPrefix(vs.servicePrefix, "Validator %s is active and has been requestes to exit", validatorExitEvent.ValidatorIndex)
+		logger.InfoWithPrefix(vs.servicePrefix, "Validator %s is active and has been requested to exit", validatorExitEvent.ValidatorIndex)
 		message := fmt.Sprintf("- 🚨 Your validator with ID: %s has been requested to exit. It will be automatically ejected within the next hour, you will receive a notification when exited", validatorExitEvent.ValidatorIndex)
 		err := vs.notifierPort.SendValidatorExitRequestedNotification(message)
 		if err != nil {
