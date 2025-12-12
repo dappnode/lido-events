@@ -119,7 +119,7 @@ func (vs *ExitRequestEventScanner) computeAllowedExitDelayBlock(ctx context.Cont
 
 	// Multiply it by 2 to be sure we cover the entire exit delay window
 	allowedExitDelaySeconds := allowedExitDelay * vs.exitDelayMultiplier
-	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiply by 2 to safe cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
+	logger.InfoWithPrefix(vs.servicePrefix, "Default allowed exit delay multiplied by 2 to safely cover entire exit delay window: %d seconds", allowedExitDelaySeconds)
 
 	// calculate its timetamp slot
 	currentTime := uint64(time.Now().Unix())
