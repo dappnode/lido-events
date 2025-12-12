@@ -229,7 +229,7 @@ func (vs *ExitRequestEventScanner) scanOperators(ctx context.Context) error {
 
 // HandleValidatorExitRequestEvent processes a ValidatorExitRequest event
 func (vs *ExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExitEvent *domain.VeboValidatorExitRequest) error {
-	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event for node operatror id %s and validator index %s", validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex)
+	logger.DebugWithPrefix(vs.servicePrefix, "Processing ValidatorExitRequest event for node operator id %s and validator index %s", validatorExitEvent.NodeOperatorId, validatorExitEvent.ValidatorIndex)
 
 	pubkeyHex := "0x" + hex.EncodeToString(validatorExitEvent.ValidatorPubkey) // This is exactly the format that signer needs for the pubkey to be when signing the exit message
 	validatorStatus, err := vs.beaconchainPort.GetValidatorStatus(validatorExitEvent.ValidatorIndex.String())
