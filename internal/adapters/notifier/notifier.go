@@ -166,6 +166,7 @@ func (n *Notifier) SendValidatorFailedExitNotification(message string) error {
 		Priority:      func() *Priority { p := Critical; return &p }(),
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := string(domain.Notifications.ValidatorExit); return &s }(),
+		Status:        func() *Status { s := Triggered; return &s }(),
 		CallToAction: &CallToAction{
 			Title: "Exit validator manually",
 			URL:   n.BrainUrl,
@@ -188,6 +189,7 @@ func (n *Notifier) SendValidatorSucceedExitNotification(message string, validato
 		Priority:      func() *Priority { p := Medium; return &p }(),
 		DnpName:       &n.LidoDnpName,
 		CorrelationId: func() *string { s := string(domain.Notifications.ValidatorExit); return &s }(),
+		Status:        func() *Status { s := Resolved; return &s }(),
 		CallToAction: &CallToAction{
 			Title: "View validator",
 			URL:   fmt.Sprintf("%s/validator/%s", n.BeaconchaUrl, validatorIndex.String()),
