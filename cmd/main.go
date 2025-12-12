@@ -94,7 +94,7 @@ func main() {
 	proxyService.Start(&wg)
 
 	// Start services
-	go relaysCheckerService.StartRelayMonitoringCron(ctx, 1*time.Hour, &wg)
+	go relaysCheckerService.StartRelayMonitoringCron(ctx, 12*time.Hour, &wg)
 	go pendingHashesLoaderService.LoadHashesCron(ctx, 24*time.Hour, &wg)
 	go validatorExitRequestScannerService.ScanExitRequestEventsCron(ctx, 384*time.Second, &wg)
 	go validatorEjectorService.ValidatorEjectorCron(ctx, 64*time.Minute, &wg)
