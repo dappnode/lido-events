@@ -256,7 +256,7 @@ func (vs *ExitRequestEventScanner) HandleValidatorExitRequestEvent(validatorExit
 		logger.ErrorWithPrefix(vs.servicePrefix, "Error saving exit request for validator %s: %v", validatorExitEvent.ValidatorIndex, err)
 		// if validator is active print attention warning log that manual exit is required
 		if validatorStatus == domain.StatusActiveOngoing {
-			logger.WarnWithPrefix(vs.servicePrefix, "Validator %s is still active and requires to exit, it could not be saved and will not be exited automatically, a manal exit is required", validatorExitEvent.ValidatorIndex)
+			logger.WarnWithPrefix(vs.servicePrefix, "Validator %s is still active and requires to exit, it could not be saved and will not be exited automatically, a manual exit is required", validatorExitEvent.ValidatorIndex)
 		}
 		return err
 	}
