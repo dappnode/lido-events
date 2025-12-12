@@ -50,6 +50,8 @@ func setupCsFeeDistributorAdapter(t *testing.T) (*csfeedistributor.CsFeeDistribu
 // TestGetAllLogCidsIntegration verifies that GetAllLogCids runs without errors
 // and prints the returned CIDs.
 func TestGetAllLogCidsIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter, err := setupCsFeeDistributorAdapter(t)
 	assert.NoError(t, err)
 

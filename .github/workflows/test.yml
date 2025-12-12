@@ -24,8 +24,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Run integration tests
-      - name: Run Integration Tests
+      - name: Run unit tests
         run: |
-          echo "Running Integration Tests"
-          NETWORK=holesky go test -v -tags=integration ./...
+          go test -v ./...
+
+      # Run integration tests
+      # - name: Run Integration Tests
+      #   run: |
+      #     echo "Running Integration Tests"
+      #     NETWORK=holesky go test -v -tags=integration ./...

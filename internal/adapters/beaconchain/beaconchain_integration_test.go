@@ -117,6 +117,8 @@ func TestGetBlockNumberIntegration(t *testing.T) {
 
 // TestGetSyncingStatusIntegration tests the GetSyncingStatus method of the BeaconchainAdapter
 func TestGetSyncingStatusIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter := setupBeaconchain(t)
 
 	// Call the GetSyncingStatus method

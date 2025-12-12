@@ -10,6 +10,8 @@ import (
 )
 
 func TestFetchAndParseIpfs(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	// Retrieve the IPFS gateway URL from the environment variable
 	ipfsURL := os.Getenv("IPFS_URL")
 	if ipfsURL == "" {

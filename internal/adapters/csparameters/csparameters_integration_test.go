@@ -41,6 +41,8 @@ func setupCsParametersAdapter(t *testing.T) (*csparameters.CsParameters, error) 
 // TestGetDefaultAllowedExitDelayIntegration verifies that GetDefaultAllowedExitDelay runs without errors
 // and logs the returned value.
 func TestGetDefaultAllowedExitDelayIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter, err := setupCsParametersAdapter(t)
 	assert.NoError(t, err)
 

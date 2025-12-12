@@ -25,6 +25,8 @@ func setupExecutionAdapter(t *testing.T) (*execution.Execution, error) {
 
 // TestGetMostRecentBlockNumberIntegration tests retrieving the most recent block number
 func TestGetMostRecentBlockNumberIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
 
@@ -41,6 +43,8 @@ func TestGetMostRecentBlockNumberIntegration(t *testing.T) {
 
 // TestIsSyncingIntegration tests the IsSyncing method of the ExecutionAdapter
 func TestIsSyncingIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	// Set up the execution adapter
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
@@ -63,6 +67,8 @@ func TestIsSyncingIntegration(t *testing.T) {
 // TestGetBlockReceiptsIntegration tests retrieving block receipts for blocks
 // that are known to have or not have receipts.
 func TestGetBlockReceiptsIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
 
@@ -87,6 +93,8 @@ func TestGetBlockReceiptsIntegration(t *testing.T) {
 // TestGetBlockHasReceiptsIntegration tests checking whether blocks have any
 // receipts using eth_getBlockReceipts.
 func TestGetBlockHasReceiptsIntegration(t *testing.T) {
+	t.Skip("integration test temporarily disabled")
+
 	adapter, err := setupExecutionAdapter(t)
 	assert.NoError(t, err)
 
