@@ -9,4 +9,5 @@ type NotifierPort interface {
 	SendValidatorSucceedExitNotification(message string, validatorIndex *big.Int) error
 	SendBlackListedNotification(message string) error
 	SendMissingRelayNotification(message string) error
+	SendNewPerformanceReport(message string) error
 }

@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"lido-events/internal/application/domain"
 	"lido-events/internal/application/ports"
 	"lido-events/internal/logger"
 	"sync"
@@ -84,6 +86,8 @@ func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 	}
 
 	// 2. For each CID: fetch and parse from IPFS, then store in performance storage.
+	var newReports []domain.Report
+
 	for _, cid := range logCids {
 		// Skip CIDs that are already present in the performance DB
 		if _, ok := existingSet[cid]; ok {
@@ -102,12 +106,81 @@ func (phl *AllHashesLoader) loadHashes(ctx context.Context) error {
 			continue
 		}
 
+		// keep track of newly stored reports to send a single
+		// consolidated notification at the end of the run
+		newReports = append(newReports, report)
+
 		// Mark CID as stored to avoid processing duplicates within the same run
 		existingSet[cid] = struct{}{}
 
 		logger.DebugWithPrefix(phl.servicePrefix, "Successfully stored performance report for CID %s", cid)
 	}
 
+	// 3. Send a single notification if at least one new report was stored.
+	if len(newReports) > 0 {
+		message := buildPerformanceNotificationMessage(newReports)
+		if err := phl.notifierPort.SendNewPerformanceReport(message); err != nil {
+			logger.ErrorWithPrefix(phl.servicePrefix, "Failed to notify about new performance reports: %v", err)
+		}
+	}
+
 	logger.DebugWithPrefix(phl.servicePrefix, "Finished hashes load")
 	return nil
+}
+
+// buildPerformanceNotificationMessage builds a human-readable summary of how
+// validators have performed during the last processed frames.
+func buildPerformanceNotificationMessage(reports []domain.Report) string {
+	if len(reports) == 0 {
+		return "New performance report available."
+	}
+
+	var (
+		globalValidators              int
+		globalUnderThreshold          int
+		globalSlashed                 int
+		globalPerformanceSum          float64
+		firstFrameStart, lastFrameEnd int
+	)
+
+	for i, r := range reports {
+		if i == 0 {
+			firstFrameStart = r.Frame[0]
+		}
+		lastFrameEnd = r.Frame[1]
+
+		for _, opData := range r.Operators {
+			for _, v := range opData.Validators {
+				globalValidators++
+				globalPerformanceSum += v.Performance
+				if v.Slashed {
+					globalSlashed++
+				}
+				if v.Performance < v.Threshold {
+					globalUnderThreshold++
+				}
+			}
+		}
+	}
+
+	avgPerformance := 0.0
+	if globalValidators > 0 {
+		avgPerformance = globalPerformanceSum / float64(globalValidators)
+	}
+
+	framesText := "frame"
+	if len(reports) > 1 {
+		framesText = "frames"
+	}
+
+	return fmt.Sprintf(
+		"New validator performance %s %d-%d: %d validators (avg performance %.4f), %d below threshold, %d slashed.",
+		framesText,
+		firstFrameStart,
+		lastFrameEnd,
+		globalValidators,
+		avgPerformance,
+		globalUnderThreshold,
+		globalSlashed,
+	)
 }

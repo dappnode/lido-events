@@ -29,6 +29,7 @@ type Config struct {
 	BrainUrl           string
 	ApiPort            uint64
 	LidoDnpName        string
+	LidoPerformanceUrl string
 
 	CORS []string
 
@@ -203,6 +204,7 @@ func LoadNetworkConfig() (Config, error) {
 			BrainUrl:                      "http://brain.web3signer-hoodi.dappnode",
 			ApiPort:                       apiPort,
 			LidoDnpName:                   "lido-csm-hoodi.dnp.dappnode.eth",
+			LidoPerformanceUrl:            "http://ui.lido-csm-hoodi.dappnode/performance",
 			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-hoodi.dappnode", "http://my.dappnode"}),
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xaCd9820b0A2229a82dc1A0770307ce5522FF3582"),
 			VEBOAddress:                   common.HexToAddress("0x8664d394C2B3278F26A1B44B967aEf99707eeAB2"),
@@ -240,6 +242,7 @@ func LoadNetworkConfig() (Config, error) {
 			StakersUiUrl:                  "http://my.dappnode/stakers/ethereum",
 			BrainUrl:                      "http://brain.web3signer.dappnode",
 			LidoDnpName:                   "lido-csm-mainnet.dnp.dappnode.eth",
+			LidoPerformanceUrl:            "http://ui.lido-csm-mainnet.dappnode/performance",
 			ApiPort:                       apiPort,
 			CORS:                          parseCORS(corsEnv, []string{"http://ui.lido-csm-mainnet.dappnode", "http://my.dappnode"}),
 			CSFeeDistributorProxyAddress:  common.HexToAddress("0xD99CC66fEC647E68294C6477B40fC7E0F6F618D0"),

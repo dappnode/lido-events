@@ -15,18 +15,19 @@ import (
 )
 
 type Notifier struct {
-	ctx          context.Context
-	Network      string
-	Category     Category
-	LidoDnpName  string
-	BrainUrl     string
-	StakersUiUrl string
-	BeaconchaUrl string
-	HTTPClient   *http.Client
-	DappManager  *dappmanager.DappManager
+	ctx                context.Context
+	Network            string
+	Category           Category
+	LidoDnpName        string
+	BrainUrl           string
+	StakersUiUrl       string
+	BeaconchaUrl       string
+	LidoPerfoomanceUrl string
+	HTTPClient         *http.Client
+	DappManager        *dappmanager.DappManager
 }
 
-func NewNotifier(ctx context.Context, network, dappmanagerUrl, lidoDnpName, brainUrl, stakersUiUrl, beaconchaUrl string) *Notifier {
+func NewNotifier(ctx context.Context, network, dappmanagerUrl, lidoDnpName, brainUrl, stakersUiUrl, beaconchaUrl, lidoPerformanceUrl string) *Notifier {
 	category := Category(strings.ToLower(network))
 	if network == "mainnet" {
 		category = Ethereum
@@ -35,15 +36,16 @@ func NewNotifier(ctx context.Context, network, dappmanagerUrl, lidoDnpName, brai
 	dm := dappmanager.NewDappManager(dappmanagerUrl, lidoDnpName)
 
 	return &Notifier{
-		ctx:          ctx,
-		Network:      network,
-		Category:     category,
-		LidoDnpName:  lidoDnpName,
-		BrainUrl:     brainUrl,
-		StakersUiUrl: stakersUiUrl,
-		BeaconchaUrl: beaconchaUrl,
-		HTTPClient:   &http.Client{Timeout: 3 * time.Second},
-		DappManager:  dm,
+		ctx:                ctx,
+		Network:            network,
+		Category:           category,
+		LidoDnpName:        lidoDnpName,
+		BrainUrl:           brainUrl,
+		StakersUiUrl:       stakersUiUrl,
+		BeaconchaUrl:       beaconchaUrl,
+		LidoPerfoomanceUrl: lidoPerformanceUrl,
+		HTTPClient:         &http.Client{Timeout: 3 * time.Second},
+		DappManager:        dm,
 	}
 }
 
@@ -237,6 +239,28 @@ func (n *Notifier) SendMissingRelayNotification(message string) error {
 		CallToAction: &CallToAction{
 			Title: "Review relays",
 			URL:   n.StakersUiUrl,
+		},
+	}
+	return n.sendNotification(payload)
+}
+
+// SendNewPerformanceReport sends a notification about a new performance report.
+func (n *Notifier) SendNewPerformanceReport(message string) error {
+	enabled, err := n.DappManager.IsNewPerformanceReportEnabled(n.ctx)
+	if err != nil || !enabled {
+		return err
+	}
+
+	payload := NotificationPayload{
+		Title:         "📊 Lido CSM: New Performance Report Available",
+		Body:          message,
+		Category:      &n.Category,
+		Priority:      func() *Priority { p := Low; return &p }(),
+		DnpName:       &n.LidoDnpName,
+		CorrelationId: func() *string { s := string(domain.Notifications.NewPerformanceReport); return &s }(),
+		CallToAction: &CallToAction{
+			Title: "View performance",
+			URL:   n.LidoPerfoomanceUrl,
 		},
 	}
 	return n.sendNotification(payload)

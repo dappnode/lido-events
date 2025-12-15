@@ -46,3 +46,9 @@ func (m *MockNotifierPort) SendMissingRelayNotification(message string) error {
 	args := m.Called(message)
 	return args.Error(0)
 }
+
+// SendNewPerformanceReport simulates sending a new performance report notification.
+func (m *MockNotifierPort) SendNewPerformanceReport(message string) error {
+	args := m.Called(message)
+	return args.Error(0)
+}

@@ -110,6 +110,13 @@ func (d *DappManager) IsMissingLogReceiptsEnabled(ctx context.Context) (bool, er
 	return d.isNotificationEnabled(ctx, domain.Notifications.MissingLogReceipts)
 }
 
+// IsNewPerformanceReportEnabled reports whether the new performance report
+// notification (correlationId like "<network>-new-performance-report") is
+// enabled.
+func (d *DappManager) IsNewPerformanceReportEnabled(ctx context.Context) (bool, error) {
+	return d.isNotificationEnabled(ctx, domain.Notifications.NewPerformanceReport)
+}
+
 // getLidoManifestNotifications gets the notifications from the Signer package manifest
 func (d *DappManager) getLidoManifestNotifications(ctx context.Context) ([]CustomEndpoint, error) {
 	url := d.baseURL + "/package-manifest/" + d.lidoDnpName
