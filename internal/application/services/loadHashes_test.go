@@ -67,6 +67,9 @@ func TestLoadHashes_WritesNewCid(t *testing.T) {
 	// Expect SaveReport to be called once with cid1
 	mockPerf.On("SaveReport", "cid1", mock.AnythingOfType("*domain.Report")).Return(nil).Once()
 
+	// Expect a single consolidated notification to be sent
+	mockNotifier.On("SendNewPerformanceReport", mock.AnythingOfType("string")).Return(nil).Once()
+
 	loader := NewAllHashesLoader(mockPerf, mockNotifier, mockCsFee, mockIpfs)
 
 	err := loader.loadHashes(ctx)
