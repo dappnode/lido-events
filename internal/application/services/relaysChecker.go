@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -91,10 +92,14 @@ func (rcs *RelayCronService) monitorRelays(ctx context.Context) error {
 	return nil
 }
 
+func normalizeRelayURI(uri string) string {
+	return strings.TrimRight(uri, "/")
+}
+
 func (rcs *RelayCronService) analyzeRelays(allowedRelays []domain.RelayAllowed, usedRelays []string) ([]string, int) {
 	allowedMap := make(map[string]domain.RelayAllowed)
 	for _, relay := range allowedRelays {
-		allowedMap[relay.Uri] = relay
+		allowedMap[normalizeRelayURI(relay.Uri)] = relay
 	}
 
 	var blacklistedRelays []string
@@ -102,7 +107,8 @@ func (rcs *RelayCronService) analyzeRelays(allowedRelays []domain.RelayAllowed, 
 
 	// Check for blacklisted relays
 	for _, used := range usedRelays {
-		if _, exists := allowedMap[used]; !exists {
+		normalizedUsed := normalizeRelayURI(used)
+		if _, exists := allowedMap[normalizedUsed]; !exists {
 			blacklistedRelays = append(blacklistedRelays, used)
 		}
 	}
@@ -110,8 +116,9 @@ func (rcs *RelayCronService) analyzeRelays(allowedRelays []domain.RelayAllowed, 
 	// Check for mandatory relays in use
 	for _, allowed := range allowedRelays {
 		if allowed.IsMandatory {
+			normalizedAllowed := normalizeRelayURI(allowed.Uri)
 			for _, used := range usedRelays {
-				if allowed.Uri == used {
+				if normalizedAllowed == normalizeRelayURI(used) {
 					mandatoryRelaysUsed++
 					break
 				}
